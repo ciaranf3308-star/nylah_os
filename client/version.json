@@ -1,0 +1,9 @@
+{
+  "build": "v108-consolidated-fixes-trusted-saved-offline-hardened-rls-normalized-calendar-dublin-ui-cut",
+  "builtAt": "2026-08-06T10:44:19.028804+00:00",
+  "changelog": "Fix: trusted Saved (server confirmed Dublin time, no fake on read/reconnect/queue clear), offline reallyOnline respects navigator.offline, queues cleanly, hardened RLS (anon only ash-ciaran-2026, validation trigger, revision monotonic), normalized chore_occurrences/calendar_series/overrides + atomic RPC wired, calendar recurrence multi-weekday + Dublin TZ + safe this-only/this+future, UI cut 25% (grain .028, slower pulse, fewer glows/rotations/confetti only win), chores simplified hide V48 MEGA/GodMode (DEV flag), dark hardcoded light -> var tokens, reduced-motion global + pause timers when hidden",
+  "code": 108,
+  "mandatory": false,
+  "timestamp": "2026-08-06T10:44:19.028804+00:00",
+  "version": "108.0.0"
+}

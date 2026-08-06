@@ -16,11 +16,15 @@
     <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png" />
     <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
+    <!-- Empty inline icon: stops the browser fetching /favicon.ico, which lives outside the space's routes and fails auth. -->
     <link rel="icon" href="data:," />
     <title>Nylah OS</title>
-    <script>window.__NYLAH_WHITE_FIX=1;addEventListener("error",function(e){try{var m=e.message||(e.error&&e.error.message)||"boot err";console.error("[boot]",e);var r=document.querySelector("[data-generated-space-root]");if(r){r.innerHTML='<div style="min-height:100dvh;display:grid;place-items:center;padding:24px;background:#FFFCF8;color:#292624;font:14px system-ui"><div style="max-width:320px;text-align:center"><div style="font-family:Fraunces,serif;font-size:18px;font-weight:600;margin-bottom:8px">Boot hiccup — tap to reload</div><div style="opacity:.7;font-size:12px;margin-bottom:12px;white-space:pre-wrap">'+m+'</div><button style="height:44px;border-radius:9999px;padding:0 20px;background:#0A0A0A;color:#fff;font-size:13px" onclick="try{localStorage.clear();sessionStorage.clear()}catch(e){};caches&&caches.keys().then(function(k){k.forEach(function(x){caches.delete(x)})});navigator.serviceWorker&&navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()})});location.reload()">Clear cache & reload</button></div></div>'}catch{}});addEventListener("unhandledrejection",function(e){console.error("[unhandled]",e.reason)})</script>
-    <link rel="stylesheet" crossorigin href="./assets/index-c03f577j.css"><script src="./supabase-env.js"></script><script type="module" crossorigin src="./assets/index-ehkbn98z.js"></script></head>
+    
+  <link rel="stylesheet" crossorigin href="./assets/index-6s8n4wsj.css"><script src="./supabase-env.js"></script><script type="module" crossorigin src="./assets/index-g1szs54w.js"></script></head>
   <body>
-    <div data-generated-space-root="" data-generated-space-slug="couple-fridge-phone"></div>
+    <div
+      data-generated-space-root=""
+      data-generated-space-slug="couple-fridge-phone"
+    ></div>
   </body>
 </html>

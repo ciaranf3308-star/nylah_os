@@ -1,9 +1,9 @@
 {
-  "build": "v114-white-fix-tour-browsed-ehkbn98z",
-  "builtAt": "2026-08-06T15:00:00.000Z",
-  "changelog": "Actual fix white screen: SW v114 network-first clears old caches, window.onerror boot trap renders Clear cache & reload instead of white, main.tsx outer try+ErrorBoundary, agenda inline var(--nav-active-bg) charcoal 121214 vs peach, old assets kept 15",
-  "code": 114,
+  "build": "v115-prod-restore-boutique-full",
+  "builtAt": "2026-08-06T15:48:30.000Z",
+  "changelog": "Restore prod: the working-well build before rollback — boutique-hotel warm paper/peach + charcoal orange Hume, trusted Saved real server time, offline queue, hardened RLS household_id, normalized mirror, calendar Dublin TZ with weekday picker + This/Future split, chores Tinder swipe deck/mine/open/done/admin + streak + championship + rules + monthly reset countdown, shopping freq + personal/wants, notes 900px + stickyboard, floating nav, script hero, 44px spring, Fraunces+Inter, 100vw edge-to-edge, SW network-first white-fix",
+  "code": 115,
   "mandatory": false,
-  "timestamp": "2026-08-06T15:00:00.000Z",
-  "version": "114.0.0"
+  "timestamp": "2026-08-06T15:48:30.000Z",
+  "version": "115.0.0"
 }

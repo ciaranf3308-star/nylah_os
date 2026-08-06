@@ -1,0 +1,86 @@
+{
+  "ok": true,
+  "url": "https://245ae5ff-dd85-47cd-a4d2-03ea4d978a54.metaaivm.com:4431/spaces/v2/couple-fridge-phone/",
+  "duration_ms": 26283.635,
+  "output_dir": "/home/hatch/workspace/ts-spaces/couple-fridge-phone/audits/2026-08-02T23-19-43Z-305882959",
+  "nav_status": 200,
+  "viewports": {
+    "desktop": {
+      "width": 1440,
+      "height": 900,
+      "screenshot_path": "/home/hatch/workspace/ts-spaces/couple-fridge-phone/audits/2026-08-02T23-19-43Z-305882959/screenshot.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "screenshot_path": "/home/hatch/workspace/ts-spaces/couple-fridge-phone/audits/2026-08-02T23-19-43Z-305882959/screenshot-mobile.png"
+    }
+  },
+  "mobile_layout": {
+    "viewport_width": 390,
+    "scroll_width": 390,
+    "overflow_px": 0,
+    "widest_selector": null,
+    "verdict": "pass"
+  },
+  "images": {
+    "total": 0,
+    "broken": [],
+    "duplicate": [],
+    "unstable": [],
+    "failed_requests": [],
+    "sample_urls": [],
+    "verdict": "pass"
+  },
+  "text_issues": [],
+  "console_errors": [],
+  "blocked_requests": [],
+  "tests": [
+    {
+      "name": "fridge-desktop",
+      "viewport": "desktop",
+      "status": "pass",
+      "screenshot_path": "/home/hatch/workspace/ts-spaces/couple-fridge-phone/audits/2026-08-02T23-19-43Z-305882959/desktop-fridge-desktop.png",
+      "duration_ms": 13141.969573000002,
+      "error": null,
+      "failing_selector": null
+    },
+    {
+      "name": "fridge-flow",
+      "viewport": "mobile",
+      "status": "pass",
+      "screenshot_path": "/home/hatch/workspace/ts-spaces/couple-fridge-phone/audits/2026-08-02T23-19-43Z-305882959/mobile-fridge-flow.png",
+      "duration_ms": 7457.843227999998,
+      "error": null,
+      "failing_selector": null
+    }
+  ],
+  "tests_summary": {
+    "authored": 2,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "mobile": 1,
+    "desktop": 1,
+    "skipped_files": []
+  },
+  "cap": {
+    "max_total": 6,
+    "max_per_viewport": 3,
+    "exceeded": false
+  },
+  "cold_launch_ms": 1083.8077829999997,
+  "desktop_ms": 3860.7327299999997,
+  "mobile_ms": 4032.2703049999996,
+  "browser_launches": 1,
+  "audit_path": "shared-concurrent",
+  "notary_mint_ms": 1018,
+  "diagnostics": {
+    "audit_path": "shared-concurrent",
+    "concurrent_ran": true,
+    "concurrent_desktop_retry": false,
+    "concurrent_mobile_retry": false,
+    "shared_launch_failed": false,
+    "nav_retries": 0
+  }
+}

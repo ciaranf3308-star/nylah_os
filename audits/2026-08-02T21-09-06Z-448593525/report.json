@@ -1,0 +1,86 @@
+{
+  "ok": true,
+  "url": "https://245ae5ff-dd85-47cd-a4d2-03ea4d978a54.metaaivm.com:4431/spaces/v2/couple-fridge-phone/",
+  "duration_ms": 13524.48268,
+  "output_dir": "/home/hatch/workspace/ts-spaces/couple-fridge-phone/audits/2026-08-02T21-09-06Z-448593525",
+  "nav_status": 200,
+  "viewports": {
+    "desktop": {
+      "width": 1440,
+      "height": 900,
+      "screenshot_path": "/home/hatch/workspace/ts-spaces/couple-fridge-phone/audits/2026-08-02T21-09-06Z-448593525/screenshot.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "screenshot_path": "/home/hatch/workspace/ts-spaces/couple-fridge-phone/audits/2026-08-02T21-09-06Z-448593525/screenshot-mobile.png"
+    }
+  },
+  "mobile_layout": {
+    "viewport_width": 390,
+    "scroll_width": 390,
+    "overflow_px": 0,
+    "widest_selector": null,
+    "verdict": "pass"
+  },
+  "images": {
+    "total": 0,
+    "broken": [],
+    "duplicate": [],
+    "unstable": [],
+    "failed_requests": [],
+    "sample_urls": [],
+    "verdict": "pass"
+  },
+  "text_issues": [],
+  "console_errors": [],
+  "blocked_requests": [],
+  "tests": [
+    {
+      "name": "fridge-desktop",
+      "viewport": "desktop",
+      "status": "fail",
+      "screenshot_path": "/home/hatch/workspace/ts-spaces/couple-fridge-phone/audits/2026-08-02T21-09-06Z-448593525/desktop-fridge-desktop.png",
+      "duration_ms": 3056.642049,
+      "error": "click: Error: strict mode violation: getByRole('button', { name: 'Shopping' }) resolved to 2 elements:\n    1) <button class=\"w-full text-left rounded-[20px] border bg-[#FFFCF8] px-3.5 py-3 flex items-center justify-between\">…</button> aka getByRole('button', { name: 'Shopping 0 still on list ↗' })\n    2) <button class=\"relative flex flex-1 flex-col items-center justify-center rounded-full px-2.5 py-1.5 transition-all duration-[120ms] active:scale-[0.96] text-[#5A5655] hover:bg-[#F7EFE8]\">…</button> aka getByRole('button', { name: 'Shopping', exact: true })\n\nCall log:\n  - waiting for getByRole('button', { name: 'Shopping' })\n",
+      "failing_selector": "getByRole('button', { name: 'Shopping' })"
+    },
+    {
+      "name": "fridge-flow",
+      "viewport": "mobile",
+      "status": "pass",
+      "screenshot_path": "/home/hatch/workspace/ts-spaces/couple-fridge-phone/audits/2026-08-02T21-09-06Z-448593525/mobile-fridge-flow.png",
+      "duration_ms": 5189.066369000001,
+      "error": null,
+      "failing_selector": null
+    }
+  ],
+  "tests_summary": {
+    "authored": 2,
+    "passed": 1,
+    "failed": 1,
+    "skipped": 0,
+    "mobile": 1,
+    "desktop": 1,
+    "skipped_files": []
+  },
+  "cap": {
+    "max_total": 6,
+    "max_per_viewport": 3,
+    "exceeded": false
+  },
+  "cold_launch_ms": 554.610541,
+  "desktop_ms": 3197.701838,
+  "mobile_ms": 3451.39711,
+  "browser_launches": 1,
+  "audit_path": "shared-concurrent",
+  "notary_mint_ms": 695,
+  "diagnostics": {
+    "audit_path": "shared-concurrent",
+    "concurrent_ran": true,
+    "concurrent_desktop_retry": false,
+    "concurrent_mobile_retry": false,
+    "shared_launch_failed": false,
+    "nav_retries": 0
+  }
+}

@@ -11,8 +11,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: nylah-os-pages-deploy
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -25,7 +25,6 @@ jobs:
         run: |
           echo "preparing static site from repo root"
           mkdir -p _site
-          # copy root static files that are the Pages site
           cp -r assets _site/ 2>/dev/null || true
           cp index.html _site/ 2>/dev/null || true
           cp 404.html _site/ 2>/dev/null || true
@@ -34,7 +33,6 @@ jobs:
           cp icon-*.png _site/ 2>/dev/null || true
           cp sw.js _site/ 2>/dev/null || true
           cp supabase-env.js _site/ 2>/dev/null || true
-          # ensure we have index
           ls -lh _site/
           test -f _site/index.html || (echo "index.html missing!" && exit 1)
           cat _site/version.json | head -5

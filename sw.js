@@ -1,5 +1,5 @@
- // Nylah OS SW v113 white-screen fix - network-first HTML, clear all old caches
-const CACHE_NAME = "nylah-os-v113-white-fix";
+ // Nylah OS SW v114 white-fix tour - network-first HTML, clear all old caches, skipWaiting
+const CACHE_NAME = "nylah-os-v114-white-fix-tour";
 const ASSETS = ["./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 self.addEventListener("install", e=>{
   self.skipWaiting();
@@ -13,14 +13,10 @@ self.addEventListener("activate", e=>{
 });
 self.addEventListener("fetch", e=>{
   const req = e.request;
-  // network-first for navigations / html to avoid white screen from stale index
   if (req.mode === 'navigate' || req.destination === 'document') {
-    e.respondWith(fetch(req).then(r=>{
-      return r;
-    }).catch(()=> caches.match("./index.html")));
+    e.respondWith(fetch(req).then(r=> r).catch(()=> caches.match("./index.html")));
     return;
   }
-  // cache-first for assets
   e.respondWith(caches.match(req).then(cached=> cached || fetch(req)));
 });
 self.addEventListener("push", e=>{

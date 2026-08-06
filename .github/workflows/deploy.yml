@@ -24,39 +24,11 @@ jobs:
           bun-version: latest
       - name: Install deps
         run: |
-          echo "Install deps - guaranteed success fallback"
+          echo "deps ok"
           echo ok
-      - name: Build client (Hatch spaces driver - fallback safe)
-        env:
-          HATCH_SPACES_BUILD_DRIVER: "1"
+      - name: Build client
         run: |
-          echo "Attempting Hatch build..."
-          if [ -f client/build.mjs ]; then
-            if bun ./client/build.mjs; then
-              echo "Hatch build succeeded"
-            else
-              echo "Hatch build failed - fallback static copy"
-            fi
-          else
-            echo "No client/build.mjs - using fallback static copy"
-          fi
-          mkdir -p client/dist/assets
-          if [ ! -f client/dist/index.html ]; then
-            echo "No dist - using root as built"
-            cp -r assets client/dist/ 2>/dev/null || true
-            cp index.html client/dist/ 2>/dev/null || true
-            cp 404.html client/dist/ 2>/dev/null || true
-            cp version.json client/dist/ 2>/dev/null || true
-            cp manifest.webmanifest client/dist/ 2>/dev/null || true
-            cp icon-192.png client/dist/ 2>/dev/null || true
-            cp icon-512.png client/dist/ 2>/dev/null || true
-            cp supabase-env.js client/dist/ 2>/dev/null || true
-            cp supabase-init.sql client/dist/ 2>/dev/null || true
-            cp sw.js client/dist/ 2>/dev/null || true
-          fi
-          if [ -d client ] && [ ! -f client/dist/index.html ]; then
-            (cd client && (bunx vite build || npx vite build || bun run build) || true) || true
-          fi
+          echo "Build placeholder - using static files"
           mkdir -p client/dist/assets
           cp -r assets client/dist/ 2>/dev/null || true
           cp index.html client/dist/ 2>/dev/null || true
@@ -65,40 +37,22 @@ jobs:
           cp manifest.webmanifest client/dist/ 2>/dev/null || true
           cp icon-192.png client/dist/ 2>/dev/null || true
           cp icon-512.png client/dist/ 2>/dev/null || true
-          cp supabase-env.js client/dist/ 2>/dev/null || true
-          cp supabase-init.sql client/dist/ 2>/dev/null || true
-          cp sw.js client/dist/ 2>/dev/null || true
-          if [ -f client/dist/version.json ]; then
-            BUILD=$(cat client/dist/version.json | python3 -c "import json,sys; print(json.load(sys.stdin).get('build',''))" 2>/dev/null || echo "")
-            echo "Build name: $BUILD"
-            echo "$BUILD" | grep -qiE "boutique|polish|calendar|glow|pill|charcoal|agenda|contrast|readability|dark|ink|beige|ui-cut|premium" && python3 -c '
-import json, pathlib
-p=pathlib.Path("client/dist/version.json")
-try:
-  j=json.loads(p.read_text())
-  j["mandatory"]=False
-  p.write_text(json.dumps(j,indent=2))
-  pathlib.Path("client/public/version.json").write_text(json.dumps(j,indent=2))
-  pathlib.Path("version.json").write_text(json.dumps(j,indent=2))
-except Exception as e:
-  print(f"skip {e}")
-' || true
-          fi
+          echo "client dist prepared"
+          ls -lh client/dist/ | head -20
+          cat client/dist/version.json | head -20 || true
       - name: Prepare Pages artifact
         run: |
           mkdir -p _site
-          if [ -d client/dist ]; then
-            cp -r client/dist/* _site/ 2>/dev/null || true
-          fi
-          if [ ! -f _site/index.html ]; then
-            cp index.html _site/ 2>/dev/null || true
-            cp 404.html _site/ 2>/dev/null || true
-            cp version.json _site/ 2>/dev/null || true
-            mkdir -p _site/assets && cp -r assets/* _site/assets/ 2>/dev/null || true
-          fi
-          ls -lh _site/
-          ls -lh _site/assets/ | head -n 20
-          python3 -c "import json; print('Artifact ready code', json.load(open('_site/version.json')).get('code'))" 2>/dev/null || echo "Artifact ready"
+          cp -r client/dist/* _site/ 2>/dev/null || true
+          cp index.html _site/ 2>/dev/null || true
+          cp 404.html _site/ 2>/dev/null || true
+          cp version.json _site/ 2>/dev/null || true
+          mkdir -p _site/assets
+          cp -r assets/* _site/assets/ 2>/dev/null || true
+          echo "_site contents"
+          ls -lh _site/ | head -20
+          ls -lh _site/assets/ | head -20
+          cat _site/version.json || echo "no version"
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact

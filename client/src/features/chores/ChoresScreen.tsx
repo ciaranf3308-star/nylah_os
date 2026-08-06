@@ -273,9 +273,30 @@ export default function ChoresScreen({
 
   const onDetail = (c:ChoreV2)=> setDetailChore(c);
   const onComplete = async (c:any)=>{
+    // Atomic claim first - if fails, do not mark, points, confetti, streak, notify
+    try{
+      const res = await claimChoreOccRpc(c.id, currentUser as any);
+      // If RPC unavailable (null), fail closed - do not mark locally
+      if (!res) {
+        setToast(`Couldn't claim — check connection`);
+        setTimeout(()=>setToast(null),2500);
+        return;
+      }
+      if (res.claimed===false || (res as any).claimed === false) {
+        const who = res.alreadyBy || 'other';
+        setToast(`Already by ${who}`);
+        setTimeout(()=>setToast(null),2500);
+        return;
+      }
+    } catch(e:any) {
+      setToast(`Claim failed — try again`);
+      setTimeout(()=>setToast(null),2500);
+      return;
+    }
     const nowISO=new Date().toISOString();
-    try{ const r=await claimChoreOccRpc(c.id, currentUser as any); if(r && !r.claimed){ setToast(`Already by ${r.alreadyBy||'other'}`);} }catch{} try{ completeChoreRpc(c.id, currentUser as any);}catch{};
+    // Server confirmed - now update local UI only
     setChores((p:any)=> p.map((x:any)=> x.id===c.id ? {...x, status:"done", completedBy:currentUser, completedAt:nowISO, updatedAt:nowISO, updatedBy:currentUser} : x));
+    // Only award points after confirmation
     triggerPointsPop(c.id, effectivePoints(c,false));
     confettiByPoints(effectivePoints(c,false));
     try{ import('../../lib/push').then(m=> (m as any).notifyOther(currentUser as any, {title: `${(currentUser==='aisling'?'Aisling':'Ciarán')} did ${c.title}`, body: `+${effectivePoints(c,false)} pts — ${monthKey}`, url: './?standalone'})) }catch{}
@@ -437,7 +458,13 @@ export default function ChoresScreen({
               <div className="text-[11px] mt-1">Streak <span className="inline-flex"><svg width="12" height="12" viewBox="0 0 24 24" fill="#E07A5F"><path d="M12 2 C10 6 4 8 4 13 a6 6 0 0012 0 c0-5-6-7-4-11z"/></svg></span> combo {combo} • Saved • {active.length} • {(()=>{ try{return localStorage.getItem("couple_v1_queue_count")||"0"}catch{return "0"}})()} synced</div>
             </div>
             <div className="flex gap-2">
-              <button onClick={async()=> { const nowISO=new Date().toISOString(); try{ const res=await claimChoreOccRpc(detailChore.id, currentUser as any); if(res && !res.claimed && res.alreadyBy){ setToast(`Already done by ${res.alreadyBy}`); setTimeout(()=>setToast(null),2500); } }catch{} try{ completeChoreRpc(detailChore.id, currentUser as any); }catch{} setChores((p:any)=> p.map((x:any)=> x.id===detailChore.id ? {...x, status:"done", completedBy: currentUser, completedAt:nowISO, updatedAt:nowISO, updatedBy:currentUser} : x)); setDetailChore(null); const pts=effectivePoints(detailChore,false); triggerPointsPop(detailChore.id, pts); confettiByPoints(pts); try{ import('../../lib/push').then(m=> (m as any).notifyOther(currentUser as any, {title: `${(currentUser==='aisling'?'Aisling':'Ciarán')} did ${detailChore.title}`, body: `+${pts} pts • ${monthKey}`, url: './?standalone'})) }catch{} }} className="flex-1 h-[52px] rounded-[16px] bg-[#0A0A0A] text-white text-[13px] font-semibold active:scale-[0.96]" style={{minHeight:52, transition:"transform 180ms cubic-bezier(0.34,1.56,0.64,1)"}}>Mark done • +{effectivePoints(detailChore,false)}</button>
+                            <button onClick={async()=> { 
+                try{
+                  const res=await claimChoreOccRpc(detailChore.id, currentUser as any);
+                  if (!res) { setToast(`couldn't claim — try again`); setTimeout(()=>setToast(null),2500); return; }
+                  if (res && res.claimed===false) { setToast(`Already done by ${res.alreadyBy||'other'}`); setTimeout(()=>setToast(null),2500); return; }
+                }catch{ setToast(`claim failed`); setTimeout(()=>setToast(null),2500); return; }
+                const nowISO=new Date().toISOString(); setChores((p:any)=> p.map((x:any)=> x.id===detailChore.id ? {...x, status:"done", completedBy: currentUser, completedAt:nowISO, updatedAt:nowISO, updatedBy:currentUser} : x)); setDetailChore(null); const pts=effectivePoints(detailChore,false); triggerPointsPop(detailChore.id, pts); confettiByPoints(pts); try{ import('../../lib/push').then(m=> (m as any).notifyOther(currentUser as any, {title: `${(currentUser==='aisling'?'Aisling':'Ciarán')} did ${detailChore.title}`, body: `+${pts} pts • ${monthKey}`, url: './?standalone'})) }catch{} }} className="flex-1 h-[52px] rounded-[16px] bg-[#0A0A0A] text-white text-[13px] font-semibold active:scale-[0.96]" style={{minHeight:52, transition:"transform 180ms cubic-bezier(0.34,1.56,0.64,1)"}}>Mark done • +{effectivePoints(detailChore,false)}</button>
               <button onClick={()=> { const nowISO=new Date().toISOString(); setChores((p:any)=> p.map((x:any)=> x.id===detailChore.id ? {...x, status:"deck", swipes:{aisling:null,ciaran:null}, updatedAt:nowISO, updatedBy:currentUser}:x)); setDetailChore(null); triggerPointsPop(detailChore.id, 20); confettiByPoints(20); }} className="flex-1 h-[44px] rounded-[16px] border bg-[var(--card-bg)] text-[13px] active:scale-[0.96]" style={{borderColor:"var(--border)", minHeight:44}}>Reshuffle</button>
             </div>
             <div className="flex gap-2">

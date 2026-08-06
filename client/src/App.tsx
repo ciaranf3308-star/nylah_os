@@ -21,6 +21,7 @@ import { THEMES, PERSONS, TABS } from "./constants/themes";
 import type { TabKey } from "./types";
 import { verifyPin } from "./lib/pins";
 import { idbSet } from "./lib/idb";
+import OnboardingFlow from "./features/auth/OnboardingFlow";
 
 // — helpers preserved verbatim minimal —
 function getPageTitle(tab: TabKey): string {
@@ -122,15 +123,23 @@ export function App() {
     window.setTimeout(()=>{host.remove();},1150);
   }
 
-  // household / TZ preserved via state: HOUSEHOLD_ID ash-ciaran-2026 TZ Europe/Dublin, PIN 4463/1958 Remember OFF, reallyOnline V21 force-online, Saved trusted server Europe/Dublin
+  // household / TZ preserved via state: HOUSEHOLD_ID ash-ciaran-2026 TZ Europe/Dublin, 
   // grain 0.028, accent 12% hero 15% — in theme.css tokens
 
-  // onboarding minimal gate (preserves shouldShowOnboarding)
+  // onboarding — proper flow restored from V117 source, no generic Continue bypass
+  // Existing users with valid household_id / legacy keys bypass via shouldShowOnboarding in state.ts
   if (!onboardingDone) {
     return (
-      <div className="min-h-screen grid place-items-center bg-[var(--bg)] p-6">
-        <div className="rounded-[24px] border bg-[var(--card-bg)] p-6 text-[13px]" style={{borderColor:"var(--border)"}}>Onboarding — code {urlInviteCode||"—"} <button onClick={()=>setOnboardingDone(true)} className="ml-2 rounded-full bg-[#0A0A0A] px-3 py-1 text-white text-[11px]">Continue</button></div>
-      </div>
+      <OnboardingFlow
+        onComplete={(hid: string) => {
+          // require household_id persisted before marking done — prevents bypass
+          try {
+            if (hid && hid.length >= 3) localStorage.setItem("couple_v1_household_id", hid);
+          } catch {}
+          setOnboardingDone(true);
+          try { (s as any).applyCustomPersonNames?.(); } catch {}
+        }}
+      />
     );
   }
 

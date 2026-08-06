@@ -1,169 +1,91 @@
-// interim PIN verification — no backend auth yet
-// Stores only SHA-256 hashes, not plain PINs, to avoid trivial bundle grep.
-// Real auth requires Supabase Auth + household_members table (see SECURITY.md).
+// PIN verification — server-side only via Supabase RPC
+// Client never stores plaintext PINs, hashes, or mappings.
+// All values live in Supabase household_pins table and verified via verify_household_pin RPC.
+// If RPC unavailable, fail closed requiring PIN setup.
 
 export type PersonKey = "aisling" | "ciaran";
 
-// Precomputed SHA-256 hex digests
-// PIN 4463 -> aisling, PIN 1958 -> ciaran
-const PIN_HASHES: Record<string, PersonKey> = {
-  "c91d793d0e481d8b90699fd4140826e2301f9937794ad30fb135b02404511d50": "aisling",
-  "522e6198a268c62c01c9944cc2c06902d8308d65e6444eb8ad10bbe98dc362b6": "ciaran",
-};
-
 function getHouseholdIdForPins(): string {
   try {
-    const custom = localStorage.getItem("couple_v1_household_id")
-    if (custom) return custom
-  } catch {}
-  return "ash-ciaran-2026"
-}
-
-function getHouseholdPinMap(): Record<string, PersonKey> | null {
-  try {
-    const hid = getHouseholdIdForPins()
-    const key = `couple_v1_household_pins_${hid}`
-    const raw = localStorage.getItem(key)
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
-    if (parsed && typeof parsed === 'object') return parsed as Record<string, PersonKey>
-  } catch {}
-  return null
-}
-
-export function setHouseholdPinMap(hid: string, map: Record<string, PersonKey>) {
-  try {
-    const key = `couple_v1_household_pins_${hid}`
-    localStorage.setItem(key, JSON.stringify(map))
-    // also expose via window.__HOUSEHOLD_PINS__ for immediate use
-    try { (window as any).__HOUSEHOLD_PINS__ = map } catch {}
-  } catch {}
-}
-
-export function setHouseholdPlainPins(hid: string, plainMap: Record<string, PersonKey>) {
-  try {
-    const key = `couple_v1_household_pins_plain_${hid}`
-    localStorage.setItem(key, JSON.stringify(plainMap))
-  } catch {}
-}
-
-export function clearHouseholdPinMap(hid: string) {
-  try { localStorage.removeItem(`couple_v1_household_pins_${hid}`) } catch {}
-}
-
-// For future env-injected pins: window.__HOUSEHOLD_PINS__ could contain hashed map {hash:person}
-function getEnvHashes(): Record<string, PersonKey> | null {
-  try {
-    const w: any = typeof window !== 'undefined' ? (window as any) : null;
-    if (w && w.__HOUSEHOLD_PINS__ && typeof w.__HOUSEHOLD_PINS__ === 'object') {
-      return w.__HOUSEHOLD_PINS__ as any;
+    const custom = localStorage.getItem("couple_v1_household_id");
+    if (custom && custom.trim().length >= 3) return custom.trim();
+    const legacyCode = localStorage.getItem("couple_v1_household_code");
+    if (legacyCode && legacyCode.trim().length >= 3) {
+      const c = legacyCode.trim().toLowerCase();
+      return c.startsWith("nylah-") ? c : `nylah-${c}`;
     }
+  } catch {}
+  return "ash-ciaran-2026";
+}
+
+async function getSupabaseClientForPin() {
+  try {
+    const mod = await import("./supabase");
+    const sb = (mod as any).getSupabase?.();
+    if (sb) return sb;
   } catch {}
   return null;
-}
-
-export async function sha256hex(input: string): Promise<string> {
-  try {
-    if (typeof crypto !== 'undefined' && crypto.subtle) {
-      const buf = new TextEncoder().encode(input);
-      const digest = await crypto.subtle.digest('SHA-256', buf);
-      const arr = new Uint8Array(digest);
-      let hex = '';
-      for (let i = 0; i < arr.length; i++) hex += (arr[i] ?? 0).toString(16).padStart(2, '0');
-      return hex;
-    }
-  } catch {}
-  // fallback simple (not crypto-secure but avoids plain compare)
-  // Use bun/node-like fallback — compute via subtle failure shouldn't happen in browser
-  return input;
-}
-
-export function sha256hexSyncFallback(pin: string): string {
-  // Only used at build time / tests when Subtle unavailable; not for prod
-  // This duplicates the precomputed table lookup path
-  if (pin === "4463") return "c91d793d0e481d8b90699fd4140826e2301f9937794ad30fb135b02404511d50";
-  if (pin === "1958") return "522e6198a268c62c01c9944cc2c06902d8308d65e6444eb8ad10bbe98dc362b6";
-  // For unknown, return raw (will not match)
-  return pin;
 }
 
 export async function verifyPin(pin: string): Promise<PersonKey | null> {
   const trimmed = pin.trim();
   if (!/^\d{4}$/.test(trimmed)) return null;
-  const hex = await sha256hex(trimmed);
-  // 1. household-specific map (dynamic for beta households)
+  const hid = getHouseholdIdForPins();
   try {
-    const hh = getHouseholdPinMap();
-    if (hh) {
-      const who = hh[hex];
-      if (who) return who as PersonKey;
+    const sb = await getSupabaseClientForPin();
+    if (!sb) return null; // fail closed - no server, no auth
+    // RPC: verify_household_pin(hid text, pin text) returns person_key text
+    const { data, error } = await sb.rpc("verify_household_pin", { hid, pin: trimmed } as any);
+    if (error) {
+      console.warn("[pin] rpc verify error", error.message);
+      return null;
     }
-  } catch {}
-  const env = getEnvHashes();
-  if (env) {
-    const who = env[hex];
-    if (who) return who as PersonKey;
+    if (!data) return null;
+    // data may be string or object {person_key} or array
+    if (typeof data === "string") {
+      if (data === "aisling" || data === "ciaran") return data as PersonKey;
+      return null;
+    }
+    if (Array.isArray(data) && data.length > 0) {
+      const first = data[0];
+      if (typeof first === "string" && (first === "aisling" || first === "ciaran")) return first as PersonKey;
+      if (first && typeof first === "object" && (first.person_key === "aisling" || first.person_key === "ciaran")) return first.person_key;
+    }
+    if (typeof data === "object") {
+      const pk = (data as any).person_key || (data as any).personKey;
+      if (pk === "aisling" || pk === "ciaran") return pk;
+    }
+    return null;
+  } catch (e) {
+    console.warn("[pin] verify exception", e);
+    return null;
   }
-  const who = PIN_HASHES[hex];
-  return who || null;
 }
 
-export async function verifyPinSync(pin: string): Promise<PersonKey | null> {
-  // Synchronous wrapper for environments without Subtle (tests)
-  // In browser, verifyPin async is preferred
-  const trimmed = pin.trim();
-  if (!/^\d{4}$/.test(trimmed)) return null;
-  const hex = sha256hexSyncFallback(trimmed);
-  // household map sync path
-  try {
-    const hh = getHouseholdPinMap();
-    if (hh) {
-      const who = hh[hex];
-      if (who) return who as PersonKey;
-    }
-  } catch {}
-  const env = getEnvHashes();
-  if (env) {
-    const who = env[hex];
-    if (who) return who as PersonKey;
-  }
-  const who = PIN_HASHES[hex];
-  return who || null;
+// Legacy sync wrappers removed - return null to force async path and fail closed
+export async function verifyPinSync(_pin: string): Promise<PersonKey | null> {
+  return null;
+}
+
+export function personFromPin(_pin: string): PersonKey | null {
+  return null; // server-side only; client must use async verifyPin
 }
 
 export const PERSON_PIN_LENGTH = 4 as const;
 
-// Back-compat for code expecting old plain map API — uses hashed verification internally
-// Hardcoded PINs remain interim — moved to isolated module for easier audit. Future: replace with Supabase auth household_members.
-export const PIN_TO_PERSON: Record<string, PersonKey> = {
-  // Deprecated: plain map kept for test compat only; real verification uses hashes via verifyPin.
-  "4463": "aisling",
-  "1958": "ciaran",
-};
+// No PIN_TO_PERSON mapping - removed for security
+export const PIN_TO_PERSON: Record<string, PersonKey> = {};
 
-export function personFromPin(pin: string): PersonKey | null {
-  // Sync fast-path using precomputed hash fallback
-  const trimmed = pin.trim();
-  if (!/^\d{4}$/.test(trimmed)) return null;
-  try {
-    const hh = getHouseholdPinMap();
-    if (hh) {
-      // we only have hash map, need to hash sync fallback for known pins already handled, but custom pins won't be in precomputed fallback
-      // for custom beta pins stored as hash, we need async path — for sync fast path we try plain LS stored map of pin->person maybe
-      const plainKey = `couple_v1_household_pins_plain_${getHouseholdIdForPins()}`
-      const rawPlain = localStorage.getItem(plainKey)
-      if (rawPlain) {
-        try {
-          const plainMap = JSON.parse(rawPlain) as Record<string, PersonKey>
-          if (plainMap[trimmed]) return plainMap[trimmed]
-        } catch {}
-      }
-    }
-  } catch {}
-  // Use sync fallback (precomputed known pins) for instant UI, no crypto needed
-  const hex = sha256hexSyncFallback(trimmed);
-  const direct = PIN_HASHES[hex];
-  if (direct) return direct;
-  // Fallback to plain map for audit/tests (will be removed with Supabase auth)
-  return PIN_TO_PERSON[trimmed] ?? null;
+// Removed: sha256hex, sha256hexSyncFallback, PIN_HASHES, setHouseholdPinMap, etc.
+// Household PIN management now server-side only. LocalStorage maps deprecated and ignored.
+// For backwards compat with old settings UI that tried to set maps, provide no-ops that clear legacy keys.
+
+export function setHouseholdPinMap(_hid: string, _map: Record<string, PersonKey>) {
+  try { localStorage.removeItem(`couple_v1_household_pins_${_hid}`); } catch {}
+}
+export function setHouseholdPlainPins(_hid: string, _plainMap: Record<string, PersonKey>) {
+  try { localStorage.removeItem(`couple_v1_household_pins_plain_${_hid}`); } catch {}
+}
+export function clearHouseholdPinMap(hid: string) {
+  try { localStorage.removeItem(`couple_v1_household_pins_${hid}`); localStorage.removeItem(`couple_v1_household_pins_plain_${hid}`); } catch {}
 }

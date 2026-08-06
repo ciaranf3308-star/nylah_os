@@ -21,11 +21,37 @@ export type RemoteData = {
 }
 
 async function reallyOnline(): Promise<boolean> {
-  // V21 fix restored: force online — navigator.onLine lies and HEAD probe fails CORS on Pages
+  // Real reachability check: distinguish offline, online but Supabase unreachable, and reachable
   try {
-    if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) return false
+    if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) return false;
   } catch {}
-  return true
+  // Lightweight Supabase reachability HEAD with 2s timeout
+  try {
+    const url = "https://zlllebsjtgihsxhcmcvb.supabase.co/rest/v1/";
+    // anon key from env or hardcoded fallback (anon is public)
+    let anon = "";
+    try {
+      // @ts-ignore
+      const w:any = typeof window !== 'undefined' ? (window as any) : null;
+      if (w && (w.__SUPABASE_ANON__ || w.__SUPABASE_ANON_KEY__)) anon = (w.__SUPABASE_ANON__ || w.__SUPABASE_ANON_KEY__) as string;
+    } catch {}
+    if (!anon) {
+      try {
+        // @ts-ignore
+        const u = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
+        if (u) anon = u as string;
+      } catch {}
+    }
+    if (!anon) anon = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsbGxlYnNqdGdpaHN4aGNtY3ZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NDQxMjQsImV4cCI6MjEwMTMyMDEyNH0.Q6PuA6nvTI__DEB0i7akLusljjjeYu_0IxQICOc5oSQ";
+    const controller = new AbortController();
+    const timeout = setTimeout(()=> controller.abort(), 2000);
+    const resp = await fetch(url, { method: 'HEAD', headers: { apikey: anon } as any, signal: controller.signal } as any);
+    clearTimeout(timeout);
+    // Any response from Supabase (ok or 401/404) means reachable - anon key may cause 401 but that's reachable
+    return resp.ok || resp.status===401 || resp.status===404 || resp.status===400;
+  } catch {
+    return false;
+  }
 }
 
 
@@ -412,11 +438,15 @@ export async function remoteSave(partial: Partial<RemoteData> & { allowEmpty?: b
                 try { localStorage.setItem('couple_v1_revision', String(retry.data[0].revision)) } catch {}
               }
               try {
-                const srvAt = (retry && retry.data && retry.data[0] && ((retry.data[0] as any).updated_at || (retry.data[0] as any).updatedAt)) || merged.updated_at || new Date().toISOString()
-                localStorage.setItem('couple_v1_last_sync', srvAt); localStorage.setItem('couple_v1_last_push_err',''); localStorage.setItem('couple_v1_had_remote','1'); localStorage.setItem('couple_v1_last_mutation', mutationId); localStorage.setItem('couple_v1_last_confirmed_at', srvAt)
+                const srvAt = (retry && retry.data && retry.data[0] && ((retry.data[0] as any).updated_at || (retry.data[0] as any).updatedAt)) || (merged as any).updated_at || null
+              if (!srvAt) {
+                console.warn('[sync] no server timestamp on retry merge, failing closed');
+                return null as any;
+              }
+                localStorage.setItem('couple_v1_last_sync', srvAt); localStorage.setItem('couple_v1_last_push_err',''); localStorage.setItem('couple_v1_had_remote','1'); localStorage.setItem('couple_v1_last_mutation', mutationId); if (srvAt) { try { localStorage.setItem('couple_v1_last_confirmed_at', srvAt); localStorage.setItem('couple_v1_last_sync', srvAt); } catch {} }
               } catch {}
               // @ts-ignore retry may hold merged timestamp
-              try { return (retry && retry.data && retry.data[0] && ((retry.data[0] as any).updated_at || (retry.data[0] as any).updatedAt)) || (typeof merged !== 'undefined' ? merged.updated_at : new Date().toISOString()) } catch { return new Date().toISOString() }
+              try { const ts = (retry && retry.data && retry.data[0] && ((retry.data[0] as any).updated_at || (retry.data[0] as any).updatedAt)) || (typeof merged !== 'undefined' ? (merged as any).updated_at : null); if (!ts) return null as any; return ts as any; } catch { return null as any }
             }
           } catch (e:any) { console.warn('[sync] merge retry ex', e?.message||e) }
           // if still conflict, treat as failed but reload will recover

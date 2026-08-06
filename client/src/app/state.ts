@@ -501,10 +501,33 @@ export function useV1AppShellState() {
   const offlineFailCountRef = useRef(0);
   const lastOnlineProbeRef = useRef<number>(0);
   const reallyOnline = async (): Promise<boolean> => {
+    // Real reachability: must distinguish offline, unreachable, reachable
     try {
-      if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) return false
+      if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) return false;
     } catch {}
-    return true
+    try {
+      const url = "https://zlllebsjtgihsxhcmcvb.supabase.co/rest/v1/";
+      let anon = "";
+      try {
+        const w:any = typeof window !== 'undefined' ? (window as any) : null;
+        if (w && (w.__SUPABASE_ANON__ || w.__SUPABASE_ANON_KEY__)) anon = (w.__SUPABASE_ANON__ || w.__SUPABASE_ANON_KEY__) as string;
+      } catch {}
+      if (!anon) {
+        try {
+          // @ts-ignore
+          const k = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
+          if (k) anon = k as string;
+        } catch {}
+      }
+      if (!anon) anon = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsbGxlYnNqdGdpaHN4aGNtY3ZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NDQxMjQsImV4cCI6MjEwMTMyMDEyNH0.Q6PuA6nvTI__DEB0i7akLusljjjeYu_0IxQICOc5oSQ";
+      const controller = new AbortController();
+      const timeout = setTimeout(()=> controller.abort(), 2000);
+      const resp = await fetch(url, { method: 'HEAD', headers: { apikey: anon } as any, signal: controller.signal } as any);
+      clearTimeout(timeout);
+      return resp.ok || resp.status===401 || resp.status===404 || resp.status===400;
+    } catch {
+      return false;
+    }
   };
 
   useEffect(()=>{
@@ -599,8 +622,14 @@ export function useV1AppShellState() {
           mutationQueueRef.current = mutationQueueRef.current.filter(x=> x.mutationId!==m.mutationId);
           await persistQueue();
           offlineFailCountRef.current = 0;
-          const confirmedAt = typeof ok === 'string' ? ok : (localStorage.getItem('couple_v1_last_confirmed_at') || new Date().toISOString());
-          setSyncStatus({ kind:'saved', lastSavedAt: confirmedAt, queueCount: mutationQueueRef.current.length });
+          const confirmedAtRaw = typeof ok === 'string' ? ok : localStorage.getItem('couple_v1_last_confirmed_at');
+          if (!confirmedAtRaw) {
+            console.warn('[sync] no server confirmation, not marking Saved');
+            // Do not display Saved if no server confirmation
+            setSyncStatus({ kind:'saving', queueCount: mutationQueueRef.current.length } as any);
+            break;
+          }
+          setSyncStatus({ kind:'saved', lastSavedAt: confirmedAtRaw, queueCount: mutationQueueRef.current.length });
         } else {
           m.retries++;
           offlineFailCountRef.current++;
@@ -682,8 +711,12 @@ export function useV1AppShellState() {
         mutationQueueRef.current = mutationQueueRef.current.filter(x=> x.mutationId!==mutationId);
         await persistQueue();
         offlineFailCountRef.current = 0;
-        const confirmedAtEnq = typeof ok === 'string' ? ok : (localStorage.getItem('couple_v1_last_confirmed_at') || new Date().toISOString());
-        setSyncStatus({ kind:'saved', lastSavedAt: confirmedAtEnq });
+        const confirmedAtEnqRaw = typeof ok === 'string' ? ok : localStorage.getItem('couple_v1_last_confirmed_at');
+        if (!confirmedAtEnqRaw) {
+          setSyncStatus({ kind:'saving' } as any);
+          return false;
+        }
+        setSyncStatus({ kind:'saved', lastSavedAt: confirmedAtEnqRaw });
         return true;
       } else {
         try {
@@ -942,9 +975,10 @@ export function useAppState() {
         v1.offlineFailCountRef.current = 0;
         try {
           const ca = localStorage.getItem('couple_v1_last_confirmed_at') || localStorage.getItem('couple_v1_last_sync')
-          v1.setSyncStatus({ kind:'saved', lastSavedAt: ca || new Date().toISOString() });
+          if (ca) v1.setSyncStatus({ kind:'saved', lastSavedAt: ca }); else { console.warn('[realtime] no server timestamp, not marking saved'); }
         } catch {
-          v1.setSyncStatus({ kind:'saved', lastSavedAt: new Date().toISOString() });
+          // Do NOT fake Saved with device time - require server timestamp
+          console.warn('[realtime] missing timestamp, skipping Saved display');
         }
       }
     };

@@ -2,9 +2,7 @@ import React, { useEffect, useState } from "react";
 import type { PersonKey } from "../../types";
 import { PERSONS } from "../../constants/themes";
 import { verifyPin } from "../../lib/pins";
-import { HOUSEHOLD_TZ } from "../../lib/buildMeta";
 
-// WebAuthn helpers — copied zero-logic from AppMonolith
 function bufToB64u(buf: ArrayBuffer): string {
   const bytes = new Uint8Array(buf);
   let bin = "";
@@ -72,11 +70,12 @@ export function PinScreen({ onSelect, onPick }: { onSelect: (k: PersonKey)=>void
   const [shaking, setShaking] = useState(false);
   const [popIdx, setPopIdx] = useState<number|null>(null);
   const [checking, setChecking] = useState(false);
-  const [remember, setRemember] = useState<boolean>(false); // Remember OFF per spec
+  const [remember, setRemember] = useState<boolean>(false);
   const [bioSupported, setBioSupported] = useState(false);
   const [bioEnrolled, setBioEnrolled] = useState<PersonKey[]>([]);
   const [bioLoading, setBioLoading] = useState(false);
   const [bioError, setBioError] = useState("");
+  const [setupNeeded, setSetupNeeded] = useState(false);
 
   useEffect(()=>{
     let cancelled=false;
@@ -112,6 +111,7 @@ export function PinScreen({ onSelect, onPick }: { onSelect: (k: PersonKey)=>void
   const tryPin = async (code: string) => {
     if (checking) return;
     setChecking(true);
+    setSetupNeeded(false);
     try{
       const who = await verifyPin(code);
       if (who) {
@@ -122,6 +122,15 @@ export function PinScreen({ onSelect, onPick }: { onSelect: (k: PersonKey)=>void
         }catch{}
         select(who as PersonKey);
       } else {
+        // If RPC unavailable or PIN not found, check if it's a setup-required condition
+        // verifyPin returns null both for invalid and unavailable. Distinguish via lack of Supabase?
+        try {
+          const mod = await import("../../lib/supabase");
+          const sb = (mod as any).getSupabase?.();
+          if (!sb) {
+            setSetupNeeded(true);
+          }
+        } catch {}
         setWrong(true); setShaking(true);
         try{ (navigator as any).vibrate?.([30,50,30]); }catch{}
         setTimeout(()=> setShaking(false),460);
@@ -152,7 +161,7 @@ export function PinScreen({ onSelect, onPick }: { onSelect: (k: PersonKey)=>void
         <div className={"w-full rounded-[28px] border px-6 pt-7 pb-6 flex flex-col items-center shadow-[0_18px_48px_rgba(0,0,0,0.10),0_1px_0_rgba(255,255,255,0.6)_inset] "+(shaking?"who-shake ":"")} style={{background:'var(--card-bg)', borderColor: wrong?'#E07A5F':'var(--border)'}}>
           <div className="text-[13px] font-semibold uppercase tracking-wide text-[var(--muted)]">Enter PIN</div>
           <div className="mt-4 flex gap-3">{[0,1,2,3].map(i=>{const filled=i<pin.length; const isPop=popIdx===i&&filled; return <div key={i} className={"grid h-[16px] w-[16px] place-items-center rounded-full border "+(isPop?"who-dot-pop ":"")} style={{borderColor: wrong?'#E07A5F':filled?'var(--text)':'var(--border)', background: filled?(wrong?'#E07A5F':'var(--text)'):'transparent'}}><div className="h-[6px] w-[6px] rounded-full bg-white/90" style={{opacity: filled?(wrong?1:0):0}}/></div>;})}</div>
-          <div className="mt-2 min-h-[18px] text-[11px]" style={{color: wrong?'#B91C1C':'transparent'}}>{wrong?'wrong code — try again':'·'}</div>
+          <div className="mt-2 min-h-[18px] text-[11px]" style={{color: wrong?'#B91C1C':'transparent'}}>{wrong? (setupNeeded? 'PIN setup required — ask household admin': 'wrong code — try again'):'·'}</div>
           {bioSupported && bioEnrolled.length>0 && (<div className="mt-2 w-full"><button onClick={handleBiometric} disabled={bioLoading} className="w-full h-[56px] rounded-full bg-[#0A0A0A] text-white text-[13.5px] font-semibold flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-60">{bioLoading?"Checking…":`Unlock with ${PERSONS[bioEnrolled[0]]?.name||'Face ID'}`}</button>{bioError && <div className="mt-1.5 text-[11px] text-[#B91C1C] text-center">{bioError}</div>}<div className="my-4 h-px w-full bg-[var(--border)] opacity-60"/></div>)}
           <div className="w-full grid grid-cols-3 gap-3 mt-2">
             {[1,2,3,4,5,6,7,8,9].map(n=><button key={n} onClick={()=>pushDigit(String(n))} className="h-[52px] min-h-[52px] rounded-full border bg-[var(--card-bg)] text-[17px] font-[600]" style={{borderColor:'var(--border)', background:'var(--chip-bg)', transition:'transform 160ms cubic-bezier(0.34,1.56,0.64,1)'}}>{n}</button>)}
@@ -162,7 +171,7 @@ export function PinScreen({ onSelect, onPick }: { onSelect: (k: PersonKey)=>void
             <button onClick={()=>pushDigit("0")} className="h-[52px] rounded-full border" style={{borderColor:'var(--border)', background:'var(--chip-bg)'}}>0</button>
             <button onClick={doBackspace} className="h-[52px] rounded-full border bg-[var(--card-bg)] grid place-items-center" style={{borderColor:'var(--border)'}}>⌫</button>
           </div>
-          <div className="mt-5 text-[11px] text-[var(--muted)]/70 text-center">{checking?"checking…":"hashed • device-local • 4463 aisling 1958 ciaran"}</div>
+          <div className="mt-5 text-[11px] text-[var(--muted)]/70 text-center">{checking?"checking…":"pin secured by household — ask admin if you forget"}</div>
         </div>
       </div>
     </div>

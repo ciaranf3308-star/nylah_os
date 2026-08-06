@@ -1,10 +1,10 @@
 {
   "build": "v117-dark-text-fix-freeze-clean",
-  "builtAt": "2026-08-06T16:26:00.000Z",
-  "changelog": "Freeze V116 prod (index-9rpqt2n1.js 736K c371b543) — fix only dark theme invisible text: --text / --text-primary from var(--card-bg) #232326 to #F5F3F0. Force SW cache bump v117.",
+  "builtAt": "2026-08-06T16:40:00.000Z",
+  "changelog": "Freeze V116 prod (index-9rpqt2n1.js 736K c371b543) \u2014 fix only dark theme invisible text: --text / --text-primary from var(--card-bg) #232326 to #F5F3F0. Force SW cache bump v117.",
   "code": 117,
   "frozen_from": "v116-db-pull-fix-trusted-online index-9rpqt2n1.js sha256 c371b54335d14c8d2975a93285bd70d95bf6f0cf9d0c900eb796e007a049859f",
   "mandatory": true,
-  "timestamp": "2026-08-06T16:26:00.000Z",
+  "timestamp": "2026-08-06T16:40:00.000Z",
   "version": "117.0.0"
 }

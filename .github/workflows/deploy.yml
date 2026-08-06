@@ -11,8 +11,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: nylah-os-pages-deploy
-  cancel-in-progress: false
+  group: pages
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -25,6 +25,7 @@ jobs:
         run: |
           echo "preparing static site from repo root"
           mkdir -p _site
+          touch _site/.nojekyll
           cp -r assets _site/ 2>/dev/null || true
           cp index.html _site/ 2>/dev/null || true
           cp 404.html _site/ 2>/dev/null || true
@@ -37,6 +38,7 @@ jobs:
           test -f _site/index.html || (echo "index.html missing!" && exit 1)
           cat _site/version.json | head -5
           echo "assets count $(ls _site/assets | wc -l)"
+          echo "has .nojekyll $(ls -la _site/.nojekyll)"
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

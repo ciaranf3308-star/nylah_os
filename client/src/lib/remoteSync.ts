@@ -1,5 +1,15 @@
 import { getSupabase, TABLE, ROW_ID, getEffectiveRowId, getEffectiveTable } from './supabase'
 
+export type SyncKind = 'saving' | 'saved' | 'synced' | 'offline-queued' | 'failed' | 'updated-elsewhere';
+export type SyncStatus = {
+  kind: SyncKind;
+  lastSavedAt?: string;
+  queueCount?: number;
+  error?: string;
+  // allow extra props preserved from monolith
+  [k:string]: any;
+};
+
 function getRowId(): string {
   try { return getEffectiveRowId() } catch { return ROW_ID }
 }

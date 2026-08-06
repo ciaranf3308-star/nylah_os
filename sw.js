@@ -1,5 +1,5 @@
-// Nylah OS SW v69 fridge rich code 69
-const CACHE_NAME = "nylah-os-v76-friends-beta";
+// Nylah OS SW v112 agenda fix charcoal readability
+const CACHE_NAME = "nylah-os-v112-agenda-charcoal-fix";
 const URLS = ["./","./index.html","./manifest.webmanifest"];
 self.addEventListener("install", e=>{
   e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(URLS.map(u=>new Request(u,{cache:"reload"}))).catch(()=>{})));

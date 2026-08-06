@@ -23,8 +23,12 @@ jobs:
         with:
           bun-version: latest
       - name: Install deps
-        run: bun install --frozen-lockfile || bun install || npm install --prefix client || true
-      - name: Build client (Hatch spaces driver - fallback safe)
+        working-directory: client
+        run: |
+          echo "Installing deps in client/"
+          bun install --frozen-lockfile || bun install || npm install || true
+          echo "deps done"
+      - name: Build client
         env:
           HATCH_SPACES_BUILD_DRIVER: "1"
         run: |
@@ -32,58 +36,51 @@ jobs:
           if bun ./client/build.mjs; then
             echo "Hatch build succeeded"
           else
-            echo "Hatch build failed - falling back to vite build or static copy"
-            cd client && (bunx vite build || npx vite build || bun run build) || true
-            cd ..
-            if [ ! -f client/dist/index.html ]; then
-              echo "No client/dist/index.html - using root as built"
-              mkdir -p client/dist/assets
-              cp -r assets client/dist/ 2>/dev/null || true
-              cp index.html client/dist/ 2>/dev/null || true
-              cp 404.html client/dist/ 2>/dev/null || true
-              cp version.json client/dist/ 2>/dev/null || true
-              cp manifest.webmanifest client/dist/ 2>/dev/null || true
-              cp icon-192.png client/dist/ 2>/dev/null || true
-              cp icon-512.png client/dist/ 2>/dev/null || true
-              cp supabase-env.js client/dist/ 2>/dev/null || true
-              cp supabase-init.sql client/dist/ 2>/dev/null || true
-              cp sw.js client/dist/ 2>/dev/null || true
-            fi
+            echo "Hatch build failed - fallback static copy"
+            mkdir -p client/dist/assets
+            cp -r assets client/dist/ 2>/dev/null || true
+            cp index.html client/dist/ 2>/dev/null || true
+            cp 404.html client/dist/ 2>/dev/null || true
+            cp version.json client/dist/ 2>/dev/null || true
+            cp manifest.webmanifest client/dist/ 2>/dev/null || true
+            cp icon-192.png client/dist/ 2>/dev/null || true
+            cp icon-512.png client/dist/ 2>/dev/null || true
+            cp supabase-env.js client/dist/ 2>/dev/null || true
+            cp supabase-init.sql client/dist/ 2>/dev/null || true
+            cp sw.js client/dist/ 2>/dev/null || true
           fi
-          if [ -f client/dist/version.json ]; then
-            BUILD=$(cat client/dist/version.json | python3 -c "import json,sys; print(json.load(sys.stdin).get('build',''))" 2>/dev/null || echo "")
-            echo "Build name: $BUILD"
-            if echo "$BUILD" | grep -qiE "boutique|polish|calendar|glow|pill|charcoal|agenda|contrast|readability|dark|ink|beige|ui-cut|premium"; then
-              echo "Cosmetic -> mandatory false"
-              python3 - <<PY
-              import json, pathlib
+          BUILD=$(cat client/dist/version.json 2>/dev/null | python3 -c "import json,sys; print(json.load(sys.stdin).get('build',''))" 2>/dev/null || echo "")
+          echo "Build name: $BUILD code=$(cat client/dist/version.json 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("code",""))' 2>/dev/null)"
+          if echo "$BUILD" | grep -qiE "boutique|polish|calendar|glow|pill|charcoal|agenda|contrast|readability|dark|ink|beige|ui-cut|premium"; then
+            echo "Cosmetic -> ensure mandatory false"
+            python3 - <<PY
+            import json, pathlib
+            try:
               p=pathlib.Path("client/dist/version.json")
-              try:
-                j=json.loads(p.read_text())
-                j["mandatory"]=False
-                p.write_text(json.dumps(j,indent=2))
-                pathlib.Path("client/public/version.json").write_text(json.dumps(j,indent=2))
-                pathlib.Path("version.json").write_text(json.dumps(j,indent=2))
-              except Exception as e:
-                print(f"version downgrade skip {e}")
-              PY
-            fi
+              j=json.loads(p.read_text())
+              j["mandatory"]=False
+              p.write_text(json.dumps(j,indent=2))
+              for q in [pathlib.Path("client/public/version.json"), pathlib.Path("version.json")]:
+                try:
+                  q.write_text(json.dumps(j,indent=2))
+                except: pass
+            except Exception as e:
+              print(f"skip {e}")
+            PY
           fi
       - name: Prepare Pages artifact
         run: |
           mkdir -p _site
-          if [ -d client/dist ]; then
-            cp -r client/dist/* _site/ 2>/dev/null || true
-          fi
+          cp -r client/dist/* _site/ 2>/dev/null || true
           if [ ! -f _site/index.html ]; then
             cp index.html _site/ 2>/dev/null || true
             cp 404.html _site/ 2>/dev/null || true
             cp version.json _site/ 2>/dev/null || true
             mkdir -p _site/assets && cp -r assets/* _site/assets/ 2>/dev/null || true
           fi
-          ls -lh _site/
-          ls -lh _site/assets/ | head -n 20
-          echo "Artifact ready code=$(cat _site/version.json 2>/dev/null | python3 -c 'import json,sys;print(json.load(sys.stdin).get(\"code\"))' 2>/dev/null)"
+          echo "=== _site ==="; ls -lh _site/ | head
+          echo "=== assets ==="; ls -lh _site/assets/ | head
+          echo "version code=$(cat _site/version.json 2>/dev/null | python3 -c 'import json,sys;print(json.load(sys.stdin).get("code"))' 2>/dev/null)"
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact

@@ -34,7 +34,7 @@ export type AddEventFormProps = {
   initialEvent?: any;
 };
 
-function AddEventForm({ onAdd, currentUser, selectedDate, initialEvent }: AddEventFormProps){
+export function AddEventForm({ onAdd, currentUser, selectedDate, initialEvent }: AddEventFormProps){
   const initDateKey = (()=>{
     if (initialEvent?.dueAt) {
       const k = toLocalKeyDublin(initialEvent.dueAt, HOUSEHOLD_TZ);

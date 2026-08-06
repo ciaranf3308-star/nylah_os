@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import type { PersonKey, CalendarEventV2 as CalendarEvent, CalendarEventStatus, CalendarEventResponse } from "../../types";
+import type { PersonKey, CalendarEventV2 as CalendarEvent, CalendarEventStatus, CalendarEventResponse, CalendarResponseKind } from "../../types";
 import { PERSONS, THEMES } from "../../constants/themes";
 import { HOUSEHOLD_TZ } from "../../lib/buildMeta";
 import { todayKey, toLocalKey as toLocalKeyDublin, tzWallToUtc, nextMonthlyFrom, weekNumberSinceEpoch, BIWEEKLY_EPOCH_MONDAY_UTC } from "../../lib/dates";
@@ -449,7 +449,7 @@ function CalendarPageV2({
           <span className="flex flex-col items-center gap-1.5 shrink-0">
             {/* time mono 12px Inter Tight */}
             <span className="tabular-nums text-[12px] font-medium tracking-[0.02em] rounded-full px-2 py-0.5 border" style={{fontFamily:'Inter Tight, var(--font-ui)', color:'var(--muted)', background:'var(--chip-bg)', border:'1px solid var(--border)'}}>{timeMono}</span>
-            <span className="h-[7px] w-[7px] rounded-full" style={{background:leftRuleColor, boxShadow: isSoon?`0 0 0 4px ${leftRuleColor}22, 0 0 10px ${leftRuleColor}55`:'none'}} className={`h-[7px] w-[7px] rounded-full ${isSoon?"nylah-dot nylah-dot--urgent":""}`} />
+            <span style={{background:leftRuleColor, boxShadow: isSoon?`0 0 0 4px ${leftRuleColor}22, 0 0 10px ${leftRuleColor}55`:'none'}} className={`h-[7px] w-[7px] rounded-full ${isSoon?"nylah-dot nylah-dot--urgent":""}`} />
           </span>
           <span className="min-w-0 flex-1">
             <span className="flex items-center gap-1.5">
@@ -939,23 +939,3 @@ function CalendarPageV2({
 
 
 
-function IconCat({ cat, size=16, active }: {cat: ShoppingCategory; size?: number; active?: boolean}) {
-  const stroke = active ? "#0A0A0A" : "#8B7357";
-  const s = size;
-  if (cat==="Food") return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 7c-2-2-7-1.5-5 3 1.2 2.6 5 5 5 5s3.8-2.4 5-5c2-4.5-3-5-5-3Z"/><path d="M12 7V4"/><path d="M9 4c0.5-0.8 2.5-1 3 0"/></svg>;
-  if (cat==="Household") return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5}><path d="M7 10l3 8 2-4 2 4 3-8"/><path d="M12 2v3"/><path d="M9 22h6"/></svg>;
-  if (cat==="Toiletries") return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5}><path d="M12 2.8c0 0-7 8.2-7 13.2a7 7 0 0 0 14 0C19 11 12 2.8 12 2.8Z"/></svg>;
-  if (cat==="Clothes") return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5}><path d="M9 3l-5 5 2 2 3-2.5V20h6V7.5L18 10l2-2-5-5H9Z"/></svg>;
-  if (cat==="Bills") return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5}><path d="M7 3h10a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>;
-  if (cat==="Trips") return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5}><rect x="6" y="7" width="12" height="10" rx="2"/><path d="M9 7V5h6v2"/><path d="M8 12h8"/></svg>;
-  if (cat==="Entertainment") return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5}><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3l-3 3-3-3H6a2 2 0 0 1-2-2V7Z"/><circle cx="12" cy="10" r="1.2"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/></svg>;
-  if (cat==="Personal") return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5}><circle cx="12" cy="8" r="3.2"/><path d="M6 20a6 6 0 0 1 12 0"/></svg>;
-  return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5}><path d="M6 7h12v10H6z"/><path d="M9 7V5h6v2"/></svg>;
-}
-
-
-// Thin wrapper that keeps same props as AppMonolith expects
-export function CalendarScreen(props: any){
-  return <CalendarPageV2 {...props} />;
-}
-export default CalendarScreen;

@@ -1,9 +1,98 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import type { PersonKey, ShoppingItemV2, ShoppingCategory, ShoppingFrequency } from "../../types";
 import { CATS } from "../../types";
 import { PERSONS } from "../../constants/themes";
 import { HOUSEHOLD_TZ } from "../../lib/dates";
 import { uid, relTime } from "../../shared/utils/helpers";
+
+function IconCheckTiny({ size=12 }: {size?:number}){ return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}><path d="M5 12.5l3.7 3.7L19 7"/></svg>; }
+function parseNeedDaysToBool(s?: string): boolean[] {
+  const out = [false,false,false,false,false,false,false];
+  if (!s) return out;
+  const toks = s.split(",").map(t=> t.trim().toLowerCase()).filter(Boolean);
+  const map: Record<string,number> = {mo:0,mon:0,monday:0,tu:1,tue:1,tues:1,tuesday:1,we:2,wed:2,wednesday:2,th:3,thu:3,thur:3,thurs:3,thursday:3,fr:4,fri:4,friday:4,sa:5,sat:5,saturday:5,su:6,sun:6,sunday:6};
+  for (const tk of toks) { const idx = (map as any)[tk]; if (idx!==undefined) out[idx]=true; }
+  return out as any;
+}
+function boolToNeedDaysString(b: boolean[]): string | undefined {
+  const labels=["Mo","Tu","We","Th","Fr","Sa","Su"];
+  const sel = labels.filter((_,i)=> b[i]);
+  return sel.length ? sel.join(",") : undefined;
+}
+function IconCat({ cat, size=16, active }: {cat: ShoppingCategory; size?: number; active?: boolean}) {
+  const stroke = active ? "#0A0A0A" : "#8B7357";
+  const s = size;
+  if (cat==="Food") return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 7c-2-2-7-1.5-5 3 1.2 2.6 5 5 5 5s3.8-2.4 5-5c2-4.5-3-5-5-3Z"/><path d="M12 7V4"/><path d="M9 4c0.5-0.8 2.5-1 3 0"/></svg>;
+  if (cat==="Household") return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5}><path d="M7 10l3 8 2-4 2 4 3-8"/><path d="M12 2v3"/><path d="M9 22h6"/></svg>;
+  if (cat==="Toiletries") return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5}><path d="M12 2.8c0 0-7 8.2-7 13.2a7 7 0 0 0 14 0C19 11 12 2.8 12 2.8Z"/></svg>;
+  if (cat==="Clothes") return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5}><path d="M9 3l-5 5 2 2 3-2.5V20h6V7.5L18 10l2-2-5-5H9Z"/></svg>;
+  if (cat==="Bills") return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5}><path d="M7 3h10a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>;
+  if (cat==="Trips") return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5}><rect x="6" y="7" width="12" height="10" rx="2"/><path d="M9 7V5h6v2"/><path d="M8 12h8"/></svg>;
+  if (cat==="Entertainment") return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5}><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3l-3 3-3-3H6a2 2 0 0 1-2-2V7Z"/><circle cx="12" cy="10" r="1.2"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/></svg>;
+  if (cat==="Personal") return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5}><circle cx="12" cy="8" r="3.2"/><path d="M6 20a6 6 0 0 1 12 0"/></svg>;
+  return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5}><path d="M6 7h12v10H6z"/><path d="M9 7V5h6v2"/></svg>;
+}
+function BottomSheet({ open, onClose, children, title }: { open: boolean; onClose: () => void; children: React.ReactNode; title?: string }) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const prevFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(()=>{ onCloseRef.current = onClose; }, [onClose]);
+  useEffect(() => {
+    if (!open) return;
+    prevFocusRef.current = document.activeElement as HTMLElement;
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.preventDefault(); onCloseRef.current?.(); }
+      if (e.key === "Tab" && sheetRef.current) {
+        const focusable = sheetRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+        if (focusable.length === 0) return;
+        const first = focusable[0] as HTMLElement;
+        const last = focusable[focusable.length - 1] as HTMLElement;
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener("keydown", h);
+    const prevOverflow = document.body.style.overflow;
+    const prevOverscroll = (document.documentElement as any).style?.overscrollBehavior;
+    document.body.style.overflow = "hidden";
+    try { (document.documentElement as any).style.overscrollBehavior = "none"; } catch {}
+    requestAnimationFrame(() => {
+      if (sheetRef.current) {
+        const auto = sheetRef.current.querySelector<HTMLElement>('[autofocus]');
+        if (auto) auto.focus();
+        else {
+          const first = sheetRef.current.querySelector<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+          first?.focus();
+        }
+      }
+    });
+    return () => {
+      document.removeEventListener("keydown", h);
+      document.body.style.overflow = prevOverflow;
+      try { (document.documentElement as any).style.overscrollBehavior = prevOverscroll || ""; } catch {}
+      try { prevFocusRef.current?.focus(); } catch {}
+    };
+  }, [open]);
+  if (!open) return null;
+  const content = (
+    <div className="fixed inset-0 z-[80] flex items-end justify-center px-3 pb-[max(16px,env(safe-area-inset-bottom))] pointer-events-auto">
+      <button aria-label="Close sheet" onClick={onClose} className="absolute inset-0 bg-[#292624]/20 backdrop-blur-[3px] min-h-[44px]" />
+      <div ref={sheetRef} role="dialog" aria-modal="true" aria-labelledby={title ? "sheet-title" : undefined} className="relative w-full max-w-[420px] animate-[sheetIn_0.24s_ease] rounded-[16px] bg-[var(--card-bg)] border shadow-[0_-16px_48px_rgba(0,0,0,0.18)] max-h-[72dvh] flex flex-col focus:outline-none" style={{ borderColor: "var(--border)" }} tabIndex={-1}>
+        <div className="flex items-center justify-center pt-3 pb-2 shrink-0" aria-hidden="true"><span className="rounded-full bg-[var(--border)]" style={{ width: "36px", height: "5px", display: "block" }} /></div>
+        <div className="flex items-center justify-between px-5 pb-3 shrink-0 gap-2">
+          {title ? <div id="sheet-title" className="font-display text-[16px] font-medium text-[var(--text)]">{title}</div> : <div className="flex-1" />}
+          <button onClick={onClose} aria-label="Close" className="grid h-[44px] w-[44px] place-items-center rounded-full bg-[var(--card-bg)] border hover:bg-[var(--chip-bg)] shrink-0" style={{ borderColor: "var(--border)" }}>
+            <span aria-hidden="true" className="text-[14px]"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></span>
+          </button>
+        </div>
+        <div className="px-4 pb-6 overflow-auto no-scrollbar overscroll-contain">{children}</div>
+      </div>
+    </div>
+  );
+  return createPortal(content, document.body);
+}
+
 
 function ShoppingPageFacelift({
   items, setItems, currentUser, onCelebrate, nowMs,

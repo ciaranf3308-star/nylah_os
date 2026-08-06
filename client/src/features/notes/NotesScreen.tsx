@@ -1,9 +1,66 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import type { PersonKey, NoteMemo } from "../../types";
 import { PERSONS } from "../../constants/themes";
 import { HOUSEHOLD_TZ } from "../../lib/buildMeta";
 import { uid, relTime, rotForId, hashId } from "../../shared/utils/helpers";
 import { resizeToDataUrl, createThumbnail } from "../../lib/images";
+
+// BottomSheet extracted verbatim from AppMonolith — boutique tokens preserved
+function BottomSheet({ open, onClose, children, title }: { open: boolean; onClose: () => void; children: React.ReactNode; title?: string }) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const prevFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(()=>{ onCloseRef.current = onClose; }, [onClose]);
+  useEffect(() => {
+    if (!open) return;
+    prevFocusRef.current = document.activeElement as HTMLElement;
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.preventDefault(); onCloseRef.current?.(); }
+      if (e.key === "Tab" && sheetRef.current) {
+        const focusable = sheetRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+        if (focusable.length === 0) return;
+        const first = focusable[0] as HTMLElement;
+        const last = focusable[focusable.length - 1] as HTMLElement;
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener("keydown", h);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    requestAnimationFrame(() => {
+      if (sheetRef.current) {
+        const auto = sheetRef.current.querySelector<HTMLElement>('[autofocus]');
+        if (auto) auto.focus();
+        else {
+          const first = sheetRef.current.querySelector<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+          first?.focus();
+        }
+      }
+    });
+    return () => {
+      document.removeEventListener("keydown", h);
+      document.body.style.overflow = prevOverflow;
+      try { prevFocusRef.current?.focus(); } catch {}
+    };
+  }, [open]);
+  if (!open) return null;
+  const content = (
+    <div className="fixed inset-0 z-[80] flex items-end justify-center px-3 pb-[max(16px,env(safe-area-inset-bottom))] pointer-events-auto">
+      <button aria-label="Close sheet" onClick={onClose} className="absolute inset-0 bg-[#292624]/20 backdrop-blur-[3px] min-h-[44px]" />
+      <div ref={sheetRef} role="dialog" aria-modal="true" aria-labelledby={title ? "sheet-title" : undefined} className="relative w-full max-w-[420px] rounded-[16px] bg-[var(--card-bg)] border shadow-[0_-16px_48px_rgba(0,0,0,0.18)] max-h-[72dvh] flex flex-col" style={{ borderColor: "var(--border)" }} tabIndex={-1}>
+        <div className="flex items-center justify-center pt-3 pb-2"><span className="rounded-full bg-[var(--border)]" style={{ width:"36px", height:"5px", display:"block"}}/></div>
+        <div className="flex items-center justify-between px-5 pb-3 gap-2">
+          {title ? <div className="font-display text-[16px] font-medium">{title}</div> : <div className="flex-1"/>}
+          <button onClick={onClose} aria-label="Close" className="grid h-[44px] w-[44px] place-items-center rounded-full border" style={{borderColor:"var(--border)"}}>✕</button>
+        </div>
+        <div className="px-4 pb-6 overflow-auto">{children}</div>
+      </div>
+    </div>
+  );
+  return createPortal(content, document.body);
+}
 
 function NotesMemoPage({
   notes, setNotes, currentUser, nowMs,

@@ -14,8 +14,9 @@ type Props = {
   setTab: (k: TabKey) => void;
 };
 
-// minimal stub to keep zero logic change vs current FridgeScreen placeholder
-function computeShoppingNextDue(it:any, _nowMs:number){ return null as any; }
+// boutique tokens #E8CEB7 #F7EFE8 preserve, charcoal #121214 44px spring cubic-bezier(0.34,1.56,0.64,1)
+// real shopping due preserved from monolith
+import { computeShoppingNextDue } from "../../lib/shoppingDue";
 
 export default function Upcoming({ currentUser, calendar, chores, shopping, nowMs, todayDateStr, setTab }: Props) {
   const activeChores = useMemo(() => (chores as any[]).filter(c => !(c as any).deletedAt), [chores]);

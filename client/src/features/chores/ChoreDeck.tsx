@@ -28,10 +28,12 @@ type Props = {
   setShowRules: (v:boolean)=>void;
 };
 
-function timingLabel(c: ChoreV2, nowMs:number, getDueMs:any, toLocalKeyDublin:any, todayKey:any, HOUSEHOLD_TZ:any){
+import { todayKey, toLocalKey as toLocalKeyDublin, HOUSEHOLD_TZ } from "../../lib/dates";
+
+function timingLabel(c: ChoreV2, nowMs:number){
   try{
     const freq = (c.frequency||"").toUpperCase() || "ONCE";
-    const dueMs = getDueMs(c);
+    const dueMs = getDueMsChore(c);
     const diff = dueMs - nowMs;
     const dueKey = toLocalKeyDublin(new Date(dueMs).toISOString(), HOUSEHOLD_TZ);
     const isToday = dueKey === todayKey(HOUSEHOLD_TZ);
@@ -46,8 +48,7 @@ function timingLabel(c: ChoreV2, nowMs:number, getDueMs:any, toLocalKeyDublin:an
 export function ChoreDeck(props: Props) {
   const { deck, currentCard, deckCount, dragX, dragging, startX, setDragX, setDragging, onSwipe, flippedId, pointsPops, nowMs, onTapCard, combo, filter, setFilter, showSkeletons, setShowRules } = props;
 
-  // local imports for TZ helpers to avoid circular — use same as scoring
-  const { todayKey, toLocalKeyDublin, HOUSEHOLD_TZ } = (()=>{ try{ return require("../../lib/dates"); }catch{ return {todayKey:()=>"", toLocalKeyDublin:()=>"", HOUSEHOLD_TZ:"Europe/Dublin"} as any; }})() as any;
+
 
   const ChoreCardMega = ({c, large=false, onTap}:{c:ChoreV2; large?:boolean; onTap?:()=>void})=>{
     const isFlipped=flippedId===c.id;
@@ -109,7 +110,7 @@ export function ChoreDeck(props: Props) {
           )}
           <button onClick={(e:any)=>{ e.stopPropagation(); const t=e.currentTarget as HTMLElement; const prev=t.style.transform; t.style.transform='scale(1.15)'; t.style.transition='transform 120ms cubic-bezier(0.34,1.56,0.64,1)'; try{ if((navigator as any).vibrate) (navigator as any).vibrate(10);}catch{} setTimeout(()=>{ t.style.transform=prev||'scale(1)'; setTimeout(()=>{ t.style.transform=''; },80); },140); onTap?.(); }} className="w-full text-left cursor-pointer relative z-10">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold tracking-[0.13em] uppercase text-[var(--muted)]">{timingLabel(c, nowMs, getDueMsChore, toLocalKeyDublin, todayKey, HOUSEHOLD_TZ)}</span>
+              <span className="text-[11px] font-semibold tracking-[0.13em] uppercase text-[var(--muted)]">{timingLabel(c, nowMs)}</span>
               {c.status==="open" && (c as any).swipes?.aisling==="right" && (c as any).swipes?.ciaran==="right" && <span className="animate-pulse rounded-full bg-[var(--card-bg)] border border-[#FCA5A5] px-2.5 py-0.5 text-[10px] font-bold text-[#991B1B]">RACE • 1.15×</span>}
             </div>
             <div className={"font-display font-semibold text-[var(--text)] "+(large?"text-[22px] leading-[26px] mt-2":"text-[15px] leading-[20px] mt-1")} style={{fontFamily:"Fraunces, serif"}}>{c.title}</div>

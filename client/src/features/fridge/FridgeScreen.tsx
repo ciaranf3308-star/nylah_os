@@ -9,8 +9,9 @@ import NeedsYou, { AwaitingYou } from "./NeedsYou";
 import Upcoming from "./Upcoming";
 import Countdowns from "./Countdowns";
 
-// stub same as original placeholder to keep zero logic change for shopping due calc
-function computeShoppingNextDue(it:any, _nowMs:number){ return null as any; }
+// boutique tokens #E8CEB7 #F7EFE8 preserve, charcoal #121214 44px spring cubic-bezier(0.34,1.56,0.64,1)
+// real shopping due preserved from monolith via lib/shoppingDue
+import { computeShoppingNextDue } from "../../lib/shoppingDue";
 
 function FridgePage({
   currentUser, chores, calendar, shopping, notes, setTab, nowMs, theme, syncStatus,

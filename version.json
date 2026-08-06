@@ -1,9 +1,9 @@
 {
-  "build": "v112-agenda-charcoal-surgical-inline-style",
-  "builtAt": "2026-08-06T14:00:00.000Z",
-  "changelog": "Surgical agenda fix — calendar selected pill, Today dot, Today • Dublin badge, +Add buttons now use inline style var(--nav-active-bg)/text for guaranteed contrast in charcoal #121214 and peach, no Tailwind purge dependency; SW bumped to v112 to clear stale v76 cache; icons restored to unhashed for manifest 404 fix; keeps old assets transitional to prevent blank",
-  "code": 112,
+  "build": "v113-white-fix-agenda-inline-plus-errorboundary",
+  "builtAt": "2026-08-06T14:15:00.000Z",
+  "changelog": "Fix white screen: SW now network-first for HTML, clears all old caches, skips waiting, shows clear-cache reload UI on crash via ErrorBoundary instead of blank; agenda pills use inline style vars for guaranteed contrast in charcoal #121214 and peach; keeps old assets to prevent blackscreen; icons unhashed fixed",
+  "code": 113,
   "mandatory": false,
-  "timestamp": "2026-08-06T14:00:00.000Z",
-  "version": "112.0.0"
+  "timestamp": "2026-08-06T14:15:00.000Z",
+  "version": "113.0.0"
 }

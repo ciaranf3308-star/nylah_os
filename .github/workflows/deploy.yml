@@ -1,0 +1,76 @@
+name: Deploy Nylah OS to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install deps
+        run: bun install --frozen-lockfile || bun install
+      - name: Build client (Hatch spaces driver)
+        env:
+          HATCH_SPACES_BUILD_DRIVER: "1"
+        run: |
+          bun ./client/build.mjs
+          # Cosmetic downgrade: if build string looks cosmetic (no data model change), ensure mandatory=false
+          if [ -f client/dist/version.json ]; then
+            BUILD=$(cat client/dist/version.json | python3 -c "import json,sys; print(json.load(sys.stdin).get('build',''))")
+            echo "Build name: $BUILD"
+            if echo "$BUILD" | grep -qiE "boutique|polish|calendar|glow|pill|charcoal|agenda|contrast|readability|dark|ink|beige|ui-cut|premium"; then
+              echo "Cosmetic build detected -> ensure mandatory false"
+              python3 - <<PY
+          import json, pathlib
+          p=pathlib.Path("client/dist/version.json")
+          j=json.loads(p.read_text())
+          j["mandatory"]=False
+          p.write_text(json.dumps(j,indent=2))
+          # mirror to public for next build
+          import shutil, pathlib
+          pub=pathlib.Path("client/public/version.json")
+          pub.write_text(json.dumps(j,indent=2))
+          # root mirror
+          pathlib.Path("version.json").write_text(json.dumps(j,indent=2))
+          PY
+            fi
+          fi
+      - name: Prepare Pages artifact (copy dist to root artifact)
+        run: |
+          mkdir -p _site
+          cp -r client/dist/* _site/ 2>/dev/null || true
+          # Ensure assets folder exists (client/dist already has assets)
+          ls -lh _site/
+          echo "Artifact ready"
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

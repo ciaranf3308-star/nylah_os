@@ -1,1 +1,9 @@
-{"build":"v109-dark-readability-charcoal-fix","builtAt":"2026-08-06T12:08:00.000Z","changelog":"Fix dark theme black text unreadable — JS var(--text) was set to var(--card-bg) (#232326) in ink, now #F5F3F0; add comprehensive ink overrides for all hardcoded #0A0A0A #2D2118 #292624 etc to readable tokens, orange CTA #FF6B26 on dark, inputs readable, notifications bar charcoal, grain .028, reduced-motion + hidden pause","code":109,"mandatory":false,"timestamp":"2026-08-06T12:08:00.000Z","version":"109.0.0"}
+{
+  "build": "v110-agenda-dark-readability-peach-midnight",
+  "builtAt": "2026-08-06T12:55:00.000Z",
+  "changelog": "Fix agenda dark readability — replace hardcoded bg-[#0A0A0A] black pills/dots/rings with theme vars var(--nav-active-bg)/text, making selected pill, Today dot, Today•Dublin badge, +Add, Yes, Yes again, Add event visible in midnight charcoal; keep peach parity black-on-white; keep old assets transitional",
+  "code": 110,
+  "mandatory": false,
+  "timestamp": "2026-08-06T12:55:00.000Z",
+  "version": "110.0.0"
+}

@@ -25,6 +25,7 @@ import {
   weekNumberSinceEpoch,
   BIWEEKLY_EPOCH_MONDAY_UTC,
 } from "./lib/dates";
+import { uid, hashId, rotForId, relTime, fmtTimeDublin } from "./shared/utils/helpers";
 import { expandTemplateForMonthDublin, addDaysKey, getDublinHourMinuteFromIso, shouldSuppressGeneratedOccurrence } from "./lib/recurrence";
 import { upsertCalendarSeries, upsertCalendarOverride } from "./lib/normalized";
 import { verifyPin } from "./lib/pins";
@@ -281,7 +282,7 @@ function getPageTitle(tab: TabKey): string {
   return meta.title ?? meta.label;
 }
 const LEGACY_TABS = TABS;
-function uid(p = "id") { return p + "_" + Math.random().toString(36).slice(2, 7) + "_" + Date.now().toString(36); }
+// uid now from shared/utils/helpers — zero logic change
 function useLocalState<T>(key: string, def: T): [T, (v: T | ((p: T) => T)) => void] {
   const [state, setState] = useState<T>(() => {
     try {
@@ -389,20 +390,7 @@ function useLocalState<T>(key: string, def: T): [T, (v: T | ((p: T) => T)) => vo
   }, [key, state]);
   return [state, setState as any];
 }
-function relTime(iso: string, nowMs: number) {
-  const t = new Date(iso).getTime(); const diff = nowMs - t;
-  if (diff < 60000) return "just now";
-  const mins = Math.floor(diff / 60000); if (mins < 60) return mins + "m ago";
-  const hrs = Math.floor(mins / 60); if (hrs < 24) return hrs + "h ago";
-  const days = Math.floor(hrs / 24); if (days < 7) return days + "d ago";
-  return new Date(t).toLocaleDateString();
-}
-function hashId(s: string) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) & 0xffffffff; return h; }
-function rotForId(id: string) {
-  const r = hashId(id) % 5;
-  const map = [-2, -1, 1, 2, 3];
-  return map[r] as number;
-}
+// relTime, hashId, rotForId now from shared/utils/helpers — zero logic change
 // types moved to ./types.ts — zero logic change, re-exported via import
 // ChoreV2, CalendarEventV2, ShoppingCategory etc now imported
 function mapOldCat(catRaw: string): ShoppingCategory {

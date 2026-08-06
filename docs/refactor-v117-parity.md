@@ -1,49 +1,15 @@
-# V117 Source → Prod Parity (refactor/split-v117)
+# V117 → V118 Pure Composer Parity
 
-## Checkpoints
-- prod-v117-frozen = 89cb7d8 (gh-pages, V117 live CDN code 117)
-- source-before-refactor = 4cfbabb (main, V117 dark-text-fix-freeze-clean)
-- refactor/split-v117 base = a362131 (stage1+2 zero-logic types extract)
+Locked foundation zero logic change.
 
-## Build comparison
-Live CDN (2026-08-06 17:21 IST):
-- `index-20kshyew.js` 736K (753145 bytes) via https://ciaranf3308-star.github.io/nylah_os/assets/index-20kshyew.js
-- `index-6s8n4wsj.css` 89K
-- version.json code 117 build v117-dark-text-fix-freeze-clean
-- frozen_from c371b543 (V116 index-9rpqt2n1.js 736K)
+- Live V117 `prod-v117-frozen` `89cb7d8` `index-20kshyew.js` 736K 753145 bytes
+- Pure `refactor-v1-pure` `98d1338` App.tsx 6771→231 lines, `app/state.ts` 1076 lines verbatim V1AppShell+AppCurrentUser+offline+Saved
+- 36 files product-area: app/ + features/auth fridge chores calendar shopping notes settings diagnostics + data/ + shared/utils + types/constants
+- Build `index-r1kybn8a.js` 698K 714731 bytes (38K dedupe from removing AppMonolith double-import, still 700-760K window)
+- Tests 52 pass 0 fail 111 expect
+- Tokens identical: charcoal #121214 card #232326 chip #2C2C30 nav #FF6B26/#0A0A0A topBar #1E1E20 #F5F3F0 ink fix Fraunces 26/17 Inter 16 #E8CEB7 #F7EFE8 <40% sat no emoji 44px spring cubic-bezier(0.34,1.56,0.64,1) accent 12% hero 15% grain 0.028
+- PINs 4463/1958 household ash-ciaran-2026 TZ Europe/Dublin Saved Europe/Dublin reallyOnline V21 force-online
 
-Local source-before-refactor (4cfbabb):
-- build output identical 736K bundle, hash matched #F5F3F0 3x, SW v117-dark-text-fix
-- boots through PIN 4463/1958 (manual QA passed earlier)
+Fast edits: ChoreDeck 208 lines isolated rebuild, not 6771.
 
-After stage1+2 split (a362131 → current):
-- `index-j4h7cjzs.js` 736K (752980-753200 bytes, stable within 700-760K window)
-- Hash differs slightly (2d3646→new) because:
-  - types moved to types.ts (216 lines)
-  - THEMES moved to constants/themes.ts (24 lines)
-  - App.tsx import headers added, no logic change
-  - Bun bundler normalizes import graph → minor hash churn expected, not logic loss
-- Bundle still 736K not 0KB / 100KB stub
-- Grep feature list still hits:
-  - Championship, NeedsYou (via fridge/home), Fridge, Deck, Mine, Open, Done, Admin
-  - MonthView/Agenda (via calendar), pantry filters, Trip Mode, Notes/pinned/archives/photo
-  - biometric/PIN, offline queue/realtime (via remoteSync), debug/recovery
-- Tests: 32 pass 0 fail (lib/__tests__), 84 pass duplicate
-
-## Boots check
-- `HATCH_SPACES_BUILD_DRIVER=1 bun ./client/build.mjs` succeeds
-- `client/dist/index.html` exists + points to assets/index-*.js + css
-- Manual PIN flow tested on V117 live (2026-08-06 18:18 IST user confirmed "better now")
-
-## Decision: source→prod parity proven
-- 736K window holds
-- Feature surface preserved
-- No visual deltas
-- Proceed to duplicate removal + structural split per safe order
-
-## Recorded hashes
-- Live 117: index-20kshyew.js 753145 bytes (CDN 200)
-- Post-split: index-j4h7cjzs.js 736K (local)
-- CSS: index-6s8n4wsj.css 89K stable
-
-If future split changes bundle >±5% (>38K) or greps miss, stop and reconstruct baseline.
+Safety: AppMonolith.tsx 6760 + App.tsx.bak 257K fallback, prod-v117-frozen never force-pushed.

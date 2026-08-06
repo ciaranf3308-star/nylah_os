@@ -19,43 +19,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-      - name: Install deps
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Prepare artifact
         run: |
-          echo "deps ok"
-          echo ok
-      - name: Build client
-        run: |
-          echo "Build placeholder - using static files"
-          mkdir -p client/dist/assets
-          cp -r assets client/dist/ 2>/dev/null || true
-          cp index.html client/dist/ 2>/dev/null || true
-          cp 404.html client/dist/ 2>/dev/null || true
-          cp version.json client/dist/ 2>/dev/null || true
-          cp manifest.webmanifest client/dist/ 2>/dev/null || true
-          cp icon-192.png client/dist/ 2>/dev/null || true
-          cp icon-512.png client/dist/ 2>/dev/null || true
-          echo "client dist prepared"
-          ls -lh client/dist/ | head -20
-          cat client/dist/version.json | head -20 || true
-      - name: Prepare Pages artifact
-        run: |
+          echo "preparing static site from repo root"
           mkdir -p _site
-          cp -r client/dist/* _site/ 2>/dev/null || true
+          # copy root static files that are the Pages site
+          cp -r assets _site/ 2>/dev/null || true
           cp index.html _site/ 2>/dev/null || true
           cp 404.html _site/ 2>/dev/null || true
           cp version.json _site/ 2>/dev/null || true
-          mkdir -p _site/assets
-          cp -r assets/* _site/assets/ 2>/dev/null || true
-          echo "_site contents"
-          ls -lh _site/ | head -20
-          ls -lh _site/assets/ | head -20
-          cat _site/version.json || echo "no version"
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
+          cp manifest.webmanifest _site/ 2>/dev/null || cp manifest.json _site/ 2>/dev/null || true
+          cp icon-*.png _site/ 2>/dev/null || true
+          cp sw.js _site/ 2>/dev/null || true
+          cp supabase-env.js _site/ 2>/dev/null || true
+          # ensure we have index
+          ls -lh _site/
+          test -f _site/index.html || (echo "index.html missing!" && exit 1)
+          cat _site/version.json | head -5
+          echo "assets count $(ls _site/assets | wc -l)"
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site

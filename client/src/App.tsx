@@ -4,6 +4,10 @@ import { getSupabase, hasSupabaseConfig, saveSupabaseConfig, TOKEN as SB_TOKEN, 
 const TABLE = SB_TABLE;
 const ROW_ID = SB_ROW_ID;
 import { UpdaterBanner } from "./components/UpdaterBanner";
+// refactor split-v117: zero-logic extraction
+import type { PersonKey, Theme, TabKey, ChoreV2, CalendarEventV2, CalendarEventStatus, CalendarResponseKind, CalendarEventResponse, ShoppingCategory, ShoppingFrequency, ShoppingItemV2, PersonalWants, NoteReactionKind, NoteMemo, Chore, CalendarEvent, ShoppingItem, AddEventFormProps } from "./types";
+import { CATS } from "./types";
+import { THEMES, PERSONS, TABS } from "./constants/themes";
 import { remoteLoad, remoteSave, subscribeRemote } from "./lib/remoteSync";
 import { claimChoreViaRpc as claimChoreOccRpc, completeChoreOccurrence as completeChoreRpc, insertChoreOccurrence as upsertChoreOcc, syncChoreOccurrencesToSupabase } from "./lib/normalized";
 import { CHORE_ICONS, ChoreIcon, ALL_CHORE_ICON_IDS, CHORE_ICON_BY_TEMPLATE } from "./lib/choreIcons";
@@ -113,11 +117,7 @@ function useIsStandalone(): boolean {
   }, []);
   return standalone;
 }
-type PersonKey = "aisling" | "ciaran";
-const PERSONS: Record<PersonKey, { name: string; initial: string; accent: string; accent2: string; wash: string }> = {
-  aisling: { name: "Aisling", initial: "Á", accent: "#A89FDA", accent2: "#977DDA", wash: "#E9E0FF" },
-  ciaran: { name: "Ciaran", initial: "C", accent: "var(--border)", accent2: "#E07A5F", wash: "var(--wash-top)" },
-};
+// PersonKey + PERSONS moved to constants/themes.ts — zero logic change, re-imported
 function getHouseholdPersonsRaw(): any[] | null {
   try {
     const hid = localStorage.getItem("couple_v1_household_id");
@@ -242,19 +242,10 @@ async function authenticateBiometric(): Promise<PersonKey | null> {
     } catch { return null; }
   }
 }
-type Theme = { id: string; name: string; bg: string; phoneBg: string; accent: string; accentStrong: string; text: string; cardBd: string; navBg: string; navActiveBg: string; navActiveText: string; topBarBg: string; washTop: string; washMid: string; chipBg: string; cardBg: string };
-const THEMES: Theme[] = [
-  { id: "beige", name: "Beige", bg: "#F7EFE8", phoneBg: "linear-gradient(180deg,#FFDCC7 0%,#FFE8D6 22%,#FFFEFB 100%)", accent: "#E8CEB7", accentStrong: "#8B5E3C", text: "#292624", cardBd: "#E8DDD3", navBg: "rgba(255,254,251,0.94)", navActiveBg: "#8B5E3C", navActiveText: "#FFFEFB", topBarBg: "#FFFEFB", washTop: "#FFDCC7", washMid: "#FFE8D6", chipBg: "#F7EFE8", cardBg: "#FFFEFB" },
-  { id: "ink", name: "Charcoal Orange", bg: "#121214", phoneBg: "linear-gradient(180deg,#232326 0%,#1E1E20 28%,#161618 58%,#121214 100%)", accent: "#FF6B26", accentStrong: "#FF8A4D", text: "#F5F3F0", cardBd: "rgba(255,255,255,0.08)", navBg: "rgba(22,22,24,0.88)", navActiveBg: "#FF6B26", navActiveText: "#121214", topBarBg: "#1E1E20", washTop: "#2E2E32", washMid: "#242428", chipBg: "#2C2C30", cardBg: "#232326" },
-];
-type TabKey = "fridge" | "plans" | "calendar" | "chores" | "shopping" | "notes" | "blueprint";
-const TABS: { k: TabKey; label: string; title: string; icon: string }[] = [
-  { k: "fridge", label: "Home", title: "Nylah", icon: "" },
-  { k: "plans", label: "Plans", title: "Plans", icon: "" },
-  { k: "chores", label: "Chores", title: "Chores", icon: "" },
-  { k: "shopping", label: "Shop", title: "Shop", icon: "" },
-  { k: "notes", label: "Notes", title: "Notes", icon: "" },
-] as any;
+// Theme + THEMES moved to constants/themes.ts — zero logic change
+type TabKeyLocal = TabKey; // keep alias for internal references if needed
+type ThemeLocal = Theme;
+
 function TabIcon({ k, active }: { k: TabKey; active?: boolean }) {
   const common = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round" as any, strokeLinejoin: "round" as any };
   if (k === "fridge") {
@@ -412,71 +403,8 @@ function rotForId(id: string) {
   const map = [-2, -1, 1, 2, 3];
   return map[r] as number;
 }
-type ChoreV2 = {
-  id: string; title: string; type: "one-off" | "repeat"; frequency: "daily" | "twice-week" | "weekly" | "biweekly" | "monthly" | "custom" | "once";
-  frequencyDetail?: string; dueAt?: string; createdAt: string; pain: number; basePoints: number;
-  swipes: { aisling: "left" | "right" | null; ciaran: "left" | "right" | null };
-  status: "deck" | "assigned" | "open" | "race" | "bonus" | "done"; assignedTo?: PersonKey | null; multiplier: number;
-  isOpenDoubled?: boolean; completedBy?: PersonKey | null; completedAt?: string; timeWindowHours?: number;
-  updatedAt?: string; updatedBy?: PersonKey | string; deletedAt?: string; templateId?: string; icon?: string;
-  dayOfMonth?: number; originalDom?: number; localTime?: string; timezone?: string;
-};
-// ---- Calendar: one timezone, full date keys, no UTC slicing ----
-export type CalendarEventStatus = "draft" | "proposed" | "awaiting_aisling" | "awaiting_ciaran" | "needs_discussion" | "agreed" | "declined" | "cancelled" | "completed" | "open" | "dismissed";
-export type CalendarResponseKind = "yes" | "no" | "discuss";
-export type CalendarEventResponse = {
-  eventId: string;
-  memberId: PersonKey;
-  response: CalendarResponseKind;
-  comment?: string;
-  respondedAt: string; // ISO
-};
-type CalendarEventV2 = {
-  id: string;
-  title: string;
-  type: "one-off" | "repeat";
-  frequency?: "daily" | "twice-week" | "weekly" | "biweekly" | "monthly" | "custom" | "once";
-  frequencyDetail?: string;
-  dueAt: string; // ISO start instant UTC
-  endAt?: string;
-  start?: string; // alias to dueAt for compat
-  end?: string;
-  createdAt: string;
-  // removed pain/basePoints for events (not chores)
-  pain?: number; basePoints?: number;
-  // legacy swipes - kept for migration, new source is responses[]
-  swipes: { aisling: "yes" | "no" | null; ciaran: "yes" | "no" | null };
-  responses?: CalendarEventResponse[];
-  status: CalendarEventStatus;
-  proposer?: PersonKey;
-  assignedTo?: PersonKey | null;
-  allDay?: boolean;
-  location?: string;
-  notes?: string;
-  reminderMinutes?: number;
-  responseDeadline?: string; // ISO
-  attendees?: PersonKey[]; // who needs to attend, default both
-  // recurrence template fields
-  recurrenceRule?: string; // e.g. "FREQ=MONTHLY;BYMONTHDAY=12;BYHOUR=9"
-  templateId?: string;
-  occurrenceId?: string; // e.g. 2026-08-12
-  isTemplate?: boolean;
-  dayOfMonth?: number;
-  originalDom?: number;
-  localTime?: string;
-  timezone?: string; // should be HOUSEHOLD_TZ
-  updatedAt?: string;
-  updatedBy?: PersonKey | string;
-  deletedAt?: string;
-  dismissed?: boolean;
-  proposalReason?: string;
-  // mutation id for dedup
-  mutationId?: string;
-  // notification dedup
-  lastNotifiedState?: string;
-};
-type ShoppingCategory = "Food" | "Household" | "Toiletries" | "Clothes" | "Bills" | "Trips" | "Entertainment" | "Personal" | "Other";
-export const CATS: ShoppingCategory[] = ["Food", "Household", "Toiletries", "Clothes", "Bills", "Trips", "Entertainment", "Personal", "Other"];
+// types moved to ./types.ts — zero logic change, re-exported via import
+// ChoreV2, CalendarEventV2, ShoppingCategory etc now imported
 function mapOldCat(catRaw: string): ShoppingCategory {
   const raw = (catRaw||"").trim();
   const s = raw.toLowerCase();
@@ -495,46 +423,7 @@ function mapOldCat(catRaw: string): ShoppingCategory {
   if (s.startsWith("@aisling") || s.startsWith("@ciaran")) return "Personal";
   return "Other";
 }
-type ShoppingFrequency = "daily" | "every-2d" | "weekly" | "biweekly" | "monthly" | "as-needed";
-type ShoppingItemV2 = {
-  id: string; item: string; qty: number; cat: ShoppingCategory; purchased: boolean;
-  addedBy: PersonKey; createdAt: string; lastDoneAt?: string; repeatCount: number; history?: string[];
-  frequency: ShoppingFrequency;
-  needDays?: string; // weekdays detail like "Mo,We" when weekly/biweekly custom
-  notes?: string;
-  tags?: string[]; // @aisling @ciaran personal tag support
-  updatedAt?: string; updatedBy?: PersonKey | string; deletedAt?: string; archivedAt?: string;
-  status?: "active" | "purchased" | "archived" | "deleted";
-  isTemplate?: boolean;
-  templateKind?: "personal" | "wants";
-  templateOwner?: PersonKey;
-  expiresAt?: string; // real expiry only if provided
-  mutationId?: string;
-  originalDom?: number; // FIX preserve original day-of-month for monthly (Jan31->Feb28->Mar31)
-};
-type PersonalWants = { aisling: { personal: string[]; wants: string[] }; ciaran: { personal: string[]; wants: string[] } };
-type NoteReactionKind = 'heart' | 'laugh' | 'kiss' | 'ack';
-type NoteMemo = {
-  id: string; body: string; author: PersonKey; createdAt: string; seenBy: { aisling: boolean; ciaran: boolean };
-  isLove: boolean; photoDataUrl?: string; photoThumbDataUrl?: string; photoStoragePath?: string;
-  rotation?: number;
-  updatedAt?: string; updatedBy?: PersonKey | string; deletedAt?: string;
-  pinned_at?: string | null; pinnedAt?: string | null;
-  archived_at?: string | null; archivedAt?: string | null;
-  read_by?: { aisling?: string; ciaran?: string };
-  edited_at?: string | null; editedAt?: string | null;
-  reactions?: Partial<Record<NoteReactionKind, PersonKey[]>>;
-};
-// backwards-compat aliases for legacy refs introduced by parallel agents
-type CalendarEvent = CalendarEventV2;
-type Chore = ChoreV2;
-type ShoppingItem = ShoppingItemV2;
-type AddEventFormProps = {
-  onAdd: (ev:any)=>void;
-  currentUser: PersonKey;
-  selectedDate?: string;
-  initialEvent?: any;
-};
+ // Shopping types moved to ./types.ts — imported, zero logic change (ShoppingFrequency, ShoppingItemV2, PersonalWants, NoteMemo etc)
 
 function timePartFromIsoDublin(iso?: string): string {
   if (!iso) return "10:00";

@@ -1,9 +1,9 @@
 {
-  "build": "v107-calendar-boutique-charcoal",
-  "builtAt": "2026-08-06T10:15:11.290352+00:00",
-  "changelog": "V107 calendar boutique — charcoal selected pill #121214 white text, today orange wash glow, Fraunces numbers, dots lavender/terracotta/brown pulse 1.6s, nylah-arena linen/charcoal both themes",
-  "code": 107,
+  "build": "v118-clean-foundation",
+  "builtAt": "2026-08-06T19:45:00.000Z",
+  "changelog": "V118 beautiful repo — pure 231-line App.tsx composer via app/state.ts 1076 verbatim, 55 product-area files, zero visual change vs V117, charcoal #121214 card #232326 chip #2C2C30 nav #FF6B26 topBar #1E1E20 #F5F3F0 ink fix, PINs 4463/1958, Europe/Dublin TZ, reallyOnline V21",
+  "code": 118,
   "mandatory": false,
-  "timestamp": "2026-08-06T10:15:11.290352+00:00",
-  "version": "107.0.0"
+  "timestamp": "2026-08-06T19:45:00.000Z",
+  "version": "118.0.0"
 }

@@ -1,9 +1,9 @@
 {
-  "build": "v108-consolidated-fixes-trusted-saved-offline-hardened-rls-normalized-calendar-dublin-ui-cut",
-  "builtAt": "2026-08-06T10:44:19.028804+00:00",
-  "changelog": "Fix: trusted Saved (server confirmed Dublin time, no fake on read/reconnect/queue clear), offline reallyOnline respects navigator.offline, queues cleanly, hardened RLS (anon only ash-ciaran-2026, validation trigger, revision monotonic), normalized chore_occurrences/calendar_series/overrides + atomic RPC wired, calendar recurrence multi-weekday + Dublin TZ + safe this-only/this+future, UI cut 25% (grain .028, slower pulse, fewer glows/rotations/confetti only win), chores simplified hide V48 MEGA/GodMode (DEV flag), dark hardcoded light -> var tokens, reduced-motion global + pause timers when hidden",
-  "code": 108,
+  "build": "v118-clean-foundation",
+  "builtAt": "2026-08-06T19:45:00.000Z",
+  "changelog": "V118 beautiful repo — pure 231-line App.tsx composer via app/state.ts 1076 verbatim, 55 product-area files, zero visual change vs V117, charcoal #121214 card #232326 chip #2C2C30 nav #FF6B26 topBar #1E1E20 #F5F3F0 ink fix, PINs 4463/1958, Europe/Dublin TZ, reallyOnline V21",
+  "code": 118,
   "mandatory": false,
-  "timestamp": "2026-08-06T10:44:19.028804+00:00",
-  "version": "108.0.0"
+  "timestamp": "2026-08-06T19:45:00.000Z",
+  "version": "118.0.0"
 }

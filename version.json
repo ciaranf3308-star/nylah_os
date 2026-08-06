@@ -1,9 +1,9 @@
 {
-  "build": "v114-white-fix-tour-browsed",
-  "builtAt": "2026-08-06T14:52:00.000Z",
-  "changelog": "Actual fix white screen: SW v114 network-first HTML clears all old v76/v112 caches skipWaiting claim, ErrorBoundary shows Clear cache & reload instead of blank (was empty root), agenda pills inline var(--nav-active-bg/text) for charcoal 121214 contrast peach, icons unhashed, old assets kept 15 total to prevent mismatch",
+  "build": "v114-white-fix-tour-browsed-ehkbn98z",
+  "builtAt": "2026-08-06T15:00:00.000Z",
+  "changelog": "Actual fix white screen: SW v114 network-first clears old caches, window.onerror boot trap renders Clear cache & reload instead of white, main.tsx outer try+ErrorBoundary, agenda inline var(--nav-active-bg) charcoal 121214 vs peach, old assets kept 15",
   "code": 114,
   "mandatory": false,
-  "timestamp": "2026-08-06T14:52:00.000Z",
+  "timestamp": "2026-08-06T15:00:00.000Z",
   "version": "114.0.0"
 }

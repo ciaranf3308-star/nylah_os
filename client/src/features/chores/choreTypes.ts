@@ -1,4 +1,11 @@
-// TODO refactor-v1: extract from App.tsx lines for choreTypes.ts - zero logic change placeholder
-// Current ChoresPage is in ChoresScreen.tsx (6771-line monolith slice)
-// This file will hold choreTypes.ts logic after Stage 5 extraction
-export const __placeholder_choreTypes= true;
+// choreTypes.ts — re-export canonical types from ../../types (zero logic change)
+export type { ChoreV2, PersonKey } from "../../types";
+export type { ChoreV2 as Chore } from "../../types";
+export * from "../../types";
+
+// Household TZ constant preserved from monolith — Europe/Dublin canonical
+export const HOUSEHOLD_TZ = "Europe/Dublin" as const;
+
+// BIWEEKLY_EPOCH_MONDAY_UTC preserved from lib/dates — 2024-01-01 is Monday
+export { BIWEEKLY_EPOCH_MONDAY_UTC } from "../../lib/dates";
+export { weekNumberSinceEpoch } from "../../lib/dates";

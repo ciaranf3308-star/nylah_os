@@ -5553,28 +5553,11 @@ function V1AppShell({
   const offlineFailCountRef = useRef(0);
   const lastOnlineProbeRef = useRef<number>(0);
   const reallyOnline = async (): Promise<boolean> => {
-    // Fixed: respect offline, probe Supabase, queue if fails
+    // V21 restored: GH Pages HEAD probe fails CORS and lies → always assume online unless navigator says offline
     try {
-      if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) {
-        console.warn('[supabase] reallyOnline: offline — queueing locally')
-        return false
-      }
+      if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) return false
     } catch {}
-    try {
-      const now = Date.now()
-      if (now - (lastOnlineProbeRef.current||0) < 2000) return true // throttle probe to 2s
-      lastOnlineProbeRef.current = now
-      const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null
-      const to = setTimeout(()=>{ try{ ctrl?.abort() } catch{} }, 1200)
-      // @ts-ignore
-      const sbUrl = (typeof window!=='undefined' ? (window as any).__SUPABASE_URL__ : null) as any
-      let testUrl = (sbUrl || 'https://zlllebsjtgihsxhcmcvb.supabase.co') + '/rest/v1/'
-      const r = await fetch(testUrl, { method:'HEAD', cache:'no-store', signal: ctrl?.signal as any }).catch(()=>null)
-      clearTimeout(to)
-      if (!r) return false
-      if (r.ok || r.status===401 || r.status===404 || (r.status>=200 && r.status<500)) { offlineFailCountRef.current=0; return true }
-      return false
-    } catch { return false }
+    return true
   };
 
   // IDB hydration for queue + photos
@@ -5846,7 +5829,7 @@ function V1AppShell({
       r.style.setProperty('--shadow-soft', isInk ? '0 8px 32px rgba(0,0,0,0.35)' : '0 8px 24px rgba(0,0,0,0.06)');
       r.style.setProperty('--shadow-raised', isInk ? '0 18px 44px rgba(0,0,0,0.42)' : '0 12px 28px rgba(0,0,0,0.08)');
       r.style.setProperty('--muted', isInk ? '#A99ED4' : '#8B7357');
-      // ink overrides for full dark consistency — V79 warm purple navy
+      // ink overrides for full dark consistency — V117 fix invisible text
       if (isInk) {
         r.setAttribute('data-theme','ink');
         // V97 Hume charcoal orange — matches https://dribbble.com/shots/26559633-Hume-Mobile-App-Design-for-Smart-Home
@@ -5855,8 +5838,8 @@ function V1AppShell({
         r.style.setProperty('--card-bg', '#232326');
         r.style.setProperty('--card-bd', 'rgba(255,255,255,0.08)');
         r.style.setProperty('--border', 'rgba(255,255,255,0.08)');
-        r.style.setProperty('--text', 'var(--card-bg)');
-        r.style.setProperty('--text-primary', 'var(--card-bg)');
+        r.style.setProperty('--text', '#F5F3F0');
+        r.style.setProperty('--text-primary', '#F5F3F0');
         r.style.setProperty('--text-secondary', '#A8A5A0');
         r.style.setProperty('--chip-bg', '#2C2C30');
         r.style.setProperty('--wash-top', '#2E2E32');

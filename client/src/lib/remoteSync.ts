@@ -21,31 +21,11 @@ export type RemoteData = {
 }
 
 async function reallyOnline(): Promise<boolean> {
-  // Fixed: respect navigator.onLine + Supabase reachability, no forced true
+  // V21 fix restored: force online — navigator.onLine lies and HEAD probe fails CORS on Pages
   try {
-    if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) {
-      console.warn('[supabase] reallyOnline: browser says offline — queuing')
-      return false
-    }
+    if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) return false
   } catch {}
-  try {
-    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null
-    const to = setTimeout(()=>{ try{ ctrl?.abort() } catch{} }, 1200)
-    let testUrl = 'https://zlllebsjtgihsxhcmcvb.supabase.co/rest/v1/'
-    try {
-      // @ts-ignore
-      const w:any = (typeof window!=='undefined' ? window : null) as any
-      if (w?.__SUPABASE_URL__) testUrl = w.__SUPABASE_URL__ + '/rest/v1/'
-    } catch {}
-    const res = await fetch(testUrl, { method: 'HEAD', cache: 'no-store', signal: ctrl?.signal as any }).catch(()=>null)
-    clearTimeout(to)
-    if (res && res.ok) return true
-    if (res && (res.status===401 || res.status===404 || res.status>=200 && res.status<500)) return true // endpoint reachable, auth gated is fine
-    // If fetch failed entirely, assume offline
-    return false
-  } catch {
-    return false
-  }
+  return true
 }
 
 

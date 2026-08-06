@@ -1,18 +1,21 @@
-// Nylah OS SW v115 prod restore - network-first, clear old, skipWaiting
-const CACHE_NAME = "nylah-os-v115-prod-restore";
-const ASSETS = ["./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
+// Nylah OS SW v69 fridge rich code 69
+const CACHE_NAME = "nylah-os-v117-dark-text-fix";
+const URLS = ["./","./index.html","./manifest.webmanifest"];
 self.addEventListener("install", e=>{
+  e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(URLS.map(u=>new Request(u,{cache:"reload"}))).catch(()=>{})));
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS.map(u=>new Request(u,{cache:"reload"}))).catch(()=>{})));
 });
 self.addEventListener("activate", e=>{
-  e.waitUntil(caches.keys().then(keys=> Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
+  e.waitUntil(caches.keys().then(keys=> Promise.all(keys.map(k=> k!==CACHE_NAME ? caches.delete(k) : null))));
+  self.clients.claim();
 });
-self.addEventListener("fetch", e=>{
-  const req=e.request;
-  if(req.mode==='navigate'||req.destination==='document'){
-    e.respondWith(fetch(req).then(r=>r).catch(()=>caches.match("./index.html")));
-    return;
-  }
-  e.respondWith(caches.match(req).then(c=>c||fetch(req)));
+self.addEventListener("push", e=>{
+  const data = e.data ? e.data.json() : {};
+  const title = data.title || "Nylah OS";
+  const body = data.body || "New chore for you";
+  e.waitUntil(self.registration.showNotification(title, {body, vibrate:[200,100,200], data:{url:data.url||"./"}}));
+});
+self.addEventListener("notificationclick", e=>{
+  e.notification.close();
+  e.waitUntil(clients.openWindow(e.notification.data.url || "./"));
 });

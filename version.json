@@ -1,8 +1,8 @@
 {
-  "build": "v167-beirt-fridge-polish-match-ref",
-  "code": 167,
-  "version": "167.0.0",
-  "changelog": "polished fridge hero to match ref: real mugs transparent + organic blobs, Fraunces big lowercase good evening Ciaran with Aisling script, unified peach bubble + paper plane travel, pinned white card 5d left huge 52px",
+  "build": "v168-fridge-hero-true-match",
+  "code": 168,
+  "version": "168.0.0",
+  "changelog": "true match hero: smaller good evening, tighter blobs, mugs bottom-anchored 178px, no dark duplicate neg margin, polished tracking",
   "mandatory": false,
-  "builtAt": "2026-08-07T22:30:00Z"
+  "builtAt": "2026-08-07T22:45:00Z"
 }

@@ -1,6 +1,4 @@
-import React from "react";
 import type { CalendarEventV2, PersonKey } from "../../types";
-import { PERSONS } from "../../constants/themes";
 import { HOUSEHOLD_TZ } from "../../lib/dates";
 
 type Props = {

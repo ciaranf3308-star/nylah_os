@@ -1,9 +1,1 @@
-{
-  "build": "v119-correctness-security",
-  "builtAt": "2026-08-06T20:00:00.000Z",
-  "changelog": "V119 correctness/security: remove exposed PINs server-side RPC fail-closed, atomic chore claim single winner, real Saved only server timestamp, real Supabase reachability, restore onboarding proper invite flow, preserve all features",
-  "code": 119,
-  "mandatory": true,
-  "timestamp": "2026-08-06T20:00:00.000Z",
-  "version": "119.0.0"
-}
+{"build":"v120-tabs-fix","builtAt":"2026-08-07T10:50:00.000Z","changelog":"V120 tabs guard fix","code":120,"mandatory":true,"timestamp":"2026-08-07T10:50:00.000Z","version":"120.0.0"}

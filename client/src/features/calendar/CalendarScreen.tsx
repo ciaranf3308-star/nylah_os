@@ -1,15 +1,12 @@
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { PersonKey, CalendarEventV2 as CalendarEvent, CalendarEventStatus, CalendarEventResponse, CalendarResponseKind } from "../../types";
-import { PERSONS, THEMES } from "../../constants/themes";
+import { PERSONS } from "../../constants/themes";
 import { HOUSEHOLD_TZ } from "../../lib/buildMeta";
-import { todayKey, toLocalKey as toLocalKeyDublin, tzWallToUtc, nextMonthlyFrom, weekNumberSinceEpoch, BIWEEKLY_EPOCH_MONDAY_UTC } from "../../lib/dates";
-import { uid, hashId, rotForId, relTime } from "../../shared/utils/helpers";
-import { expandTemplateForMonthDublin, addDaysKey as addDaysKeyLib, getDublinHourMinuteFromIso, shouldSuppressGeneratedOccurrence } from "../../lib/recurrence";
+import { todayKey, toLocalKey as toLocalKeyDublin, tzWallToUtc } from "../../lib/dates";
+import { uid } from "../../shared/utils/helpers";
+import { expandTemplateForMonthDublin, getDublinHourMinuteFromIso, shouldSuppressGeneratedOccurrence } from "../../lib/recurrence";
 import { upsertCalendarSeries, upsertCalendarOverride } from "../../lib/normalized";
-import { MonthView } from "./MonthView";
-import { AgendaView } from "./AgendaView";
-import { EventEditor, AddEventForm } from "./EventEditor";
-import { getResponses, computeStatusFromResponses } from "./eventActions";
+import { AddEventForm } from "./EventEditor";
 
 function BottomSheet({ open, onClose, title, children }: { open: boolean; onClose:()=>void; title?: any; children:any }){
   if(!open) return null;
@@ -24,12 +21,19 @@ function BottomSheet({ open, onClose, title, children }: { open: boolean; onClos
   );
 }
 
-function CalendarPageV2({
-  events, setEvents, currentUser, nowMs, chores, setCurrentUser, onCelebrate,
-}: {
-  events: CalendarEvent[]; setEvents: (up: CalendarEvent[] | ((p: CalendarEvent[]) => CalendarEvent[])) => void;
-  currentUser: PersonKey; nowMs: number; chores?: any; setCurrentUser?: any; onCelebrate?: any;
-}) {
+function CalendarPageV2(props: any) {
+  let { events, setEvents, currentUser, nowMs, chores, setCurrentUser, onCelebrate } = props as {
+    events: CalendarEvent[]; setEvents: (up: CalendarEvent[] | ((p: CalendarEvent[]) => CalendarEvent[])) => void;
+    currentUser: PersonKey; nowMs: number; chores?: any; setCurrentUser?: any; onCelebrate?: any;
+  };
+  // v120 defensive defaults
+  if (!Array.isArray(events)) events = [] as any;
+  if (!Array.isArray(chores)) chores = [] as any;
+  if (typeof setEvents !== 'function') setEvents = (()=>{}) as any;
+  if (!currentUser) currentUser = "aisling" as any;
+  if (typeof setCurrentUser !== 'function') setCurrentUser = (()=>{}) as any;
+  if (typeof onCelebrate !== 'function') onCelebrate = (()=>{}) as any;
+  if (typeof nowMs !== 'number') nowMs = Date.now();
   // --- Dublin constants ---
   const tz = HOUSEHOLD_TZ;
   const todayDublin = todayKey(tz);

@@ -1,4 +1,3 @@
-import React from "react";
 import type { Theme } from "../../types";
 import { THEMES } from "../../constants/themes";
 

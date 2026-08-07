@@ -2,8 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { PersonKey, NoteMemo } from "../../types";
 import { PERSONS } from "../../constants/themes";
-import { HOUSEHOLD_TZ } from "../../lib/buildMeta";
-import { uid, relTime, rotForId, hashId } from "../../shared/utils/helpers";
+import { uid, relTime, rotForId } from "../../shared/utils/helpers";
 import { resizeToDataUrl, createThumbnail } from "../../lib/images";
 
 // BottomSheet extracted verbatim from AppMonolith — boutique tokens preserved
@@ -62,11 +61,15 @@ function BottomSheet({ open, onClose, children, title }: { open: boolean; onClos
   return createPortal(content, document.body);
 }
 
-function NotesMemoPage({
-  notes, setNotes, currentUser, nowMs,
-}: {
-  notes: NoteMemo[]; setNotes: any; currentUser: PersonKey; nowMs: number;
-}) {
+function NotesMemoPage(props: any) {
+  let { notes, setNotes, currentUser, nowMs } = (props || {}) as {
+    notes: NoteMemo[]; setNotes: any; currentUser: PersonKey; nowMs: number;
+  };
+  // v120 defensive: never crash on undefined
+  if (!Array.isArray(notes)) notes = [] as any;
+  if (typeof setNotes !== 'function') setNotes = (()=>{}) as any;
+  if (!currentUser) currentUser = "aisling" as any;
+  if (typeof nowMs !== 'number') nowMs = Date.now();
   const [filter, setFilter] = useState<"all"|"unread"|"pinned"|"love"|"archive">("all");
   const [showFilter, setShowFilter] = useState(false);
   const [query, setQuery] = useState("");

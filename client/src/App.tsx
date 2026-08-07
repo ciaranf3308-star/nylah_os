@@ -85,7 +85,28 @@ export function App() {
     pushToast,
     onboardingDone, setOnboardingDone,
     urlInviteCode,
-  } = s;
+  } = s || {};
+
+  // v120 defensive: never let undefined props crash .filter
+  const safeCurrentUser = (currentUser || "aisling") as any;
+  const safeTheme = theme || { bg: "#F7EFE8", fg: "#0A0A0A" } as any;
+  const safeChores = Array.isArray(chores) ? chores : [];
+  const safeChoresRaw = Array.isArray(choresRaw) ? choresRaw : [];
+  const safeCalendarRaw = Array.isArray(calendarRaw) ? calendarRaw : [];
+  const safeShoppingRaw = Array.isArray(shoppingRaw) ? shoppingRaw : [];
+  const safeNotesRaw = Array.isArray(notesRaw) ? notesRaw : [];
+  const safeSetChoresRaw = typeof setChoresRaw === 'function' ? setChoresRaw : (()=>{}) as any;
+  const safeSetCalendarRaw = typeof setCalendarRaw === 'function' ? setCalendarRaw : (()=>{}) as any;
+  const safeSetShoppingRaw = typeof setShoppingRaw === 'function' ? setShoppingRaw : (()=>{}) as any;
+  const safeSetNotesRaw = typeof setNotesRaw === 'function' ? setNotesRaw : (()=>{}) as any;
+  const safeSetCurrentUser = typeof setCurrentUser === 'function' ? setCurrentUser : (()=>{}) as any;
+  const safeNowMs = typeof nowMs === 'number' ? nowMs : Date.now();
+  const safeSyncStatus = syncStatus || { kind: "saved" } as any;
+  const safeDrainQueue = typeof drainQueue === 'function' ? drainQueue : (()=>{}) as any;
+  const safeSetTab = typeof setTab === 'function' ? setTab : (()=>{}) as any;
+  const safePhoneInnerRef = phoneInnerRef || { current: null } as any;
+
+
 
   // confetti — verbatim 24-node 1.15s, palette #A89FDA var(--border) #D0A1EA var(--wash-top) #FACC15 #6EE7B7 #FB923C
   function triggerConfetti(origin?: any) {
@@ -165,28 +186,28 @@ export function App() {
         .hero-script { font-family: Fraunces, Instrument Serif, Georgia, serif; letter-spacing: -0.02em; }
       `}</style>
 
-      <div className={standalone ? "relative w-full max-w-[100vw] w-[100vw] min-h-screen min-h-dvh flex flex-col border-0 rounded-none" : "relative mx-auto w-full max-w-[390px] overflow-hidden rounded-[36px] border-0 flex flex-col"} style={{ background: (theme as any).bg, width: standalone ? "100vw" : undefined, maxWidth: standalone ? "100vw" : undefined } as any}>
+      <div className={standalone ? "relative w-full max-w-[100vw] w-[100vw] min-h-screen min-h-dvh flex flex-col border-0 rounded-none" : "relative mx-auto w-full max-w-[390px] overflow-hidden rounded-[36px] border-0 flex flex-col"} style={{ background: (safeTheme as any).bg || (theme as any)?.bg, width: standalone ? "100vw" : undefined, maxWidth: standalone ? "100vw" : undefined } as any}>
         {pushToast && (
           <div className="fixed top-[12px] left-1/2 -translate-x-1/2 z-[80] rounded-full bg-[#0A0A0A] text-white px-4 py-2 text-[12px] font-semibold shadow-[0_8px_24px_rgba(0,0,0,0.22)] max-w-[90%] truncate">
             <span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#22C55E] animate-pulse" />{pushToast.title}: {pushToast.body}</span>
           </div>
         )}
-        <div ref={phoneInnerRef} className={standalone ? "relative flex flex-1 min-h-0 flex-col overflow-hidden w-full max-w-[100vw] rounded-none" : "relative flex h-[800px] flex-col overflow-hidden rounded-[28px]"}>
+        <div ref={safePhoneInnerRef} className={standalone ? "relative flex flex-1 min-h-0 flex-col overflow-hidden w-full max-w-[100vw] rounded-none" : "relative flex h-[800px] flex-col overflow-hidden rounded-[28px]"}>
           <div className="sticky top-0 z-30 flex flex-col bg-transparent border-0 shadow-none backdrop-blur-[1px] topbar-transparent" style={{ background: "transparent" }}>
             <div className="flex h-[56px] items-center justify-between px-4">
-              <h1 className="text-[26px] font-semibold leading-[32px] tracking-[-0.02em] text-[var(--text)] hero-script">{getPageTitle(tab as any)}</h1>
-              <button onClick={()=> setShowSwitch(true)} aria-label="Open account" className="grid h-11 w-11 place-items-center rounded-full border-2 text-[13px] font-bold active:scale-[0.96] transition ring-1 ring-[var(--border)]" style={{ background: (PERSONS[currentUser]?.wash||'var(--wash-top)'), borderColor:"var(--border)", color:"var(--text)", minHeight:44, minWidth:44 }}>{(PERSONS[currentUser]?.initial||'?')}</button>
+              <h1 className="text-[26px] font-semibold leading-[32px] tracking-[-0.02em] text-[var(--text)] hero-script">{getPageTitle((tab as any) || "fridge")}</h1>
+              <button onClick={()=> setShowSwitch(true)} aria-label="Open account" className="grid h-11 w-11 place-items-center rounded-full border-2 text-[13px] font-bold active:scale-[0.96] transition ring-1 ring-[var(--border)]" style={{ background: (PERSONS[safeCurrentUser]?.wash||'var(--wash-top)'), borderColor:"var(--border)", color:"var(--text)", minHeight:44, minWidth:44 }}>{(PERSONS[safeCurrentUser]?.initial||'?')}</button>
             </div>
-            {(()=>{ const k=(syncStatus as any)?.kind; if(!k||k==="saved"||k==="saving") return null; let msg:string|null=null; let tone="bg-amber-50 text-amber-900 border-amber-200"; if(k==="offline-queued"||k==="offline"||k==="queued"){const n=(syncStatus as any).queueCount??1; msg=n>1?`${n} changes waiting`:"Offline"; tone="bg-neutral-100 text-neutral-800 border-neutral-200";} else if(k==="failed"){msg="Sync failed — tap retry"; tone="bg-red-50 text-red-800 border-red-200";} else if(k==="updated-elsewhere"){msg="Updated elsewhere"; tone="bg-violet-50 text-violet-800 border-violet-200";} if(!msg) return null; return (<button onClick={()=> (drainQueue as any)()} className={`mx-3 mb-2 flex h-[36px] items-center rounded-[12px] border px-3 text-[12px] font-medium leading-[17px] ${tone}`}><span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-70 mr-2" />{msg}</button>); })()}
+            {(()=>{ const k=(safeSyncStatus as any)?.kind; if(!k||k==="saved"||k==="saving") return null; let msg:string|null=null; let tone="bg-amber-50 text-amber-900 border-amber-200"; if(k==="offline-queued"||k==="offline"||k==="queued"){const n=(safeSyncStatus as any).queueCount??1; msg=n>1?`${n} changes waiting`:"Offline"; tone="bg-neutral-100 text-neutral-800 border-neutral-200";} else if(k==="failed"){msg="Sync failed — tap retry"; tone="bg-red-50 text-red-800 border-red-200";} else if(k==="updated-elsewhere"){msg="Updated elsewhere"; tone="bg-violet-50 text-violet-800 border-violet-200";} if(!msg) return null; return (<button onClick={()=> (safeDrainQueue as any)()} className={`mx-3 mb-2 flex h-[36px] items-center rounded-[12px] border px-3 text-[12px] font-medium leading-[17px] ${tone}`}><span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-70 mr-2" />{msg}</button>); })()}
           </div>
 
-          <div className="flex-1 overflow-auto no-scrollbar px-4 pt-3 pb-[112px]" style={{ background: (theme as any).bg }}>
-            {(tab as any)==="fridge" && <FridgeScreen currentUser={currentUser} chores={chores as any} calendar={calendarRaw} shopping={shoppingRaw} notes={notesRaw} setTab={setTab as any} nowMs={nowMs} theme={theme} syncStatus={syncStatus} />}
-            {((tab as any)==="calendar" || (tab as any)==="plans") && <CalendarScreen />}
-            {tab==="chores" && <ChoresScreen />}
-            {tab==="shopping" && <ShoppingScreen />}
-            {tab==="notes" && <NotesScreen />}
-            {tab==="blueprint" && <SettingsScreen />}
+          <div className="flex-1 overflow-auto no-scrollbar px-4 pt-3 pb-[112px]" style={{ background: (safeTheme as any).bg || (theme as any)?.bg }}>
+            {(tab as any)==="fridge" && <FridgeScreen currentUser={safeCurrentUser} chores={(safeChores||[]) as any} calendar={(safeCalendarRaw||[])} shopping={(safeShoppingRaw||[])} notes={(safeNotesRaw||[])} setTab={safeSetTab as any} nowMs={safeNowMs} theme={safeTheme} syncStatus={safeSyncStatus} />}
+            {((tab as any)==="calendar" || (tab as any)==="plans") && <CalendarScreen events={(safeCalendarRaw||[]) as any} setEvents={safeSetCalendarRaw as any} currentUser={safeCurrentUser} nowMs={safeNowMs} chores={(safeChores||[]) as any} setCurrentUser={safeSetCurrentUser as any} onCelebrate={()=> (s as any).triggerConfetti?.()} />}
+            {tab==="chores" && <ChoresScreen chores={(safeChores||[]) as any} setChores={(s as any).setChores || safeSetChoresRaw as any} currentUser={safeCurrentUser} setCurrentUser={safeSetCurrentUser as any} onCelebrate={()=> (s as any).triggerConfetti?.()} nowMs={safeNowMs} />}
+            {tab==="shopping" && <ShoppingScreen items={(safeShoppingRaw||[]) as any} setItems={safeSetShoppingRaw as any} currentUser={safeCurrentUser} nowMs={safeNowMs} onCelebrate={()=> (s as any).triggerConfetti?.()} />}
+            {tab==="notes" && <NotesScreen notes={(safeNotesRaw||[]) as any} setNotes={safeSetNotesRaw as any} currentUser={safeCurrentUser} nowMs={safeNowMs} />}
+            {tab==="blueprint" && <SettingsScreen theme={safeTheme as any} setTheme={setThemeId as any} onConfetti={()=> (s as any).triggerConfetti?.()} choresRaw={(safeChoresRaw||[])} calendarRaw={(safeCalendarRaw||[])} shoppingRaw={(safeShoppingRaw||[])} notesRaw={(safeNotesRaw||[])} setChoresRaw={safeSetChoresRaw as any} setCalendarRaw={safeSetCalendarRaw as any} setShoppingRaw={safeSetShoppingRaw as any} setNotesRaw={safeSetNotesRaw as any} currentUser={safeCurrentUser} />}
           </div>
         </div>
 
@@ -194,7 +215,7 @@ export function App() {
           {(TABS as any).map((it:any)=>{
             const isPlans=it.k==="plans"; const currentIsPlans=(tab as any)==="plans"||(tab as any)==="calendar"; const isActive=isPlans?currentIsPlans:tab===it.k;
             return (
-              <button key={it.k} onClick={()=>{ const target=it.k==="plans"?"plans":it.k; setTab(target); }} className={`flex flex-1 flex-col items-center justify-center gap-0.5 active:scale-[0.94] select-none ${isActive?"nav-item-active":""}`} style={{ minHeight:52, height:52, minWidth:44 }}>
+              <button key={it.k} onClick={()=>{ const target=it.k==="plans"?"plans":it.k; safeSetTab(target); }} className={`flex flex-1 flex-col items-center justify-center gap-0.5 active:scale-[0.94] select-none ${isActive?"nav-item-active":""}`} style={{ minHeight:52, height:52, minWidth:44 }}>
                 <span className={`nav-icon grid h-6 w-6 place-items-center transition-colors`} style={{ color: isActive ? "#8B5E3C" : "var(--muted)" }}><TabIcon k={it.k} active={isActive} /></span>
                 <span className={`nav-label text-[12px] leading-[17px] tracking-[-0.01em] ${isActive?"font-semibold":"font-medium"}`} style={{ color: isActive ? "#8B5E3C" : "var(--muted)" }}>{it.label}</span>
               </button>
@@ -209,19 +230,19 @@ export function App() {
                 <div className="text-[13px] font-medium">Enter PIN for {(PERSONS[pendingSwitchTo as any]?.name||pendingSwitchTo||"?")}</div>
                 <div className="flex gap-2">
                   <input value={switchPin} onChange={e=>{ const v=e.target.value.replace(/\D/g,"").slice(0,4); setSwitchPin(v); setSwitchPinWrong(false); }} inputMode="numeric" placeholder="••••" className="flex-1 rounded-[12px] border bg-[var(--card-bg)] px-4 h-[48px] text-center tracking-widest text-[14px]" style={{ borderColor: switchPinWrong ? "#E07A5F" : "var(--border)" }} />
-                  <button onClick={async()=>{ const who=await verifyPin(switchPin); if(who===pendingSwitchTo){ setCurrentUser(who as any); try{ localStorage.setItem("couple_v1_currentUser", JSON.stringify(who)); }catch{} try{ idbSet("couple_v1_currentUser", who); }catch{} setShowSwitch(false); setPendingSwitchTo(null); setSwitchPin(""); } else { setSwitchPinWrong(true); setTimeout(()=> setSwitchPin(""),300);} }} className="rounded-[16px] bg-[#0A0A0A] px-4 h-[48px] text-white text-[13px]">Switch</button>
+                  <button onClick={async()=>{ const who=await verifyPin(switchPin); if(who===pendingSwitchTo){ safeSetCurrentUser(who as any); try{ localStorage.setItem("couple_v1_currentUser", JSON.stringify(who)); }catch{} try{ idbSet("couple_v1_currentUser", who); }catch{} setShowSwitch(false); setPendingSwitchTo(null); setSwitchPin(""); } else { setSwitchPinWrong(true); setTimeout(()=> setSwitchPin(""),300);} }} className="rounded-[16px] bg-[#0A0A0A] px-4 h-[48px] text-white text-[13px]">Switch</button>
                 </div>
                 {switchPinWrong && <div className="text-[11px] text-[#B91C1C]">wrong PIN</div>}
                 <button onClick={()=>{ setPendingSwitchTo(null); setSwitchPin(""); }} className="text-[11px] underline">cancel</button>
               </div>
             ) : (
               <div className="space-y-1 py-2">
-                <div className="px-3 pb-3 flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-full border text-[13px] font-bold" style={{ background:(PERSONS[currentUser]?.wash||'var(--wash-top)'), borderColor:"var(--border)" }}>{(PERSONS[currentUser]?.initial||'?')}</span><div><div className="text-[15px] font-semibold">{(PERSONS[currentUser]?.name||currentUser||'You')}</div><div className="text-[12px] text-[var(--muted)]">Current profile</div></div></div>
-                <button onClick={()=>{ setShowSwitch(false); setTab("fridge" as any); }} className="flex min-h-[52px] w-full items-center justify-between rounded-[16px] px-4 text-[14px] leading-[20px] hover:bg-[var(--chip-bg)] active:scale-[0.98]"><span>Profile</span><span className="text-[11px] text-[var(--muted)]">{(PERSONS[currentUser]?.name||currentUser||'You')}</span></button>
+                <div className="px-3 pb-3 flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-full border text-[13px] font-bold" style={{ background:(PERSONS[safeCurrentUser]?.wash||'var(--wash-top)'), borderColor:"var(--border)" }}>{(PERSONS[safeCurrentUser]?.initial||'?')}</span><div><div className="text-[15px] font-semibold">{(PERSONS[safeCurrentUser]?.name||safeCurrentUser||'You')}</div><div className="text-[12px] text-[var(--muted)]">Current profile</div></div></div>
+                <button onClick={()=>{ setShowSwitch(false); safeSetTab("fridge" as any); }} className="flex min-h-[52px] w-full items-center justify-between rounded-[16px] px-4 text-[14px] leading-[20px] hover:bg-[var(--chip-bg)] active:scale-[0.98]"><span>Profile</span><span className="text-[11px] text-[var(--muted)]">{(PERSONS[safeCurrentUser]?.name||safeCurrentUser||'You')}</span></button>
                 <div className="flex min-h-[52px] w-full items-center justify-between rounded-[16px] px-4 text-[14px] leading-[20px]"><span>Sync status</span><span className="text-[11px] text-[var(--muted)]">{(()=>{ const k=(s.syncStatus as any)?.kind; if(k==='failed') return 'Failed — will retry'; if(k==='offline-queued'||(s.syncStatus as any)?.kind==='offline'){ const n=(s.syncStatus as any)?.queueCount||1; return `${n} queued — server not reached`; } if(k==='saving') return 'Saving to server...'; const last=(s.syncStatus as any)?.lastSavedAt; if(last){ try{ const t=new Date(last).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); return `Saved ${t} server ✓`; }catch{return 'Saved server ✓';}} return 'No confirmed save yet'; })()}</span></div>
                 <button onClick={()=>{ setShowSwitch(false); setShowBlueprint(true); }} className="flex min-h-[52px] w-full items-center justify-between rounded-[16px] px-4 text-[14px] leading-[20px] hover:bg-[var(--chip-bg)] active:scale-[0.98]"><span>Appearance</span><span className="text-[11px] text-[var(--muted)]">{THEMES.find((t:any)=> t.id===themeId)?.name || "Beige"}</span></button>
                 <button onClick={()=>{ setShowSwitch(false); setShowBlueprint(true); }} className="flex min-h-[52px] w-full items-center justify-between rounded-[16px] px-4 text-[14px] leading-[20px] hover:bg-[var(--chip-bg)] active:scale-[0.98]">Settings<span className="text-[11px] text-[var(--muted)]">›</span></button>
-                <div className="pt-3 border-t mt-2" style={{ borderColor:"var(--border)"}}><div className="text-[11px] text-[var(--muted)] px-2 mb-2">Switch to</div><div className="flex items-center gap-3 px-2">{(["aisling","ciaran"] as const).map(k=> (<button key={k} onClick={()=>{ if(k===currentUser){ setShowSwitch(false); return;} setPendingSwitchTo(k); }} className={"flex flex-col items-center gap-1.5 active:scale-[0.98] "+(currentUser===k?"opacity-100":"opacity-70")}><span className={"grid h-11 w-11 place-items-center rounded-full border text-[13px] font-bold "+(currentUser===k?"ring-2 ring-[#0A0A0A] ring-offset-2":"")} style={{ background: PERSONS[k].wash, borderColor: PERSONS[k].accent }}>{PERSONS[k].initial}</span><span className="text-[11px]">{PERSONS[k].name}</span></button>))}</div></div>
+                <div className="pt-3 border-t mt-2" style={{ borderColor:"var(--border)"}}><div className="text-[11px] text-[var(--muted)] px-2 mb-2">Switch to</div><div className="flex items-center gap-3 px-2">{(["aisling","ciaran"] as const).map(k=> (<button key={k} onClick={()=>{ if(k===safeCurrentUser){ setShowSwitch(false); return;} setPendingSwitchTo(k); }} className={"flex flex-col items-center gap-1.5 active:scale-[0.98] "+(safeCurrentUser===k?"opacity-100":"opacity-70")}><span className={"grid h-11 w-11 place-items-center rounded-full border text-[13px] font-bold "+(safeCurrentUser===k?"ring-2 ring-[#0A0A0A] ring-offset-2":"")} style={{ background: PERSONS[k].wash, borderColor: PERSONS[k].accent }}>{PERSONS[k].initial}</span><span className="text-[11px]">{PERSONS[k].name}</span></button>))}</div></div>
               </div>
             )}
           </BottomSheet>
@@ -229,8 +250,8 @@ export function App() {
 
         {showBlueprint && (
           <BottomSheet open={showBlueprint} onClose={()=> setShowBlueprint(false)} title="Settings + Blueprint">
-            {/* single Settings 5-group — product area settings */}
-            <SettingsScreen />
+            {/* single Settings 5-group — product area settings — v120 defensive [] */}
+            <SettingsScreen theme={safeTheme as any} setTheme={setThemeId as any} onConfetti={()=> (s as any).triggerConfetti?.()} choresRaw={(safeChoresRaw||[])} calendarRaw={(safeCalendarRaw||[])} shoppingRaw={(safeShoppingRaw||[])} notesRaw={(safeNotesRaw||[])} setChoresRaw={safeSetChoresRaw as any} setCalendarRaw={safeSetCalendarRaw as any} setShoppingRaw={safeSetShoppingRaw as any} setNotesRaw={safeSetNotesRaw as any} currentUser={safeCurrentUser} />
           </BottomSheet>
         )}
       </div>

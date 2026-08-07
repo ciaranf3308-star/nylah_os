@@ -1,4 +1,3 @@
-import React from "react";
 import type { NoteMemo } from "../../types";
 import { rotForId } from "../../shared/utils/helpers";
 

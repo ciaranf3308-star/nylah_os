@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { PersonKey } from "../../types";
 import { PERSONS } from "../../constants/themes";
 import { todayKey, toLocalKey as toLocalKeyDublin, tzWallToUtc } from "../../lib/dates";
 import { HOUSEHOLD_TZ } from "../../lib/buildMeta";
-import { uid } from "../../shared/utils/helpers";
 
 function timePartFromIsoDublin(iso?: string): string {
   if (!iso) return "10:00";

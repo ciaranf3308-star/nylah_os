@@ -1,9 +1,8 @@
 // ChoreHistory.tsx — history / feed
-import React from "react";
 import type { ChoreV2 } from "./choreTypes";
 import { relTime } from "../../shared/utils/helpers";
 import { PERSONS } from "../../constants/themes";
-import { effectivePoints, isBonusChore, toLocalKeyDublin } from "./choreScoring";
+import { effectivePoints, toLocalKeyDublin } from "./choreScoring";
 
 type Props = {
   done: ChoreV2[];

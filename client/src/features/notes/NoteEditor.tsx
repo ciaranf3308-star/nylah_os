@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import type { NoteMemo, PersonKey } from "../../types";
 import { uid } from "../../shared/utils/helpers";
 import { resizeToDataUrl, createThumbnail } from "../../lib/images";

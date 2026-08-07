@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import type { PersonKey } from "../../types";
 import { HOUSEHOLD_ID, HOUSEHOLD_TZ } from "../../lib/buildMeta";
 

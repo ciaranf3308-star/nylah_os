@@ -1,7 +1,7 @@
 // ChoreDeck.tsx — Tinder swipe deck UI (Deck tab)
 // Preserve 44px min spring cubic-bezier(0.34,1.56,0.64,1), Fraunces/Inter styles, grain 0.12 opacity, 64px badge
 import React from "react";
-import type { ChoreV2, PersonKey } from "./choreTypes";
+import type { ChoreV2 } from "./choreTypes";
 import { effectivePoints, getDueMsChore, isBonusChore, effortHuman } from "./choreScoring";
 import { rotForId } from "../../shared/utils/helpers";
 import { ChoreIcon, CHORE_ICONS, CHORE_ICON_BY_TEMPLATE } from "../../lib/choreIcons";

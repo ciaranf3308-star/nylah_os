@@ -1,5 +1,4 @@
 // ChoreMine.tsx — Mine tab list
-import React from "react";
 import type { ChoreV2 } from "./choreTypes";
 import { effectivePoints, getDueMsChore, isBonusChore, timingLabel } from "./choreScoring";
 import { PERSONS } from "../../constants/themes";

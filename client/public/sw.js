@@ -1,5 +1,5 @@
-// Nylah OS SW v119 fridge rich code 69
-const CACHE_NAME = "nylah-os-v119-correctness-patch";
+// Nylah OS SW v120 tabs fix
+const CACHE_NAME = "nylah-os-v120-tabs-fix";
 const URLS = ["./","./index.html","./manifest.webmanifest"];
 self.addEventListener("install", e=>{
   e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(URLS.map(u=>new Request(u,{cache:"reload"}))).catch(()=>{})));

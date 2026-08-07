@@ -1,4 +1,4 @@
-import { getSupabase, TABLE, ROW_ID, getEffectiveRowId, getEffectiveTable } from './supabase'
+import { getSupabase, TABLE, ROW_ID, getEffectiveRowId, getEffectiveTable } from './supabase';
 
 export type SyncKind = 'saving' | 'saved' | 'synced' | 'offline-queued' | 'failed' | 'updated-elsewhere';
 export type SyncStatus = {

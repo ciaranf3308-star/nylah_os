@@ -1,5 +1,5 @@
 // ChoreAdmin.tsx — Admin template editor, recurrence weekday picker + This/Future split, icons ALL_CHORE_ICON_IDS, CHORE_ICON_BY_TEMPLATE
-import React, { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import type { ChoreV2 } from "./choreTypes";
 import { ChoreIcon, ALL_CHORE_ICON_IDS } from "../../lib/choreIcons";
 import type { ChoreIconId } from "../../lib/choreIcons";

@@ -1,5 +1,4 @@
 // ChoreDone.tsx — Done tab
-import React from "react";
 import type { ChoreV2 } from "./choreTypes";
 import { effectivePoints, isBonusChore, timingLabel } from "./choreScoring";
 import { PERSONS } from "../../constants/themes";

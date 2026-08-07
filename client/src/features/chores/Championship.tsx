@@ -1,6 +1,5 @@
 // Championship.tsx — monthly leaderboard, streak
 // Preserve: Europe/Dublin TZ, weekNumberSinceEpoch, BIWEEKLY_EPOCH_MONDAY_UTC, 1.15× bonus, capped 1.5×, 600 pts label, Fraunces/Inter styles
-import React from "react";
 import type { PersonKey } from "./choreTypes";
 import { PERSONS } from "../../constants/themes";
 

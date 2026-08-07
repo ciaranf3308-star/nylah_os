@@ -3,7 +3,7 @@
 // Existing users with local household_id or legacy couple_v1_* keys bypass via shouldShowOnboarding check in App.tsx.
 // Fresh users must create or join via validated invite code; no generic Continue bypass.
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getSupabase, TABLE as SB_TABLE } from "../../lib/supabase";
 
 function generateInviteCode(): string {

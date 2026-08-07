@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { HOUSEHOLD_ID, HOUSEHOLD_TZ } from "../../lib/buildMeta";
 
 export function DataTruth({ choresRaw, calendarRaw, shoppingRaw, notesRaw }: { choresRaw?:any[]; calendarRaw?:any[]; shoppingRaw?:any[]; notesRaw?:any[] }){

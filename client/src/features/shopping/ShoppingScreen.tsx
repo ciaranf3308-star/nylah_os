@@ -2,9 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { PersonKey, ShoppingItemV2, ShoppingCategory, ShoppingFrequency } from "../../types";
 import { CATS } from "../../types";
-import { PERSONS } from "../../constants/themes";
-import { HOUSEHOLD_TZ } from "../../lib/dates";
-import { uid, relTime } from "../../shared/utils/helpers";
+import { uid } from "../../shared/utils/helpers";
 
 function IconCheckTiny({ size=12 }: {size?:number}){ return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}><path d="M5 12.5l3.7 3.7L19 7"/></svg>; }
 function parseNeedDaysToBool(s?: string): boolean[] {
@@ -94,11 +92,16 @@ function BottomSheet({ open, onClose, children, title }: { open: boolean; onClos
 }
 
 
-function ShoppingPageFacelift({
-  items, setItems, currentUser, onCelebrate, nowMs,
-}: {
-  items: ShoppingItemV2[]; setItems: any; currentUser: PersonKey; onCelebrate?: any; nowMs: number;
-}) {
+function ShoppingPageFacelift(props: any) {
+  let { items, setItems, currentUser, onCelebrate, nowMs } = (props || {}) as {
+    items: ShoppingItemV2[]; setItems: any; currentUser: PersonKey; onCelebrate?: any; nowMs: number;
+  };
+  // v120 tabs guard: defensive defaults so .filter never crashes if props undefined
+  if (!Array.isArray(items)) items = [] as any;
+  if (typeof setItems !== 'function') setItems = (()=>{}) as any;
+  if (!currentUser) currentUser = "aisling" as any;
+  if (typeof onCelebrate !== 'function') onCelebrate = (()=>{}) as any;
+  if (typeof nowMs !== 'number') nowMs = Date.now();
   const [tripMode, setTripMode] = useState(false);
   const [segment, setSegment] = useState<"household"|"aisling"|"ciaran">("household");
   const [catFilter, setCatFilter] = useState<ShoppingCategory|"All">("All");

@@ -1,6 +1,4 @@
-import React from "react";
 import type { CalendarEventV2 } from "../../types";
-import { PERSONS } from "../../constants/themes";
 
 type Props = {
   cells: { key: string|null; day:number|null; isSelected:boolean; isToday:boolean }[];

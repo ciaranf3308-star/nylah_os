@@ -11,8 +11,14 @@ try {
   const outDir = "./client/dist";
   const assetsDir = join(outDir, "assets");
   if (existsSync(publicDir)) {
-    await cp(publicDir, outDir, { recursive: true, force: true });
+    await cp(publicDir, outDir, { recursive: true, force: true, filter: (src) => {
+      // Exclude supabase-init.sql - must never go to Pages (causes build failed)
+      if (src.endsWith("supabase-init.sql")) return false;
+      return true;
+    }});
   }
+  // Ensure no supabase-init.sql leaked via older build
+  try { const sqlPath = `${outDir}/supabase-init.sql`; if (existsSync(sqlPath)) { const { unlink } = await import("node:fs/promises"); await unlink(sqlPath); } } catch {}
 
   // fix asset icons
   try {

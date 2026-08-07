@@ -1,6 +1,5 @@
 // eventActions.ts — zero logic change, exact JSX/logic verbatim from AppMonolith.tsx boutique tokens preserved
 import type { CalendarEventV2, CalendarEventStatus, CalendarEventResponse, PersonKey } from "../../types";
-import { HOUSEHOLD_TZ } from "../../lib/buildMeta";
 import { upsertCalendarSeries, upsertCalendarOverride } from "../../lib/normalized";
 
 export type { CalendarEventV2, CalendarEventStatus, CalendarEventResponse };

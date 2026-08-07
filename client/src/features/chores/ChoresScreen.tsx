@@ -4,11 +4,11 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { PersonKey, ChoreV2 } from "../../types";
 import { PERSONS } from "../../constants/themes";
-import { uid, rotForId, relTime } from "../../shared/utils/helpers";
-import { todayKey, toLocalKey as toLocalKeyDublin, tzWallToUtc, HOUSEHOLD_TZ } from "../../lib/dates";
-import { CHORE_ICONS, ChoreIcon, ALL_CHORE_ICON_IDS, CHORE_ICON_BY_TEMPLATE } from "../../lib/choreIcons";
+import { uid, relTime } from "../../shared/utils/helpers";
+import { todayKey, toLocalKey as toLocalKeyDublin, HOUSEHOLD_TZ } from "../../lib/dates";
+import { ChoreIcon, ALL_CHORE_ICON_IDS } from "../../lib/choreIcons";
 import type { ChoreIconId } from "../../lib/choreIcons";
-import { claimChoreViaRpc as claimChoreOccRpc, completeChoreOccurrence as completeChoreRpc } from "../../lib/normalized";
+import { claimChoreViaRpc as claimChoreOccRpc } from "../../lib/normalized";
 
 // submodules
 import { effectivePoints, getDueMsChore, isBonusChore, effortHuman, getNextResetAt, getResetCountdown, computeMonthScores, computeMetaHistory } from "./choreScoring";
@@ -70,11 +70,16 @@ function BottomSheet({ open, onClose, children, title }: { open: boolean; onClos
   return createPortal(content, document.body);
 }
 
-export default function ChoresScreen({
-  chores, setChores, currentUser, setCurrentUser, onCelebrate, nowMs,
-}: {
-  chores: ChoreV2[]; setChores: any; currentUser: PersonKey; setCurrentUser?: any; onCelebrate?: any; nowMs: number;
-}) {
+export default function ChoresScreen(props: any) {
+  let { chores, setChores, currentUser, setCurrentUser, onCelebrate, nowMs } = (props || {}) as {
+    chores: ChoreV2[]; setChores: any; currentUser: PersonKey; setCurrentUser?: any; onCelebrate?: any; nowMs: number;
+  };
+  if (!Array.isArray(chores)) chores = [] as any;
+  if (typeof setChores !== 'function') setChores = (()=>{}) as any;
+  if (!currentUser) currentUser = "aisling" as any;
+  if (typeof setCurrentUser !== 'function') setCurrentUser = (()=>{}) as any;
+  if (typeof onCelebrate !== 'function') onCelebrate = (()=>{}) as any;
+  if (typeof nowMs !== 'number') nowMs = Date.now();
   const [tab, setTab] = useState<"deck"|"mine"|"open"|"done"|"admin">("deck");
   const [filter, setFilter] = useState<"all"|"today"|"week"|"overdue">("all");
   const [weekdayFilter, setWeekdayFilter] = useState<boolean[]>(()=>[false,false,false,false,false,false,false]);

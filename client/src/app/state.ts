@@ -4,78 +4,46 @@
 // Source file: AppMonolith.tsx — V1AppShell + App hooks
 // This file does NOT wire UI — only exports state, constants, helpers, and hooks.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  getSupabase,
-  hasSupabaseConfig,
-  saveSupabaseConfig,
-  TOKEN as SB_TOKEN,
-  TABLE as SB_TABLE,
-  ROW_ID as SB_ROW_ID,
+getSupabase,
+hasSupabaseConfig,
+saveSupabaseConfig,
+TOKEN as SB_TOKEN,
+TABLE as SB_TABLE,
+ROW_ID as SB_ROW_ID,
 } from "../lib/supabase";
 import type {
-  PersonKey,
-  Theme,
-  TabKey,
-  ChoreV2,
-  CalendarEventV2,
-  CalendarEventStatus,
-  CalendarResponseKind,
-  CalendarEventResponse,
-  ShoppingCategory,
-  ShoppingFrequency,
-  ShoppingItemV2,
-  PersonalWants,
-  NoteReactionKind,
-  NoteMemo,
-  Chore,
-  CalendarEvent,
-  ShoppingItem,
-  AddEventFormProps,
+PersonKey,
+Theme,
+TabKey,
+ChoreV2,
+CalendarEventV2,
+CalendarEventStatus,
+CalendarResponseKind,
+CalendarEventResponse,
+ShoppingCategory,
+ShoppingFrequency,
+ShoppingItemV2,
+PersonalWants,
+NoteReactionKind,
+NoteMemo,
+Chore,
+CalendarEvent,
+ShoppingItem,
+AddEventFormProps,
 } from "../types";
 import { CATS } from "../types";
 import { THEMES, PERSONS, TABS } from "../constants/themes";
 import { remoteLoad, remoteSave, subscribeRemote } from "../lib/remoteSync";
-import {
-  claimChoreViaRpc as claimChoreOccRpc,
-  completeChoreOccurrence as completeChoreRpc,
-  insertChoreOccurrence as upsertChoreOcc,
-  syncChoreOccurrencesToSupabase,
-} from "../lib/normalized";
-import {
-  CHORE_ICONS,
-  ChoreIcon,
-  ALL_CHORE_ICON_IDS,
-  CHORE_ICON_BY_TEMPLATE,
-} from "../lib/choreIcons";
 import type { ChoreIconId } from "../lib/choreIcons";
 import {
-  HOUSEHOLD_ID as BUILD_HOUSEHOLD_ID,
-  HOUSEHOLD_TZ,
-  HOUSEHOLD_ID,
+HOUSEHOLD_ID as BUILD_HOUSEHOLD_ID,
+HOUSEHOLD_TZ,
+HOUSEHOLD_ID,
 } from "../lib/buildMeta";
-import {
-  todayKey,
-  toLocalKey as toLocalKeyDublin,
-  toLocalKey,
-  tzWallToUtc,
-  nextMonthlyFrom,
-  diffCalendarDays,
-  clampDayOfMonth,
-  weekNumberSinceEpoch,
-  BIWEEKLY_EPOCH_MONDAY_UTC,
-} from "../lib/dates";
-import { uid, hashId, rotForId, relTime, fmtTimeDublin } from "../shared/utils/helpers";
-import {
-  expandTemplateForMonthDublin,
-  addDaysKey,
-  getDublinHourMinuteFromIso,
-  shouldSuppressGeneratedOccurrence,
-} from "../lib/recurrence";
-import { upsertCalendarSeries, upsertCalendarOverride } from "../lib/normalized";
-import { verifyPin } from "../lib/pins";
-import { openIdb, idbGet, idbSet, idbGetQueue, idbSetQueue } from "../lib/idb";
-import { resizeToDataUrl, createThumbnail } from "../lib/images";
+import { uid } from "../shared/utils/helpers";
+import { openIdb, idbGet, idbSet } from "../lib/idb";
 
 // ---- constants (verbatim from monolith) ----
 export const TABLE = SB_TABLE;

@@ -3,33 +3,28 @@ import { createPortal } from "react-dom";
 import { getSupabase, hasSupabaseConfig, saveSupabaseConfig, TOKEN as SB_TOKEN, TABLE as SB_TABLE, ROW_ID as SB_ROW_ID } from "./lib/supabase";
 const TABLE = SB_TABLE;
 const ROW_ID = SB_ROW_ID;
-import { UpdaterBanner } from "./components/UpdaterBanner";
 // refactor split-v117: zero-logic extraction
-import type { PersonKey, Theme, TabKey, ChoreV2, CalendarEventV2, CalendarEventStatus, CalendarResponseKind, CalendarEventResponse, ShoppingCategory, ShoppingFrequency, ShoppingItemV2, PersonalWants, NoteReactionKind, NoteMemo, Chore, CalendarEvent, ShoppingItem, AddEventFormProps } from "./types";
+import type { PersonKey, Theme, TabKey, ChoreV2, CalendarEventV2, CalendarEventStatus, CalendarResponseKind, CalendarEventResponse, ShoppingCategory, ShoppingFrequency, ShoppingItemV2, NoteMemo, CalendarEvent, AddEventFormProps } from "./types";
 import { CATS } from "./types";
 import { THEMES, PERSONS, TABS } from "./constants/themes";
 import { remoteLoad, remoteSave, subscribeRemote } from "./lib/remoteSync";
-import { claimChoreViaRpc as claimChoreOccRpc, completeChoreOccurrence as completeChoreRpc, insertChoreOccurrence as upsertChoreOcc, syncChoreOccurrencesToSupabase } from "./lib/normalized";
+import { claimChoreViaRpc as claimChoreOccRpc, completeChoreOccurrence as completeChoreRpc } from "./lib/normalized";
 import { CHORE_ICONS, ChoreIcon, ALL_CHORE_ICON_IDS, CHORE_ICON_BY_TEMPLATE } from "./lib/choreIcons";
 import type { ChoreIconId } from "./lib/choreIcons";
 // FIX: one date engine Europe/Dublin — single source of truth
 import { HOUSEHOLD_ID as BUILD_HOUSEHOLD_ID, HOUSEHOLD_TZ } from "./lib/buildMeta";
 import {
-  todayKey,
-  toLocalKey as toLocalKeyDublin,
-  toLocalKey,
-  tzWallToUtc,
-  nextMonthlyFrom,
-  diffCalendarDays,
-  clampDayOfMonth,
-  weekNumberSinceEpoch,
-  BIWEEKLY_EPOCH_MONDAY_UTC,
+todayKey,
+toLocalKey as toLocalKeyDublin, tzWallToUtc,
+nextMonthlyFrom, clampDayOfMonth,
+weekNumberSinceEpoch,
+BIWEEKLY_EPOCH_MONDAY_UTC
 } from "./lib/dates";
-import { uid, hashId, rotForId, relTime, fmtTimeDublin } from "./shared/utils/helpers";
-import { expandTemplateForMonthDublin, addDaysKey, getDublinHourMinuteFromIso, shouldSuppressGeneratedOccurrence } from "./lib/recurrence";
+import { uid, rotForId, relTime } from "./shared/utils/helpers";
+import { expandTemplateForMonthDublin, getDublinHourMinuteFromIso, shouldSuppressGeneratedOccurrence } from "./lib/recurrence";
 import { upsertCalendarSeries, upsertCalendarOverride } from "./lib/normalized";
 import { verifyPin } from "./lib/pins";
-import { openIdb, idbGet, idbSet, idbGetQueue, idbSetQueue } from "./lib/idb";
+import { openIdb, idbGet, idbSet } from "./lib/idb";
 import { resizeToDataUrl, createThumbnail } from "./lib/images";
 
 // ---- robust storage ----

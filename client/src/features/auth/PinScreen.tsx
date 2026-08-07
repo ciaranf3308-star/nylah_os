@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { PersonKey } from "../../types";
 import { PERSONS } from "../../constants/themes";
 import { verifyPin } from "../../lib/pins";

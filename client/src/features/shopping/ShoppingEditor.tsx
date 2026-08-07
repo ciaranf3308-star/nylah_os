@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import type { ShoppingItemV2, ShoppingCategory, ShoppingFrequency, PersonKey } from "../../types";
 import { CATS } from "../../types";
-import { HOUSEHOLD_TZ } from "../../lib/buildMeta";
 import { uid } from "../../shared/utils/helpers";
 
 type Props = {

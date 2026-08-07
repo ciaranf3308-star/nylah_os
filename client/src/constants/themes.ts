@@ -1,6 +1,6 @@
 // ZERO LOGIC CHANGE — extracted from App.tsx lines 245-257 V117 4cfbabb
 // Contains THEMES array, PERSONS, TABS constants. No logic changes.
-import type { Theme, PersonKey, TabKey, TABSItem } from "../types";
+import type { Theme, PersonKey, TABSItem } from "../types";
 
 export type { Theme } from "../types";
 

@@ -539,7 +539,7 @@ export default function ChoresScreen(props: any) {
           </div>
 
           {/* Effort — dot scale */}
-          <div className="rounded-[18px] border bg-[#FFFCF8] px-4 py-3.5" style={{borderColor:"#EDE2D2"}}>
+          <div className="rounded-[18px] border bg-[var(--card-bg)] px-4 py-3.5" style={{borderColor:"var(--border)"}}>
             <div className="flex items-baseline justify-between">
               <span className="text-[10.5px] font-[650] tracking-[0.12em] uppercase text-[#8A7D6E]">How heavy?</span>
               <span className="font-['Fraunces'] text-[11.5px] italic text-[var(--muted)] tabular-nums">
@@ -588,7 +588,7 @@ export default function ChoresScreen(props: any) {
           {/* Frequency — pill rail */}
           <div className="space-y-2.5">
             <span className="text-[10.5px] font-[650] tracking-[0.12em] uppercase text-[#8A7D6E]">How often?</span>
-            <div className="grid w-full grid-cols-4 rounded-[14px] p-[3px] gap-[2px]" style={{background:"#F5EEE6", border:"1px solid #EFE3D3"}}>
+            <div className="grid w-full grid-cols-4 rounded-[14px] p-[3px] gap-[2px]" style={{background:"var(--chip-bg)", border:"1px solid var(--border)"}}>
               {(["one-off","daily","weekly","monthly"] as const).map(f=> {
                 const active = (f==="one-off" && addType==="one-off") || addFreq===f;
                 return (
@@ -631,7 +631,7 @@ export default function ChoresScreen(props: any) {
               <span className="text-[10.5px] font-[650] tracking-[0.12em] uppercase text-[#8A7D6E]">Mark</span>
               <span className="text-[10px] font-[450] text-[var(--muted)]/60 tabular-nums">{addPain*10} pts • {addIcon}</span>
             </div>
-            <div className="rounded-[14px] border bg-[#FFFCF8] p-2" style={{borderColor:"#EDE2D2"}}>
+            <div className="rounded-[14px] border bg-[var(--card-bg)] p-2" style={{borderColor:"var(--border)"}}>
               <div className="grid grid-cols-5 gap-2 max-h-[148px] overflow-y-auto no-scrollbar p-1">
                 {(ALL_CHORE_ICON_IDS as any).map((id:string)=> {
                   const active = addIcon===id;

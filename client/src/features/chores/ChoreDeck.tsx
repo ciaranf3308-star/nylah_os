@@ -108,7 +108,7 @@ export function ChoreDeck(props: Props) {
             className="pointer-events-none absolute inset-0 rounded-[20px] translate-y-[6px] scale-[0.985]"
             style={{
               background: "var(--card-bg)",
-              border: "1px solid rgba(0,0,0,0.06)",
+              border: "1px solid var(--border)",
               opacity: 0.62,
             }}
             aria-hidden
@@ -122,8 +122,8 @@ export function ChoreDeck(props: Props) {
             "transition-[transform,box-shadow,border-color] active:scale-[0.985]"
           }
           style={{
-            borderColor: "rgba(0,0,0,0.08)",
-            background: "linear-gradient(180deg, #FFFEFB 0%, #FFFEFB 46%, #FFF8F1 100%)",
+            borderColor: "var(--border)",
+            background: "var(--card-bg)",
             boxShadow: large
               ? "0 6px 20px rgba(18,18,20,0.05), 0 1px 0 rgba(0,0,0,0.02)"
               : "0 2px 10px rgba(18,18,20,0.04)",
@@ -146,11 +146,11 @@ export function ChoreDeck(props: Props) {
             }}
             aria-hidden
           />
-          {/* single soft warm radial, not colored blob by icon */}
+          {/* soft wash – theme aware, not beige-only */}
           <div
             className="pointer-events-none absolute -right-10 -top-14 h-[168px] w-[168px] rounded-full blur-[18px]"
             style={{
-              background: "radial-gradient(70% 70% at 50% 50%, rgba(247,239,232,0.72) 0%, rgba(255,248,241,0) 72%)",
+              background: "radial-gradient(70% 70% at 50% 50%, var(--chip-bg) 0%, transparent 72%)",
               opacity: 0.72,
             }}
             aria-hidden
@@ -158,20 +158,20 @@ export function ChoreDeck(props: Props) {
 
           {/* top-rule row */}
           <div className="relative z-10 flex items-center justify-between px-[18px] pt-[14px]">
-            <span className="text-[10px] font-[650] tracking-[0.18em] uppercase text-[#8A7F78]/80">
+            <span className="text-[10px] font-[650] tracking-[0.18em] uppercase" style={{color:"var(--muted)"}}>
               {timingLabel(c, nowMs)}
             </span>
             <div className="flex items-center gap-2">
               {isRace && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-[#E8DDD0] bg-white/70 px-2 py-[2px] text-[10px] font-[600] tracking-[0.04em] text-[#9A836F]">
+                <span className="inline-flex items-center gap-1 rounded-full border bg-[var(--chip-bg)]/80 px-2 py-[2px] text-[10px] font-[600] tracking-[0.04em]" style={{borderColor:"var(--border)", color:"var(--text-secondary)"}}>
                   <span className="h-[4px] w-[4px] rounded-full bg-[#D6BCA7] animate-pulse" />
                   RACE
                 </span>
               )}
-              {/* 44px circle icon – linen, no shadow rotate */}
+              {/* 44px circle icon – theme aware */}
               <span
-                className="grid h-[44px] w-[44px] place-items-center rounded-full bg-white text-[var(--text)]"
-                style={{ border: "1px solid rgba(0,0,0,0.08)" }}
+                className="grid h-[44px] w-[44px] place-items-center rounded-full bg-[var(--chip-bg)] text-[var(--text)]"
+                style={{ border: "1px solid var(--border)" }}
                 aria-hidden
               >
                 <ChoreIcon id={iconId as any} size={20} />
@@ -182,14 +182,14 @@ export function ChoreDeck(props: Props) {
           {/* swipe hints – soft translucent, centered */}
           {large && dragX < -56 && (
             <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center">
-              <div className="rounded-full border border-black/10 bg-white/80 px-4 py-2 text-[11.5px] font-[600] tracking-[0.06em] text-[#5A5450] backdrop-blur-md shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
+              <div className="rounded-full border bg-[var(--card-bg)]/85 px-4 py-2 text-[11.5px] font-[600] tracking-[0.06em] backdrop-blur-md shadow-[0_2px_12px_rgba(0,0,0,0.08)]" style={{borderColor:"var(--border)", color:"var(--text-secondary)"}}>
                 pass
               </div>
             </div>
           )}
           {large && dragX > 56 && (
             <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center">
-              <div className="rounded-full bg-[#121214] px-4 py-2 text-[11.5px] font-[650] tracking-[0.06em] text-white shadow-[0_4px_14px_rgba(0,0,0,0.16)]">
+              <div className="rounded-full bg-[#121214] px-4 py-2 text-[11.5px] font-[650] tracking-[0.06em] text-white shadow-[0_4px_14px_rgba(0,0,0,0.16)] dark:bg-[#FF6B26] dark:text-[#121214]">
                 mine
               </div>
             </div>
@@ -216,28 +216,28 @@ export function ChoreDeck(props: Props) {
                 {c.title}
               </div>
 
-              {/* meta row – effort chip transparent, points terracotta, overdue dot */}
+              {/* meta row – effort chip, points, overdue */}
               <div className="mt-[10px] flex flex-wrap items-center gap-2">
-                <span className="inline-flex h-[20px] items-center rounded-full border border-[#E8DDD0] bg-transparent px-2.5 text-[10.5px] font-[500] text-[#7A6F68]">
+                <span className="inline-flex h-[20px] items-center rounded-full border bg-transparent px-2.5 text-[10.5px] font-[500]" style={{borderColor:"var(--border)", color:"var(--muted)"}}>
                   {effortHuman(c.pain)}
                 </span>
-                <span className="text-[11px] font-[600] tracking-[0.01em] text-[#8B5E3C]">
+                <span className="text-[11px] font-[600] tracking-[0.01em]" style={{color:"var(--accent-strong)"}}>
                   {points} pts{mult > 1 ? ` • ${mult}×` : ""}
                 </span>
                 {overdue && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-[500] text-[#A77166]">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-[500]" style={{color:"#A77166"}}>
                     <span className="h-[4px] w-[4px] rounded-full bg-[#D9A8A0]" />
                     {overdueDays}d late
                   </span>
                 )}
-                {isFlipped && <span className="text-[10.5px] text-black/40">close</span>}
+                {isFlipped && <span className="text-[10.5px]" style={{color:"var(--muted)"}}>close</span>}
               </div>
 
               {large && (
-                <div className="mt-[14px] h-[1.5px] w-full overflow-hidden rounded-full bg-[#EEE6DE]">
+                <div className="mt-[14px] h-[1.5px] w-full overflow-hidden rounded-full" style={{background:"var(--border)"}}>
                   <div
                     className="h-full rounded-full bg-[#D9CFC5] transition-all duration-500"
-                    style={{ width: Math.min(100, (points / 120) * 100) + "%" }}
+                    style={{ width: Math.min(100, (points / 120) * 100) + "%", background:"var(--border)" }}
                   />
                 </div>
               )}
@@ -245,7 +245,7 @@ export function ChoreDeck(props: Props) {
           </button>
 
           {isFlipped && (
-            <div className="relative z-10 mx-[12px] mb-[12px] rounded-[12px] border border-[#F0E8DE] bg-[#FFFDFA] px-3 py-2.5 text-[11px] leading-[1.5] text-[#6E6660]">
+            <div className="relative z-10 mx-[12px] mb-[12px] rounded-[12px] border bg-[var(--chip-bg)] px-3 py-2.5 text-[11px] leading-[1.5]" style={{borderColor:"var(--border)", color:"var(--text-secondary)"}}>
               <div>
                 Pain {c.pain}/10 • base {c.basePoints} {c.multiplier > 1 ? "• bonus 1.15×" : ""} {overdue ? `• ${overdueDays}d overdue 1.15× → ${points}` : `• ${points} pts`}
               </div>
@@ -274,15 +274,15 @@ export function ChoreDeck(props: Props) {
 
   return (
     <>
-      {/* deck chrome – editorial, not black pill */}
+      {/* deck chrome – editorial, theme aware */}
       <div className="px-[2px] flex items-end justify-between">
         <div className="flex items-baseline gap-2">
-          <span className="font-['Fraunces'] text-[12.5px] font-[620] tracking-[-0.01em] text-[var(--text)] tabular-nums">
+          <span className="font-['Fraunces'] text-[12.5px] font-[620] tracking-[-0.01em] tabular-nums" style={{color:"var(--text)"}}>
             {deckCount} left
           </span>
-          <span className="text-[11px] font-[450] tracking-[0.02em] text-black/40">swipe to play</span>
+          <span className="text-[11px] font-[450] tracking-[0.02em]" style={{color:"var(--muted)"}}>swipe to play</span>
           {combo > 1 && (
-            <span className="ml-1 inline-flex h-[20px] items-center rounded-full border border-black/10 bg-white/70 px-2 text-[10.5px] font-[650] tracking-[0.04em] text-[#5A5450]">
+            <span className="ml-1 inline-flex h-[20px] items-center rounded-full border bg-[var(--chip-bg)]/70 px-2 text-[10.5px] font-[650] tracking-[0.04em]" style={{borderColor:"var(--border)", color:"var(--text-secondary)"}}>
               {combo}×
             </span>
           )}
@@ -291,7 +291,7 @@ export function ChoreDeck(props: Props) {
         {/* minimal underline filter */}
         <div className="flex items-center gap-2">
           {deckCount === 0 && (
-            <span className="hidden sm:inline-flex h-[22px] items-center rounded-full border border-[#E9E0D2] bg-[#FFFEFB] px-2.5 text-[10.5px] font-[550] text-[#8A7F78]">
+            <span className="hidden sm:inline-flex h-[22px] items-center rounded-full border bg-[var(--chip-bg)] px-2.5 text-[10.5px] font-[550]" style={{borderColor:"var(--border)", color:"var(--muted)"}}>
               {(() => {
                 try {
                   return Number(localStorage.getItem("couple_v1_chore_streak") || 0);
@@ -306,15 +306,15 @@ export function ChoreDeck(props: Props) {
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value as any)}
-              className="h-[32px] min-w-[88px] appearance-none bg-transparent px-0 pr-5 text-[11.5px] font-[500] text-[#6E6660] outline-none"
-              style={{ border: "none", borderBottom: "1px solid rgba(0,0,0,0.12)" }}
+              className="h-[32px] min-w-[88px] appearance-none bg-transparent px-0 pr-5 text-[11.5px] font-[500] outline-none"
+              style={{ border: "none", borderBottom: "1px solid var(--border)", color:"var(--muted)" }}
             >
               <option value="all">All</option>
               <option value="today">Today</option>
               <option value="week">This week</option>
               <option value="overdue">Overdue</option>
             </select>
-            <span className="pointer-events-none absolute right-[2px] top-1/2 -translate-y-1/2 text-black/40">
+            <span className="pointer-events-none absolute right-[2px] top-1/2 -translate-y-1/2" style={{color:"var(--muted)"}}>
               <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden>
                 <path d="M2.6 4.2 L6 7.6 L9.4 4.2" stroke="currentColor" strokeWidth="1.1" fill="none" strokeLinecap="round" />
               </svg>
@@ -325,14 +325,14 @@ export function ChoreDeck(props: Props) {
 
       {showSkeletons ? (
         <div className="mt-3 space-y-3">
-          <div className="rounded-[20px] border border-black/[0.07] bg-white h-[248px] animate-pulse">
+          <div className="rounded-[20px] border bg-[var(--card-bg)] h-[248px] animate-pulse" style={{borderColor:"var(--border)"}}>
             <div className="p-[18px] space-y-3">
-              <div className="h-2 w-20 rounded-full bg-black/10" />
-              <div className="h-5 w-3/4 rounded-full bg-black/10" />
-              <div className="h-3 w-full rounded-full bg-black/[0.04]" />
+              <div className="h-2 w-20 rounded-full bg-[var(--border)]" />
+              <div className="h-5 w-3/4 rounded-full bg-[var(--border)]" />
+              <div className="h-3 w-full rounded-full bg-[var(--chip-bg)]" />
             </div>
           </div>
-          <div className="h-[52px] rounded-[14px] bg-white/70 border border-black/[0.06] animate-pulse" />
+          <div className="h-[52px] rounded-[14px] bg-[var(--chip-bg)] border animate-pulse" style={{borderColor:"var(--border)"}} />
         </div>
       ) : currentCard ? (
         <div className="mt-[10px] space-y-3">
@@ -373,13 +373,14 @@ export function ChoreDeck(props: Props) {
             <ChoreCardBoutique c={currentCard} large onTap={() => onTapCard(currentCard)} />
           </div>
 
-          {/* Soho buttons – ghost linen + charcoal ink */}
+          {/* Soho buttons – ghost + charcoal, theme aware */}
           <div className="grid grid-cols-[1fr_1.35fr] gap-[10px] px-[1px]">
             <button
               onClick={() => onSwipe("left")}
-              className="h-[52px] rounded-[14px] border bg-[#FFFEFB] text-[13px] font-[600] tracking-[0.04em] text-[#5E5752] active:scale-[0.98] transition-transform"
+              className="h-[52px] rounded-[14px] border bg-[var(--card-bg)] text-[13px] font-[600] tracking-[0.04em] active:scale-[0.98] transition-transform"
               style={{
-                borderColor: "#E8DDD0",
+                borderColor: "var(--border)",
+                color:"var(--text-secondary)",
                 boxShadow: "0 1px 0 rgba(0,0,0,0.02) inset",
                 minHeight: 52,
                 transition: "transform 180ms cubic-bezier(0.34,1.56,0.64,1)",
@@ -391,29 +392,29 @@ export function ChoreDeck(props: Props) {
             </button>
             <button
               onClick={() => onSwipe("right")}
-              className="h-[52px] rounded-[14px] bg-[#121214] text-[13px] font-[650] tracking-[0.02em] text-white active:scale-[0.98] shadow-[0_6px_18px_rgba(0,0,0,0.18)] transition-transform"
+              className="h-[52px] rounded-[14px] bg-[#121214] text-[13px] font-[650] tracking-[0.02em] text-white active:scale-[0.98] shadow-[0_6px_18px_rgba(0,0,0,0.18)] transition-transform dark:bg-[#FF6B26] dark:text-[#121214]"
               style={{ minHeight: 52, transition: "transform 180ms cubic-bezier(0.34,1.56,0.64,1)" }}
             >
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-[5px] w-[5px] rounded-full bg-[#F7EFE8] opacity-80" /> I’ll do it
+                <span className="h-[5px] w-[5px] rounded-full bg-[#F7EFE8] opacity-80 dark:bg-[#121214]/70" /> I’ll do it
               </span>
             </button>
           </div>
 
-          {/* next up – muted, no bold helper */}
+          {/* next up – muted */}
           {deck.length > 1 && (
-            <div className="px-[2px] pt-[2px] text-[11px] font-[450] tracking-[0.01em] text-black/35">
-              Next <span className="text-black/55">{deck[1].title}</span> • {deck[1].basePoints}pts
+            <div className="px-[2px] pt-[2px] text-[11px] font-[450] tracking-[0.01em]" style={{color:"var(--muted)"}}>
+              Next <span style={{color:"var(--text-secondary)"}}>{deck[1].title}</span> • {deck[1].basePoints}pts
             </div>
           )}
         </div>
       ) : (
-        <div className="mt-3 rounded-[20px] border border-black/[0.07] bg-[#FFFEFB] px-6 py-[36px] text-center shadow-[0_6px_20px_rgba(0,0,0,0.04)]">
-          <div className="mx-auto mb-3 grid h-[44px] w-[44px] place-items-center rounded-full bg-white border border-black/[0.06]">
+        <div className="mt-3 rounded-[20px] border bg-[var(--card-bg)] px-6 py-[36px] text-center shadow-[0_6px_20px_rgba(0,0,0,0.04)]" style={{borderColor:"var(--border)"}}>
+          <div className="mx-auto mb-3 grid h-[44px] w-[44px] place-items-center rounded-full bg-[var(--chip-bg)] border" style={{borderColor:"var(--border)"}}>
             <span className="h-[6px] w-[6px] rounded-full bg-[#8B5E3C]/70" />
           </div>
-          <div className="font-['Fraunces'] text-[15.5px] font-[620] tracking-[-0.01em] text-[#242120]">Deck clear</div>
-          <div className="mt-1 text-[12px] font-[450] leading-[1.5] text-black/45">New drops at midnight • come back then</div>
+          <div className="font-['Fraunces'] text-[15.5px] font-[620] tracking-[-0.01em]" style={{color:"var(--text)"}}>Deck clear</div>
+          <div className="mt-1 text-[12px] font-[450] leading-[1.5]" style={{color:"var(--muted)"}}>New drops at midnight • come back then</div>
         </div>
       )}
     </>

@@ -916,8 +916,8 @@ export function useAppState() {
       }
     }catch{}
     // v124 build marker
-    try{ localStorage.setItem("couple_v1_build","v126-beirt-rebrand"); }catch{}
-    try{ (window as any).__NYLAH_VERSION__ = "v126-beirt-rebrand"; }catch{}
+    try{ localStorage.setItem("couple_v1_build","v127-beirt-dynamic-names"); }catch{}
+    try{ (window as any).__NYLAH_VERSION__ = "v127-beirt-dynamic-names"; }catch{}
   },[]);
 
   // v121 auto-sync after login (PinScreen sets force_resync flag)

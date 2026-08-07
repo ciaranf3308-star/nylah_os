@@ -2151,7 +2151,7 @@ function FridgePage({
             </span>
           </h1>
           <div className="mt-2 flex items-center gap-2 text-[11px] tracking-[0.12em] uppercase" style={{fontFamily:'var(--font-ui)', color:'var(--muted)'}}>
-            <span className="h-px w-8" style={{background:'var(--border)'}} /> Aisling ♥ Ciaran • private OS
+            <span className="h-px w-8" style={{background:'var(--border)'}} /> {(PERSONS[currentUser]?.name||currentUser)} ♥ {(PERSONS[partner]?.name||partner)} • Beirt
           </div>
         </div>
         <div className="absolute -right-10 -bottom-10 w-[180px] h-[180px] rounded-full blur-[38px] opacity-[0.18] pointer-events-none" style={{background:'radial-gradient(100% 100% at 50% 50%, var(--accent) 0%, transparent 70%)'}} />

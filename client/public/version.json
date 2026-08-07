@@ -1,1 +1,1 @@
-{"build":"v126-beirt-rebrand","builtAt":"2026-08-07T12:48:30.000Z","changelog":"Beirt rebrand - formerly Nylah OS / BeirtOS, now just Beirt - Irish for two - same functionality","code":126,"mandatory":true,"timestamp":"2026-08-07T12:48:30.000Z","version":"126.0.0"}
+{"build":"v127-beirt-dynamic-names","builtAt":"2026-08-07T12:55:00.000Z","changelog":"Fix hardcoded Aisling Ciaran -> dynamic partner names for friend testing","code":127,"mandatory":true,"timestamp":"2026-08-07T12:55:00.000Z","version":"127.0.0"}

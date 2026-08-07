@@ -177,7 +177,7 @@ function FridgePage(props: FridgeProps | any) {
             </span>
           </h1>
           <div className="mt-2 flex items-center gap-2 text-[11px] tracking-[0.12em] uppercase" style={{ fontFamily: "var(--font-ui)", color: "var(--muted)", fontWeight: 500 }}>
-            <span className="h-px w-8" style={{ background: "var(--border)" }} /> Aisling ♥ Ciaran • Beirt
+            <span className="h-px w-8" style={{ background: "var(--border)" }} /> {(PERSONS as any)[currentUser]?.name || currentUser} ♥ {(PERSONS as any)[partner]?.name || partner} • Beirt
           </div>
         </div>
         {/* single subtle glow - cut extra blobs */}

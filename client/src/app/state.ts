@@ -723,6 +723,41 @@ export function useV1AppShellState() {
   const [shoppingRaw, setShoppingRaw] = useLocalState<ShoppingItemV2[]>("couple_v1_shopping_v2", []);
   const [notesRaw, setNotesRaw] = useLocalState<NoteMemo[]>("couple_v1_notes_memo", []);
 
+  // --- RESTORED: auto-push from monolith (6323-6365) previously missing in split ---
+  // If this disappears, deletes/adds never hit Supabase and refresh reverts.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("couple_v1_auto_push");
+      if (raw !== null) {
+        try { const p = JSON.parse(raw); if (p === false) return; if (p === "off" || p === '"off"') return } catch { if (raw === "off" || (raw as any).includes("off")) return }
+      }
+    } catch {}
+    if (applyingRemoteRef.current) return;
+    if (!hasSupabaseConfig() || !getSupabase()) return;
+    const snapshot = { chores: choresRaw as any, calendar: calendarRaw as any, shopping: shoppingRaw as any, notes: notesRaw as any };
+    const snapshotHash = stableHash(snapshot);
+    if (snapshotHash === lastSnapshotHashRef.current) return;
+    const mutationId = typeof crypto !== 'undefined' && (crypto as any).randomUUID ? (crypto as any).randomUUID() : `mut_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+    lastLocalMutationIdRef.current = mutationId;
+    lastSnapshotHashRef.current = snapshotHash;
+    try { setSyncStatus({ kind:'saving' } as any); } catch {}
+    const h = setTimeout(async () => {
+      if (applyingRemoteRef.current) return;
+      try {
+        const rev = (() => { try { return Number(localStorage.getItem('couple_v1_revision')||'0') } catch { return 0 } })();
+        console.log("[sync] guarded push 800ms, rev", rev, "mut", mutationId.slice(0,8));
+        const ok = await enqueueMutation({ ...snapshot, meta:{ syncedAt: new Date().toISOString(), householdId: BUILD_HOUSEHOLD_ID, householdTz: HOUSEHOLD_TZ, lastMutationId: mutationId } });
+        if (ok) {
+          try { window.dispatchEvent(new CustomEvent('couple-sync',{detail:'saved'})) } catch {}
+        } else {
+          try { if (typeof navigator!=='undefined' && (navigator as any).onLine===false) setSyncStatus({ kind:'offline-queued', queueCount: mutationQueueRef.current.length||1 } as any); else setSyncStatus({ kind:'failed', queueCount: mutationQueueRef.current.length } as any); } catch {}
+        }
+      } catch (e) { console.warn(e); try { setSyncStatus({ kind:'failed' } as any) } catch {} }
+    }, 800);
+    return () => clearTimeout(h);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [choresRaw, calendarRaw, shoppingRaw, notesRaw]);
+
   // theme computed same as monolith but outside effect
   // we keep themeId external — caller passes; for this internal hook we read LS directly via useLocalState will be done in App composition
   // For pure composition we also expose setters.

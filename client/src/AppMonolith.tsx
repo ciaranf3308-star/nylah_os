@@ -1515,7 +1515,7 @@ function OnboardingFlow({ onComplete }: { onComplete: (hid: string)=>void }) {
               <button onClick={startJoin} className="w-full h-[48px] rounded-full bg-white border border-[var(--border)] text-[#2D2118] text-[13px] font-medium active:scale-[0.98]">I have a code</button>
             </div>
             <div className="mt-4 text-[11px] text-[#8B7357] text-center">For friends beta — invite only. Your data stays in your own household.</div>
-            {hasAnyLegacyData() && <button onClick={()=> onComplete(getStoredHouseholdId()||"ash-ciaran-2026")} className="mt-2 text-[11px] underline text-[#6B5242]">I’m Aisling & Ciaran — keep our space</button>}
+            {false && <span/>}
           </>
         )}
         {step==="create_names" && (

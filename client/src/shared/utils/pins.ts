@@ -15,7 +15,7 @@ function getHouseholdIdForPins(): string {
       return c.startsWith("nylah-") ? c : `nylah-${c}`;
     }
   } catch {}
-  return "ash-ciaran-2026";
+  try { const id = localStorage.getItem("couple_v1_household_id"); if(id) return id; } catch {} return null as any;
 }
 
 async function getSupabaseClientForPin() {

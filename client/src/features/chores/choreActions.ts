@@ -2,7 +2,7 @@
 // Zero logic change — preserves offline queue handling, reallyOnline, Saved timestamp logic contract
 import { getSupabase } from "../../lib/supabase";
 
-const HOUSEHOLD = 'ash-ciaran-2026';
+const HOUSEHOLD = (()=>{ try { return localStorage.getItem('couple_v1_household_id')||'unknown' } catch { return 'unknown' } })();
 
 // Canonical implementations re-exported from lib/normalized (single source of truth)
 export { claimChoreViaRpc as claimChoreViaRpc } from "../../lib/normalized";

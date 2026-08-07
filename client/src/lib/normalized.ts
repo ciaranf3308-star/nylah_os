@@ -1,6 +1,6 @@
 import { getSupabase } from './supabase'
 
-const HOUSEHOLD = 'ash-ciaran-2026'
+const HOUSEHOLD = ((): string => { try { return localStorage.getItem('couple_v1_household_id')||'unknown' } catch { return 'unknown' } })()
 
 export async function claimChoreViaRpc(occurrenceId: string, member: 'aisling'|'ciaran'): Promise<{claimed:boolean, alreadyBy?:string}|null> {
   try {

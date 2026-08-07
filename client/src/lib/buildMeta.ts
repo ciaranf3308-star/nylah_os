@@ -1,29 +1,26 @@
 /**
- * Nylah OS — Build-time household constants (Phase 1)
- * Do NOT store per-device prefs here (theme, currentUser) — those are device-local.
- * These are shared household truth that should be consistent across devices.
+ * Nylah OS — Build-time constants (Scalable V144)
+ * No hard-coded household ID. Household is dynamic per-install.
+ * Only shared invariants live here.
  */
 
-export const HOUSEHOLD_ID = "ash-ciaran-2026" as const;
-export const HOUSEHOLD_TABLE = "couple_data" as const;
-export const HOUSEHOLD_ROW_ID = "ash-ciaran-2026" as const;
-
 // Household timezone — single source of truth for all local-date logic
-// Use Europe/Dublin for all "today", dueAt, recurrence calcs (never UTC slice)
 export const HOUSEHOLD_TZ = "Europe/Dublin" as const;
 
-// Legacy token kept for compatibility with old stored data; do not use for auth
+// Legacy token kept for migration reads only; do not use for auth or default row
 export const HOUSEHOLD_TOKEN_LEGACY = "ash-ciaran-2026" as const;
 
-// Members — stable identifiers
-export const HOUSEHOLD_MEMBERS = ["aisling", "ciaran"] as const;
-export type HouseholdMember = typeof HOUSEHOLD_MEMBERS[number];
+// Members type — actual names are per-household dynamic, stored in Supabase meta.persons
+export type HouseholdMember = string;
 
 // Beta build marker
 export const BUILD_CHANNEL = "beta" as const;
 export const BUILD_META = {
-  id: HOUSEHOLD_ID,
   tz: HOUSEHOLD_TZ,
-  table: HOUSEHOLD_TABLE,
-  rowId: HOUSEHOLD_ROW_ID,
+  channel: BUILD_CHANNEL,
 } as const;
+
+// For backwards compat where code imported HOUSEHOLD_ID / ROW_ID — export nullable helper, not a default
+export const HOUSEHOLD_ID: string | null = null;
+export const HOUSEHOLD_ROW_ID: string | null = null;
+export const HOUSEHOLD_TABLE = "couple_data" as const;

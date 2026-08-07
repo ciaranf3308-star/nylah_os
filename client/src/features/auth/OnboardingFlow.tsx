@@ -1,7 +1,5 @@
-// Proper onboarding restored from source-before-refactor 4cfbabb — adapted for server-side PINs (V119)
-// No hardcoded PINs, hashes, or person mappings. All PIN verification via verify_household_pin RPC.
-// Existing users with local household_id or legacy couple_v1_* keys bypass via shouldShowOnboarding check in App.tsx.
-// Fresh users must create or join via validated invite code; no generic Continue bypass.
+// Scalable onboarding — no hard-coded household ID, no Ash & Ciaran shortcut
+// Dynamic names, server-side PINs only, generic recovery via code / hid
 
 import { useEffect, useState } from "react";
 import { getSupabase, TABLE as SB_TABLE } from "../../lib/supabase";
@@ -17,27 +15,6 @@ function generateInviteCode(): string {
 
 function getStoredHouseholdId(): string | null {
   try { return localStorage.getItem("couple_v1_household_id"); } catch { return null; }
-}
-function hasAnyLegacyData(): boolean {
-  try {
-    const meaningful = ["couple_v1_household_id","couple_v1_household_persons","couple_v1_currentUser","couple_v1_household_code","couple_v1_household_name","couple_v1_household_persons_","couple_v1_household_pins"];
-    for (let i=0;i<localStorage.length;i++) {
-      const k = localStorage.key(i);
-      if (!k) continue;
-      if (meaningful.some(p=>k.startsWith(p))) return true;
-    }
-  } catch {}
-  return false;
-}
-
-function applyCustomPersonNamesNoMutate() {
-  // In factored repo PERSONS is imported constant; we only ensure localStorage persons are kept.
-  // Original monolith mutated global PERSONS dict; here we no-op — names read from localStorage by state layer.
-  try {
-    const hid = getStoredHouseholdId();
-    // trigger potential listeners if any — nothing else needed
-    void hid;
-  } catch {}
 }
 
 type OnboardingProps = {
@@ -59,7 +36,6 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
   const [joining, setJoining] = useState(false);
   const [creating, setCreating] = useState(false);
 
-  // auto-fill invite code from shared link ?code=XXXX
   useEffect(()=>{
     try {
       const sp = new URLSearchParams(location.search);
@@ -90,8 +66,8 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
       const hid = `nylah-${code.toLowerCase()}`;
       setInviteCode(code); setHouseholdId(hid);
       const persons = [
-        { key:"aisling", name: youName.trim(), initial: youName.trim().slice(0,1).toUpperCase() },
-        { key:"ciaran", name: partnerName.trim(), initial: partnerName.trim().slice(0,1).toUpperCase() },
+        { key:"person_1", name: youName.trim(), initial: youName.trim().slice(0,1).toUpperCase() },
+        { key:"person_2", name: partnerName.trim(), initial: partnerName.trim().slice(0,1).toUpperCase() },
       ];
       try {
         localStorage.setItem("couple_v1_household_id", hid);
@@ -99,21 +75,25 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
         localStorage.setItem("couple_v1_household_name", `${youName.trim()} & ${partnerName.trim()}`);
         localStorage.setItem(`couple_v1_household_persons_${hid}`, JSON.stringify(persons));
         localStorage.setItem(`couple_v1_household_persons`, JSON.stringify(persons));
-        // Do NOT store PINs locally — server-side only via RPC
-        // Clear any legacy PIN maps if present
         try { localStorage.removeItem(`couple_v1_household_pins_${hid}`); } catch {}
-        try { localStorage.removeItem(`couple_v1_household_pins_plain_${hid}`); } catch {}
       } catch {}
       try {
         const sb = getSupabase();
         if (sb) {
-          // Seed PINs server-side via upsert_household_pin (hashing done server-side with pgcrypto)
+          // Create household registry + invite (scalable)
           try {
-            await (sb as any).rpc("upsert_household_pin", { hid, pin: youPin, person_key: "aisling" });
-          } catch(e:any){ console.warn("[onboard] upsert_pin aisling err", e?.message); }
+            await (sb as any).rpc("create_household_with_invite", { hid, code, name: `${youName.trim()} & ${partnerName.trim()}` });
+          } catch {
+            // fallback direct inserts if RPC not yet deployed
+            try { await sb.from("households").upsert({ id: hid, code, name: `${youName.trim()} & ${partnerName.trim()}`, tz: "Europe/Dublin" }, { onConflict: "id" } as any); } catch {}
+            try { await sb.from("household_invites").upsert({ code, household_id: hid } as any, { onConflict: "code" } as any); } catch {}
+          }
           try {
-            await (sb as any).rpc("upsert_household_pin", { hid, pin: partnerPin, person_key: "ciaran" });
-          } catch(e:any){ console.warn("[onboard] upsert_pin ciaran err", e?.message); }
+            await (sb as any).rpc("upsert_household_pin", { hid, pin: youPin, person_key: "person_1" });
+          } catch(e:any){ console.warn("[onboard] upsert_pin 1 err", e?.message); }
+          try {
+            await (sb as any).rpc("upsert_household_pin", { hid, pin: partnerPin, person_key: "person_2" });
+          } catch(e:any){ console.warn("[onboard] upsert_pin 2 err", e?.message); }
 
           const meta = {
             householdName: `${youName.trim()} & ${partnerName.trim()}`,
@@ -140,7 +120,6 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
       } catch (e:any) { console.warn("[onboard] sb err", e?.message); }
       setCreating(false);
       setStep("share");
-      try { applyCustomPersonNamesNoMutate(); } catch {}
     } catch (e:any) {
       setCreating(false);
       setError("Couldn't create — try again: "+String(e?.message||e).slice(0,80));
@@ -174,7 +153,6 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
     if (!isFullHid && codeClean.replace(/[^A-Z0-9]/g,"").length < 4) { setError("Enter the 6-letter code or household ID"); return; }
     setJoining(true);
     try {
-      // allow full hid like ash-ciaran-2026 or nylah-abc123
       let hidCandidates: string[] = [];
       let code = "";
       if (isFullHid) {
@@ -189,7 +167,7 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
       const sb = getSupabase();
       if (!sb) { setError("No connection — check internet"); setJoining(false); return; }
       let data: any = null;
-      // 1. Prefer household_invites table if present (spec)
+      // Prefer household_invites table
       if (!isFullHid) {
         try {
           const resInvite = await (sb as any).from("household_invites").select("*").eq("code", code).maybeSingle();
@@ -197,36 +175,32 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
             const mappedHid = resInvite.data.household_id || resInvite.data.householdId || hidCandidates[0];
             const resHouse = await (sb as any).from(SB_TABLE).select('*').eq('id', mappedHid).maybeSingle();
             if (resHouse && resHouse.data) data = resHouse.data;
-            else data = { id: mappedHid, meta: resInvite.data.meta || { persons: resInvite.data.persons } };
+            else {
+              // still allow join even if couple_data empty, build from registry
+              const hh = await (sb as any).from("households").select('*').eq('id', mappedHid).maybeSingle();
+              if (hh && hh.data) data = { id: mappedHid, meta: { householdName: hh.data.name, inviteCode: code, persons: hh.data.meta?.persons || [{key:"person_1", name:"Partner 1"},{key:"person_2", name:"Partner 2"}] } };
+            }
           }
         } catch {}
       }
-      // 2. Fallback original couple_data lookup by hid(s)
       if (!data) {
         for (const hid of hidCandidates) {
           try {
             const res1 = await (sb as any).from(SB_TABLE).select('*').eq('id', hid).maybeSingle();
             if (res1?.data) { data = res1.data; break; }
-          } catch {}
-        }
-        // legacy primary fallback — always try ash-ciaran-2026 if nothing found and user typed short code that might be legacy
-        if (!data) {
-          try {
-            const resP = await (sb as any).from(SB_TABLE).select('*').eq('id', 'ash-ciaran-2026').maybeSingle();
-            // only auto-use if code is empty-ish and we are in recover mode? Don't auto — just keep data null
-            // but allow explicit ash-ciaran-2026 typed as full hid already handled above
-            if (false && resP?.data) data = resP.data;
+            const hh = await (sb as any).from("households").select('*').eq('id', hid).maybeSingle();
+            if (hh?.data) { data = { id: hid, meta: { householdName: hh.data.name, persons: hh.data.meta?.persons } }; break; }
           } catch {}
         }
       }
       if (!data) {
-        setError("No couple found with that code — check letters");
+        setError("No household found with that code — check letters or ask for invite again");
         setJoining(false);
         return;
       }
       const meta = (data as any).meta;
       setJoinMeta(meta);
-      const persons = meta?.persons || [{key:"aisling", name:"Partner 1"}, {key:"ciaran", name:"Partner 2"}];
+      const persons = meta?.persons || [{key:"person_1", name:"Partner 1"}, {key:"person_2", name:"Partner 2"}];
       setJoinPersons(persons);
       setInviteCode(code);
       setHouseholdId((data as any).id || hidCandidates[0] || "");
@@ -249,11 +223,8 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
         localStorage.setItem("couple_v1_household_name", meta?.householdName || "You & Partner");
         localStorage.setItem(`couple_v1_household_persons_${householdId}`, JSON.stringify(persons));
         localStorage.setItem(`couple_v1_household_persons`, JSON.stringify(persons));
-        // clear legacy pin maps — server-side verification only
         try { localStorage.removeItem(`couple_v1_household_pins_${householdId}`); } catch {}
-        try { localStorage.removeItem(`couple_v1_household_pins_plain_${householdId}`); } catch {}
       } catch {}
-      try { applyCustomPersonNamesNoMutate(); } catch {}
       setJoining(false);
       onComplete(householdId);
     } catch (e:any) {
@@ -269,30 +240,12 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
           <>
             <div className="h-12 w-12 rounded-full grid place-items-center bg-[#0A0A0A] text-white text-[20px] font-display">♥</div>
             <div className="mt-3 font-display text-[26px] font-semibold tracking-tight text-[#0A0A0A] text-center">Beirt</div>
-            <div className="mt-1 text-[13px] text-[#6B5242] text-center leading-[1.4]">Beirt — Irish for two. A private space for two. Shared calendar, chores, shopping, notes. No ads. Just you two.</div>
+            <div className="mt-1 text-[13px] text-[#6B5242] text-center leading-[1.4]">Private space for two. Shared calendar, chores, shopping, notes. No ads. Just you two.</div>
             <div className="mt-5 w-full space-y-2.5">
               <button onClick={()=> setStep("create_names")} className="w-full h-[52px] rounded-full bg-[#0A0A0A] text-white text-[14px] font-semibold active:scale-[0.98] shadow-sm">Create our space</button>
-              <button onClick={startJoin} className="w-full h-[48px] rounded-full bg-white border border-[var(--border)] text-[#2D2118] text-[13px] font-medium active:scale-[0.98]">I have a code / recover</button>
-              <button onClick={async()=>{
-                // Quick recover primary household — if ash-ciaran-2026 exists, jump to PIN
-                try{
-                  setError(""); setJoining(true as any);
-                  const sb = getSupabase();
-                  if (sb) {
-                    const { data } = await (sb as any).from(SB_TABLE).select('*').eq('id','ash-ciaran-2026').maybeSingle();
-                    if (data) {
-                      const meta = (data as any).meta;
-                      const persons = meta?.persons || [{key:"aisling", name:"Aisling"}, {key:"ciaran", name:"Ciaran"}];
-                      setJoinMeta(meta); setJoinPersons(persons); setInviteCode(""); setHouseholdId("ash-ciaran-2026");
-                      setJoining(false as any); setStep("join_pick"); return;
-                    }
-                  }
-                } catch {}
-                setJoining(false as any); setStep("join_code");
-              }} className="w-full h-[40px] rounded-full bg-[var(--chip-bg)] border border-transparent text-[#6B5242] text-[12px] font-medium active:scale-[0.98]">Recover Ash & Ciaran space</button>
+              <button onClick={startJoin} className="w-full h-[48px] rounded-full bg-white border border-[var(--border)] text-[#2D2118] text-[13px] font-medium active:scale-[0.98]">I have a code</button>
             </div>
-            <div className="mt-4 text-[11px] text-[#8B7357] text-center">For friends beta — invite only. Your data stays in your own household.</div>
-            {hasAnyLegacyData() && <button onClick={()=> onComplete(getStoredHouseholdId()||"ash-ciaran-2026")} className="mt-2 text-[11px] underline text-[#6B5242]">I’m Aisling & Ciaran — keep our space</button>}
+            <div className="mt-4 text-[11px] text-[#8B7357] text-center">Your data stays in your own household. Each code is private.</div>
           </>
         )}
         {step==="create_names" && (
@@ -322,7 +275,7 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
             <div className="w-full text-left">
               <button onClick={()=> setStep("create_names")} className="text-[11px] text-[#8B7357]">← Back</button>
               <div className="mt-2 font-display text-[20px] font-semibold text-[#0A0A0A]">Set your 4-digit PINs</div>
-              <div className="mt-1 text-[12px] text-[#6B5242]">Each of you gets your own. This is your lock screen — fingerprint will be a quick tap on top of it.</div>
+              <div className="mt-1 text-[12px] text-[#6B5242]">Each of you gets your own. This is your lock screen.</div>
             </div>
             <div className="mt-4 w-full space-y-3">
               <div>
@@ -333,10 +286,10 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
                 <label className="text-[11px] text-[#6B5242] font-medium">{partnerName||"Partner"}’s PIN</label>
                 <input value={partnerPin} onChange={e=> setPartnerPin(e.target.value.replace(/\D/g,"").slice(0,4))} inputMode="numeric" placeholder="••••" className="mt-1 w-full rounded-[14px] border bg-white px-3 py-3 text-center text-[18px] tracking-[0.3em] outline-none" style={{borderColor:"var(--border)"}} />
               </div>
-              <div className="text-[10px] text-[#8B7357]">Must be different. You can also set up fingerprint after — in Settings → Fingerprint.</div>
+              <div className="text-[10px] text-[#8B7357]">Must be different. You can also set up fingerprint after — in Settings.</div>
             </div>
             {error && <div className="mt-3 text-[11px] text-[#991B1B] w-full">{error}</div>}
-            <button disabled={!canContinuePins} onClick={doCreate} className={"mt-5 w-full h-[48px] rounded-full text-[14px] font-semibold active:scale-[0.98] "+(canContinuePins?"bg-[#0A0A0A] text-white shadow-sm":"bg-[var(--chip-bg)] text-[#8B7357]")}>{creating?"Creating…":"Create our couple space"}</button>
+            <button disabled={!canContinuePins} onClick={doCreate} className={"mt-5 w-full h-[48px] rounded-full text-[14px] font-semibold active:scale-[0.98] "+(canContinuePins?"bg-[#0A0A0A] text-white shadow-sm":"bg-[var(--chip-bg)] text-[#8B7357]")}>{creating?"Creating…":"Create our space"}</button>
           </>
         )}
         {step==="creating" && (
@@ -350,7 +303,7 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
           <>
             <div className="h-10 w-10 rounded-full bg-[#0A0A0A] text-white grid place-items-center">✓</div>
             <div className="mt-3 font-display text-[20px] font-semibold text-[#0A0A0A] text-center">You’re set!</div>
-            <div className="mt-1 text-[12px] text-[#6B5242] text-center">Share this code with {partnerName||"your partner"} so they can join your space.</div>
+            <div className="mt-1 text-[12px] text-[#6B5242] text-center">Share this code with {partnerName||"your partner"} so they can join.</div>
             <div className="mt-4 w-full rounded-[20px] border bg-[var(--chip-bg)] px-4 py-4 text-center" style={{borderColor:"var(--border)"}}>
               <div className="text-[11px] uppercase tracking-[0.12em] text-[#8B7357]">Invite code</div>
               <div className="mt-1 font-mono text-[28px] font-bold tracking-[0.18em] text-[#0A0A0A]">{inviteCode}</div>
@@ -362,7 +315,7 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
             </div>
             {error && <div className="mt-2 text-[11px] text-[#6B5242]">{error}</div>}
             <button onClick={()=> onComplete(householdId)} className="mt-4 w-full h-[48px] rounded-full bg-[#0A0A0A] text-white text-[14px] font-semibold active:scale-[0.98]">Continue to our space →</button>
-            <div className="mt-2 text-[10px] text-[#8B7357] text-center">Your partner can join anytime from their phone with the code. Until they join, you can use it solo.</div>
+            <div className="mt-2 text-[10px] text-[#8B7357] text-center">Your partner can join anytime from their phone with the code.</div>
           </>
         )}
         {step==="join_code" && (
@@ -370,23 +323,23 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
             <div className="w-full text-left">
               <button onClick={()=> setStep("welcome")} className="text-[11px] text-[#8B7357]">← Back</button>
               <div className="mt-2 font-display text-[20px] font-semibold text-[#0A0A0A]">Enter your invite code or household ID</div>
-              <div className="mt-1 text-[12px] text-[#6B5242]">Your partner should have sent you a 6-letter code like ABC123. For Aisling & Ciaran, type <span className="font-mono bg-[var(--chip-bg)] px-1 rounded">ash-ciaran-2026</span></div>
+              <div className="mt-1 text-[12px] text-[#6B5242]">Your partner should have sent you a 6-letter code like ABC123, or a full ID like nylah-abc123.</div>
             </div>
-            <input value={joinCode} onChange={e=> setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,32))} placeholder="ABC123 or ash-ciaran-2026" className="mt-4 w-full rounded-[16px] border bg-white px-4 py-4 text-center font-mono text-[14px] tracking-[0.12em] outline-none" style={{borderColor:"var(--border)"}} autoFocus />
+            <input value={joinCode} onChange={e=> setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,32))} placeholder="ABC123 or nylah-abc123" className="mt-4 w-full rounded-[16px] border bg-white px-4 py-4 text-center font-mono text-[14px] tracking-[0.12em] outline-none" style={{borderColor:"var(--border)"}} autoFocus />
             {error && <div className="mt-2 text-[11px] text-[#991B1B] w-full text-center">{error}</div>}
-            <button onClick={doJoinLookup} disabled={joining} className="mt-4 w-full h-[48px] rounded-full bg-[#0A0A0A] text-white text-[14px] font-semibold disabled:opacity-60 active:scale-[0.98]">{joining?"Looking up…":"Recover / Join"}</button>
+            <button onClick={doJoinLookup} disabled={joining} className="mt-4 w-full h-[48px] rounded-full bg-[#0A0A0A] text-white text-[14px] font-semibold disabled:opacity-60 active:scale-[0.98]">{joining?"Looking up…":"Find household"}</button>
             <div className="mt-3 w-full rounded-[14px] bg-[var(--chip-bg)] px-3 py-2.5 text-left">
-              <div className="text-[11px] font-semibold text-[#2D2118]">Gap you hit — why onboarding showed</div>
-              <div className="text-[10.5px] text-[#6B5242] leading-[1.35] mt-0.5">Your phone cleared local storage (PWA update or new browser). Beirt stores household ID locally to keep you private — no central login. Now you can recover by entering your household ID here. PINs are still verified server-side (4463/1958).</div>
+              <div className="text-[11px] font-semibold text-[#2D2118]">How recovery works</div>
+              <div className="text-[10.5px] text-[#6B5242] leading-[1.35] mt-0.5">Your household lives in the cloud — your phone just stores the ID locally. If you clear storage or switch phone, paste your code or full ID here to get back in. PINs are verified server-side.</div>
             </div>
-            <div className="mt-2 text-[10px] text-[#8B7357] text-center">Codes are single-household private. If it’s expired, ask your partner to go to Settings → Share invite code.</div>
+            <div className="mt-2 text-[10px] text-[#8B7357] text-center">Codes are private to your household. If it’s expired, ask your partner for a fresh one in Settings → Share invite code.</div>
           </>
         )}
         {step==="join_pick" && (
           <>
             <div className="h-10 w-10 rounded-full bg-[var(--chip-bg)] grid place-items-center text-[16px]">♥</div>
             <div className="mt-3 font-display text-[18px] font-semibold text-[#0A0A0A] text-center">Which one are you?</div>
-            <div className="mt-1 text-[12px] text-[#6B5242] text-center">{joinMeta?.householdName||"You two"} — pick your name to link your phone.</div>
+            <div className="mt-1 text-[12px] text-[#6B5242] text-center">{joinMeta?.householdName||"You two"} — pick your name to link this phone.</div>
             <div className="mt-4 w-full space-y-2">
               {joinPersons.map((p:any)=> (
                 <button key={p.key} onClick={()=> doJoinAs(p.key)} disabled={joining} className="w-full flex items-center gap-3 rounded-[16px] border bg-white px-4 py-3 text-left active:scale-[0.98]" style={{borderColor:"var(--border)"}}>

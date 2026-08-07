@@ -46,7 +46,7 @@ export function SettingsScreen(props: any = {}){
   const [online,setOnline]=useState<boolean>(true);
   const [anonPresent,setAnonPresent]=useState<string>("unknown");
   const [build,setBuild]=useState<string>("v121-settings-debug");
-  const [effId,setEffId]=useState<string>("ash-ciaran-2026");
+  const [effId,setEffId]=useState<string>(()=>{ try{return localStorage.getItem("couple_v1_household_id")||"–"}catch{return "–"} });
   const [isPulling,setIsPulling]=useState(false);
   const [pullMsg,setPullMsg]=useState<string|null>(null);
   const [remoteCounts,setRemoteCounts]=useState<{c:number;cal:number;s:number;n:number}|null>(null);
@@ -113,11 +113,13 @@ export function SettingsScreen(props: any = {}){
 
   function doFixHouse(){
     try{
-      localStorage.setItem("couple_v1_household_id","ash-ciaran-2026");
+      // scalable: do not hard-code house fix — show recover UI instead
+      alert("Use Settings → Recover to change household. Hard-coded fix removed for scalability."); return; //
+      localStorage.setItem("couple_v1_household_id","REMOVED");
       localStorage.removeItem("couple_v1_household_code");
       try{ localStorage.setItem("couple_v1_household_migrated_from", effId); }catch{}
       try{ localStorage.setItem("couple_v1_household_fixed_at", new Date().toISOString()); }catch{}
-      alert("House fixed to ash-ciaran-2026 — reloading");
+      alert("House fix removed — use Recover flow");
       location.reload();
     }catch(e:any){ alert("fix err "+String(e?.message||e)); }
   }
@@ -192,9 +194,9 @@ export function SettingsScreen(props: any = {}){
   const showEmptyWarning = useMemo(()=>{
     const localEmpty = (safeChores.length+safeCalendar.length+safeShopping.length+safeNotes.length)===0;
     const effIsTest = effId==="nylah-98jylh" || effId==="nylah-fbkf2m" || effId.startsWith("nylah-");
-    if(localEmpty && effIsTest) return `You're on test house ${effId} which is empty — main house ash-ciaran-2026 has 4/6/2/7`;
+    if(localEmpty && effIsTest) return `You're on ${effId} which is empty — create or recover a household`;
     if(localEmpty) return "Local is empty — try Force Pull from server";
-    if(effIsTest) return `Warning: you're on ${effId} — tap Fix House → ash-ciaran-2026`;
+    if(effIsTest) return `You are on ${effId}`;
     return null;
   }, [safeChores.length, safeCalendar.length, safeShopping.length, safeNotes.length, effId]);
 
@@ -235,7 +237,7 @@ export function SettingsScreen(props: any = {}){
           <div className="px-4 pb-3 pt-3 border-t space-y-3" style={{borderColor:"var(--border)"}}>
             {showEmptyWarning && (
               <div className="rounded-[10px] border bg-[#FEF3C7] border-[#FDE68A] px-3 py-2 text-[11px] text-[#92400E] leading-[1.4]">
-                ⚠️ {showEmptyWarning} <button onClick={doFixHouse} className="ml-2 rounded-full bg-[#0A0A0A] text-white px-2.5 py-1 text-[10px]">Fix House → ash-ciaran-2026</button>
+                ⚠️ {showEmptyWarning}
               </div>
             )}
             {pullMsg && <div className="rounded-[8px] bg-[var(--chip-bg)] border px-2.5 py-1.5 text-[11px] text-[var(--muted)]">{pullMsg}</div>}
@@ -278,7 +280,7 @@ export function SettingsScreen(props: any = {}){
             <button onClick={()=> doSwitchDebug("nylah-fbkf2m")} className="w-full h-[40px] rounded-full border bg-[#FFFbeb] text-[11px]">Debug → nylah-fbkf2m</button>
             <button onClick={()=>{ try{ localStorage.clear(); sessionStorage.clear(); alert("local cleared — reload"); location.reload(); }catch{}}} className="w-full h-[40px] rounded-full border bg-[#0A0A0A] text-white text-[11px]">Nuke Local — keep remote</button>
           </div>
-          <div className="text-[10px] text-[var(--muted)]">Auto-migrate: nylah-98jylh/ fbkf2m → ash-ciaran-2026 on app start. PinScreen login now sets force-resync flag then remote pulls. Revision from localStorage kept truthful to server.</div>
+          <div className="text-[10px] text-[var(--muted)]">Scalable households — each code is isolated. No hard-coded main house.</div>
         </div>}
       </div>
     </div>

@@ -899,27 +899,11 @@ export function useAppState() {
     return ()=>{ clearInterval(i); document.removeEventListener("visibilitychange", onVis); };
   }, [app.setNowMs]);
 
-  // v121 auto-migrate empty test houses -> ash-ciaran-2026 + force resync after PIN login
+  // v144 scalable — no hard-coded ash-ciaran-2026 migration. Keep build marker only.
   useEffect(()=>{
-    try{
-      const bad = ["nylah-98jylh","nylah-fbkf2m","98jylh","fbkf2m"];
-      const cur = localStorage.getItem("couple_v1_household_id");
-      if(cur && bad.includes(cur.trim().toLowerCase())){
-        console.warn("[v121] migrating",cur,"-> ash-ciaran-2026");
-        localStorage.setItem("couple_v1_household_id","ash-ciaran-2026");
-        localStorage.setItem("couple_v1_household_migrated_from",cur);
-        localStorage.setItem("couple_v1_household_migrated_at", new Date().toISOString());
-        try{ localStorage.removeItem("couple_v1_household_code"); }catch{}
-      }
-      const code = localStorage.getItem("couple_v1_household_code");
-      if(code && bad.includes(code.trim().toLowerCase())){
-        localStorage.setItem("couple_v1_household_id","ash-ciaran-2026");
-        try{ localStorage.removeItem("couple_v1_household_code"); }catch{}
-      }
-    }catch{}
-    // v132 build marker
-    try{ localStorage.setItem("couple_v1_build","v132-beirt-logo-transparent"); }catch{}
-    try{ (window as any).__NYLAH_VERSION__ = "v132-beirt-logo-transparent"; }catch{}
+    // v144 build marker
+    try{ localStorage.setItem("couple_v1_build","v144-beirt-scalable"); }catch{}
+    try{ (window as any).__NYLAH_VERSION__ = "v144-beirt-scalable"; }catch{}
   },[]);
 
   // v121 auto-sync after login (PinScreen sets force_resync flag)

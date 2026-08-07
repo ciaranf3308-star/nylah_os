@@ -1,6 +1,6 @@
 import { getSupabase, getEffectiveRowId } from './supabase'
 
-export const HOUSEHOLD_ID = 'ash-ciaran-2026'
+export const HOUSEHOLD_ID = (()=>{ try { return localStorage.getItem('couple_v1_household_id')||'unknown' } catch { return 'unknown' } })() as unknown as string
 export function getHouseholdId(): string {
   try { return getEffectiveRowId() } catch { return HOUSEHOLD_ID }
 }

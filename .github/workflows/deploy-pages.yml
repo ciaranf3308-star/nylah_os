@@ -1,4 +1,4 @@
-name: Deploy Nylah OS V119 to Pages
+name: Deploy Beirt to Pages
 
 on:
   push:
@@ -10,34 +10,33 @@ permissions:
   pages: write
   id-token: write
 
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: 20
       - name: Install deps
         working-directory: client
+        run: npm ci || npm install
+      - name: Build V144
         run: |
-          bun install --frozen-lockfile || bun install
-      - name: Build V119
-        env:
-          HATCH_SPACES_BUILD_DRIVER: 1
-        run: |
-          bun ./client/build.mjs
-          echo "dist contents:"
-          ls -lh client/dist
-          ls -lh client/dist/assets
-          test ! -f client/dist/supabase-init.sql && echo "no supabase-init.sql PASS" || (echo "FAIL supabase-init.sql present" && exit 1)
-          sha256sum client/dist/assets/index-yc8eyqh9.js || true
+          cd client
+          npx vite build --outDir dist
+          cp -r public/* dist/ || true
+          rm -f dist/supabase-init.sql
+          test ! -f dist/supabase-init.sql && echo "no sql PASS" || (echo "FAIL sql present" && exit 1)
+          ls -lh dist
+          ls -lh dist/assets | head
+          if ! grep -q "supabase-env.js" dist/index.html; then echo "FAIL no env"; exit 1; fi
+          if grep -q '"/assets/' dist/index.html; then echo "FAIL absolute assets"; exit 1; fi
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Upload Pages artifact
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: client/dist

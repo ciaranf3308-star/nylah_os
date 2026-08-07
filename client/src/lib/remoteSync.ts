@@ -1,4 +1,4 @@
-import { getSupabase, TABLE, ROW_ID, getEffectiveRowId, getEffectiveTable } from './supabase';
+import { getSupabase, TABLE, getEffectiveRowId, getEffectiveTable, ROW_ID_LEGACY } from './supabase';
 
 export type SyncKind = 'saving' | 'saved' | 'synced' | 'offline-queued' | 'failed' | 'updated-elsewhere';
 export type SyncStatus = {
@@ -6,12 +6,16 @@ export type SyncStatus = {
   lastSavedAt?: string;
   queueCount?: number;
   error?: string;
-  // allow extra props preserved from monolith
   [k:string]: any;
 };
 
-function getRowId(): string {
-  try { return getEffectiveRowId() } catch { return ROW_ID }
+function getRowId(): string | null {
+  try { return getEffectiveRowId() } catch { return null }
+}
+function requireRowId(): string {
+  const id = getRowId()
+  if (!id) throw new Error("No household — recover or create")
+  return id
 }
 function getTable(): string {
   try { return getEffectiveTable() } catch { return TABLE }
@@ -26,26 +30,29 @@ export type RemoteData = {
   meta?: any
   updated_at?: string
   revision?: number
-  updatedAt?: string // alias
+  updatedAt?: string
   deletedAt?: string
 }
 
 async function reallyOnline(): Promise<boolean> {
-  // V21 fix restored: force online — navigator.onLine lies and HEAD probe fails CORS on Pages
   try {
     if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) return false
   } catch {}
+  // Also do a quick HEAD to guard against captive portal lying about online? Respect offline, don't force true.
   return true
 }
 
-
 export async function remoteLoad(): Promise<RemoteData | null> {
-  const sb = getSupabase()
-  if (!sb) {
-    console.warn('[supabase] load skip – no config (check VITE_SUPABASE_URL / anon present eyJ...?)')
+  const hid = getRowId()
+  if (!hid) {
+    console.warn('[supabase] load skip — no household_id, need onboarding/recover')
     return null
   }
-  // Offline detection: if definitely offline, skip network load and rely on local cache
+  const sb = getSupabase()
+  if (!sb) {
+    console.warn('[supabase] load skip – no config')
+    return null
+  }
   try {
     const online = await Promise.resolve(reallyOnline()).catch(()=>false)
     if (!online) {
@@ -55,21 +62,34 @@ export async function remoteLoad(): Promise<RemoteData | null> {
   } catch {}
 
   try {
-    const { data, error } = await sb.from(getTable()).select('*').eq('id', getRowId()).maybeSingle()
+    // Try normalized household first? For now still couple_data blob for compat, but also check households table existence via meta
+    let { data, error } = await sb.from(getTable()).select('*').eq('id', hid).maybeSingle()
+    if (error && error.code === 'PGRST116') {
+      // no row
+      console.warn('[supabase] load empty – row', hid, 'not found')
+      return null
+    }
     if (error) {
-      console.warn('[supabase] load error', error.message, '| anon?', !!((sb as any)?.supabaseKey || true), 'row', getRowId())
+      console.warn('[supabase] load error', error.message, 'row', hid)
+      // If new household not yet in couple_data but exists in households table, return empty shape
+      try {
+        const { data: h } = await sb.from("households").select('id').eq('id', hid).maybeSingle()
+        if (h) return { chores: [], calendar: [], shopping: [], notes: [], meta: null, updated_at: undefined, revision: 0 }
+      } catch {}
       return null
     }
     if (!data) {
-      console.warn('[supabase] load empty – row', getRowId(), 'not found')
+      console.warn('[supabase] load empty – row', hid, 'not found')
+      // try households registry fallback
+      try {
+        const { data: h } = await sb.from("households").select('id').eq('id', hid).maybeSingle()
+        if (h) return { chores: [], calendar: [], shopping: [], notes: [], meta: null, updated_at: undefined, revision: 0 }
+      } catch {}
       return null
     }
     try {
-      // Don't fabricate Saved here - loading is not a confirmed write
       if ((data as any).revision != null) localStorage.setItem('couple_v1_revision', String((data as any).revision));
-      // had_remote is set only after verified save, not on load
     } catch {}
-    // verbose ok log – redact keys, show revision + anon presence
     try {
       let anonPresent = false
       let anonTail = '????'
@@ -89,20 +109,15 @@ export async function remoteLoad(): Promise<RemoteData | null> {
       const cal = Array.isArray((data as any).calendar) ? (data as any).calendar.length : 0
       const sh = Array.isArray((data as any).shopping) ? (data as any).shopping.length : 0
       const n = Array.isArray((data as any).notes) ? (data as any).notes.length : 0
-      console.log(`[supabase] loaded ok rev=${rev} anon=${anonPresent ? 'eyJ...'+anonTail : 'no'} counts c:${c} cal:${cal} s:${sh} n:${n}`)
+      console.log(`[supabase] loaded ok rev=${rev} anon=${anonPresent ? 'eyJ...'+anonTail : 'no'} hid=${hid.slice(0,12)} counts c:${c} cal:${cal} s:${sh} n:${n}`)
     } catch {}
-    // sync household pinHashes + persons for beta multi-household linking
     try {
       const meta = (data as any).meta;
       if (meta) {
-        const hid = getRowId();
-        if (meta.pinHashes && typeof meta.pinHashes === 'object') {
-          try { localStorage.setItem(`couple_v1_household_pins_${hid}`, JSON.stringify(meta.pinHashes)); } catch {}
-          try { (window as any).__HOUSEHOLD_PINS__ = meta.pinHashes; } catch {}
-        }
+        const hidLocal = hid;
         if (meta.persons && Array.isArray(meta.persons)) {
           try {
-            localStorage.setItem(`couple_v1_household_persons_${hid}`, JSON.stringify(meta.persons));
+            localStorage.setItem(`couple_v1_household_persons_${hidLocal}`, JSON.stringify(meta.persons));
             localStorage.setItem(`couple_v1_household_persons`, JSON.stringify(meta.persons));
             if (meta.householdName) localStorage.setItem(`couple_v1_household_name`, meta.householdName);
             if (meta.inviteCode) localStorage.setItem(`couple_v1_household_code`, meta.inviteCode);
@@ -130,18 +145,14 @@ function stripNotesPhotos(arr: any[]): any[] {
   if (!Array.isArray(arr)) return arr as any
   return arr.map((n:any)=>{
     if (n && typeof n === 'object' && 'photoDataUrl' in n && n.photoDataUrl) {
-      // keep small photos (<200k) for quality, drop huge ones to avoid row bloat
       try {
         const len = typeof n.photoDataUrl === 'string' ? n.photoDataUrl.length : 0
         if (len > 0 && len < 200000) return n
-        // if big, keep thumb but drop full to save space — but preserve if thumb missing?
         if (n.photoThumbDataUrl) {
           const { photoDataUrl, ...rest } = n
           void photoDataUrl
-          // keep thumb only to save space but allow mergeById to preserve from other side
           return rest
         }
-        // no thumb, keep small else drop
         if (len >= 200000) {
           const { photoDataUrl, ...rest } = n
           void photoDataUrl
@@ -156,8 +167,6 @@ function stripNotesPhotos(arr: any[]): any[] {
 
 function withTimestamps<T extends any>(arr: T[], updatedBy?: string): T[] {
   return arr.map((it:any)=> {
-    // Preserve existing timestamps, but consider deletedAt/archivedAt for recency
-    // When a delete sets deletedAt + updatedAt, updatedAt wins. If only deletedAt set, use it.
     const candidate = it.updatedAt || it.updated_at || it.deletedAt || (it as any).archivedAt || (it as any).archived_at || it.createdAt || undefined
     return {
       ...it,
@@ -170,7 +179,6 @@ function withTimestamps<T extends any>(arr: T[], updatedBy?: string): T[] {
 export function mergeById(local: any[], remote: any[]): any[] {
   const map = new Map<string, any>()
   const all = [...remote, ...local]
-  // helper to get effective timestamp for recency
   const effTs = (it:any): number => {
     try {
       const candidates = [
@@ -195,23 +203,19 @@ export function mergeById(local: any[], remote: any[]): any[] {
     let winner = existing
     if (b > a) winner = it
     else if (b === a) {
-      // tie-breaker: deletion wins tie, then photo preservation, then existing
       const existingDel = !!(existing as any).deletedAt
       const itDel = !!(it as any).deletedAt
       if (itDel && !existingDel) winner = it
       else if ((it as any).photoDataUrl && !(existing as any).photoDataUrl) winner = it
       else winner = existing
     }
-    // Preserve photoDataUrl if winner lacks it but loser has it
     if ((existing as any).photoDataUrl && !(winner as any).photoDataUrl) {
       winner = { ...winner, photoDataUrl: (existing as any).photoDataUrl, photoThumbDataUrl: (existing as any).photoThumbDataUrl || winner.photoThumbDataUrl }
     }
     if ((it as any).photoDataUrl && !(winner as any).photoDataUrl) {
       winner = { ...winner, photoDataUrl: (it as any).photoDataUrl, photoThumbDataUrl: (it as any).photoThumbDataUrl || winner.photoThumbDataUrl }
     }
-    // Preserve tombstone if newer or tie: if either has deletedAt and its ts >= other's, keep deleted version
     if ((it as any).deletedAt || (existing as any).deletedAt) {
-      // if winner doesn't have deletedAt but loser does and loser ts >= winner ts, swap to deleted one
       const winnerHasDel = !!(winner as any).deletedAt
       if (!winnerHasDel) {
         const candidateWithDel = (it as any).deletedAt ? it : existing
@@ -220,7 +224,6 @@ export function mergeById(local: any[], remote: any[]): any[] {
         }
       }
     }
-    // Preserve archivedAt similarly
     if ((it as any).archivedAt && !(winner as any).archivedAt) {
       if (effTs(it) >= effTs(winner)) winner = { ...winner, archivedAt: (it as any).archivedAt }
     }
@@ -229,7 +232,6 @@ export function mergeById(local: any[], remote: any[]): any[] {
     }
     map.set(id, winner)
   }
-  // Keep tombstones for 7d in merge (don't purge immediately) — UI filters them, purge only after 7d to keep DB tidy
   const now = Date.now()
   const out: any[] = []
   for (const v of map.values()) {
@@ -245,8 +247,12 @@ export function mergeById(local: any[], remote: any[]): any[] {
   return out
 }
 
-// True multiplayer: revision compare-and-swap
-export async function remoteSave(partial: Partial<RemoteData> & { allowEmpty?: boolean, expectedRevision?: number, mutationId?: string }): Promise<string | false> { // returns server updated_at ISO on success, false on failure
+export async function remoteSave(partial: Partial<RemoteData> & { allowEmpty?: boolean, expectedRevision?: number, mutationId?: string }): Promise<string | false> {
+  const hid = getRowId()
+  if (!hid) {
+    console.warn('[supabase] save blocked — no household id')
+    return false
+  }
   const sb = getSupabase()
   if (!sb) {
     console.log('[supabase] save skipped - no config')
@@ -263,27 +269,19 @@ export async function remoteSave(partial: Partial<RemoteData> & { allowEmpty?: b
     }
 
     const mutationId = (partial as any).mutationId || (typeof crypto!=='undefined' && (crypto as any).randomUUID ? (crypto as any).randomUUID() : String(Date.now()))
-    // last mutation dedup - verify against remote before skipping
-    // Local-only check can cause data loss for offline mutations (bug: marked processed before write)
     try {
       const last = localStorage.getItem('couple_v1_last_mutation')
       if (last && last===mutationId) {
-        // Verify remote actually has this mutation before treating as duplicate
         try {
           const sbCheck = getSupabase()
           if (sbCheck) {
-            const { data: checkData } = await sbCheck.from(getTable()).select('meta').eq('id', getRowId()).maybeSingle()
+            const { data: checkData } = await sbCheck.from(getTable()).select('meta').eq('id', hid).maybeSingle()
             const remoteLast = (checkData as any)?.meta?.lastMutationId
             if (remoteLast === mutationId) {
               console.log('[sync] duplicate mutation confirmed on remote, skip', mutationId)
-              return true
+              return true as any
             }
-            // local thinks it's done but remote doesn't have it — must write
             console.log('[sync] local duplicate but remote missing, proceeding to write', mutationId)
-          } else {
-            // No supabase client, can't verify — be safe and skip only if we're offline? Actually safer to write
-            // But if offline, remoteSave would fail anyway, so skip the early return
-            console.log('[sync] duplicate marker but no client to verify, proceeding')
           }
         } catch {
           console.log('[sync] duplicate check failed, proceeding to write')
@@ -294,12 +292,11 @@ export async function remoteSave(partial: Partial<RemoteData> & { allowEmpty?: b
     let existing: any = null
     let existingRevision = 0
     try {
-      const { data } = await sb.from(getTable()).select('id,chores,calendar,shopping,notes,meta,updated_at,revision').eq('id', getRowId()).maybeSingle()
+      const { data } = await sb.from(getTable()).select('id,chores,calendar,shopping,notes,meta,updated_at,revision').eq('id', hid).maybeSingle()
       if (data) { existing = data; existingRevision = (data as any).revision ?? 0 }
     } catch (e:any) {
-      // revision column may not exist yet – try without revision
       try {
-        const { data } = await sb.from(getTable()).select('id,chores,calendar,shopping,notes,meta,updated_at').eq('id', getRowId()).maybeSingle()
+        const { data } = await sb.from(getTable()).select('id,chores,calendar,shopping,notes,meta,updated_at').eq('id', hid).maybeSingle()
         if (data) existing = data
       } catch {}
       console.warn('[supabase] revision column missing? continuing without CAS', e?.message)
@@ -310,8 +307,6 @@ export async function remoteSave(partial: Partial<RemoteData> & { allowEmpty?: b
       updated_at: new Date().toISOString(),
     }
 
-    // Perfect multiplayer: always merge local partial with remote existing, never blind overwrite
-    // This stops a stale device from wiping the other person's recent add
     if (Array.isArray(partial.chores)) {
       const local = withTimestamps(partial.chores)
       const remote = Array.isArray(existing?.chores) ? existing.chores : []
@@ -333,11 +328,9 @@ export async function remoteSave(partial: Partial<RemoteData> & { allowEmpty?: b
     if (Array.isArray(partial.notes)) {
       const local = withTimestamps(stripNotesPhotos(partial.notes as any) as any) as any
       const remote = Array.isArray(existing?.notes) ? existing.notes : []
-      // mergeById preserves photoDataUrl across stripped remote vs local with photo
       payload.notes = mergeById(local, remote)
     } else if (existing?.notes) payload.notes = stripNotesPhotos(existing.notes)
 
-    // chore_game persistence — embedded in meta to avoid needing ALTER TABLE (anon cannot add column)
     const choreGameFromPartial = (partial as any).chore_game || (partial as any).meta?.choreGame || (partial as any).meta?.chore_game
     const existingCG = (existing as any)?.chore_game || (existing as any)?.meta?.choreGame || (existing as any)?.meta?.chore_game || null
     const finalCG = choreGameFromPartial || existingCG || null
@@ -353,28 +346,31 @@ export async function remoteSave(partial: Partial<RemoteData> & { allowEmpty?: b
       payload.meta = { lastMutationId: mutationId, lastSyncedAt: nowIso }
       if (finalCG) (payload.meta as any).choreGame = finalCG;
     }
-    // ensure no stray top-level chore_game column is sent — anon can't ALTER
     if ((payload as any).chore_game) delete (payload as any).chore_game;
 
-    // try revision bump if column exists - only if remote actually has revision
     const revisionSupported = existing != null && typeof (existing as any).revision === 'number';
     if (revisionSupported) {
       payload.revision = (existing as any).revision + 1;
-    } else {
-      // revision column missing or row is new - do not send revision
-      // will be retried without revision, or migration will add it
     }
 
     if (!existing) {
-      const insertPayload: any = { id: getRowId(), ...payload }
+      const insertPayload: any = { id: hid, ...payload }
       if (!insertPayload.chores) insertPayload.chores = []
       if (!insertPayload.calendar) insertPayload.calendar = []
       if (!insertPayload.shopping) insertPayload.shopping = []
       if (!insertPayload.notes) insertPayload.notes = []
-      if (insertPayload.revision == null) delete insertPayload.revision // allow table without revision
+      if (insertPayload.revision == null) delete insertPayload.revision
+      // Ensure households registry has this id (scalable)
+      try {
+        const persons = (payload.meta as any)?.persons
+        const name = (payload.meta as any)?.householdName || hid
+        const code = (payload.meta as any)?.inviteCode ? String((payload.meta as any).inviteCode).toUpperCase() : hid.replace('nylah-','').toUpperCase()
+        await sb.from("households").upsert({ id: hid, code, name, meta: payload.meta||{} }, { onConflict: 'id' } as any)
+        if (code) await sb.from("household_invites").upsert({ code, household_id: hid } as any, { onConflict: 'code' } as any)
+      } catch {}
       const { error } = await sb.from(getTable()).insert(insertPayload)
       if (error) {
-        const { error: upErr, data: upData } = await sb.from(getTable()).upsert({ id: getRowId(), ...payload, chores: payload.chores||[], calendar: payload.calendar||[], shopping: payload.shopping||[], notes: payload.notes||[] }, { onConflict: 'id' }).select()
+        const { error: upErr, data: upData } = await sb.from(getTable()).upsert({ id: hid, ...payload, chores: payload.chores||[], calendar: payload.calendar||[], shopping: payload.shopping||[], notes: payload.notes||[] }, { onConflict: 'id' }).select()
         if (upErr) {
           console.warn('[supabase] insert/upsert error', upErr.message)
           try { localStorage.setItem('couple_v1_last_push_err', upErr.message.slice(0,180)) } catch {}
@@ -387,17 +383,15 @@ export async function remoteSave(partial: Partial<RemoteData> & { allowEmpty?: b
         try { localStorage.setItem('couple_v1_revision', String(insertPayload.revision||1)) } catch {}
       }
     } else {
-      // compare-and-swap if revision column present
       let res:any = null
       let err:any = null
       if (payload.revision != null) {
-        const q = await sb.from(getTable()).update(payload).eq('id', getRowId()).eq('revision', expectedRev).select()
+        const q = await sb.from(getTable()).update(payload).eq('id', hid).eq('revision', expectedRev).select()
         res = q.data; err = q.error
         if (!err && (!res || res.length===0)) {
           console.warn('[sync] revision conflict expected', expectedRev, 'got', existingRevision, '- reloading & merging')
-          // conflict: reload and merge per item, retry once
           try {
-            const { data: fresh } = await sb.from(getTable()).select('*').eq('id', getRowId()).maybeSingle()
+            const { data: fresh } = await sb.from(getTable()).select('*').eq('id', hid).maybeSingle()
             if (fresh) {
               const freshHasRev = typeof (fresh as any).revision === 'number'
               const merged: any = {
@@ -410,8 +404,8 @@ export async function remoteSave(partial: Partial<RemoteData> & { allowEmpty?: b
               }
               if (freshHasRev) merged.revision = (fresh as any).revision + 1
               const retryQuery = freshHasRev
-                ? sb.from(getTable()).update(merged).eq('id', getRowId()).eq('revision', (fresh as any).revision).select()
-                : sb.from(getTable()).update(merged).eq('id', getRowId()).select()
+                ? sb.from(getTable()).update(merged).eq('id', hid).eq('revision', (fresh as any).revision).select()
+                : sb.from(getTable()).update(merged).eq('id', hid).select()
               const retry = await retryQuery
               if (retry.error) {
                 console.warn('[supabase] retry merge failed', retry.error.message)
@@ -425,16 +419,13 @@ export async function remoteSave(partial: Partial<RemoteData> & { allowEmpty?: b
                 const srvAt = (retry && retry.data && retry.data[0] && ((retry.data[0] as any).updated_at || (retry.data[0] as any).updatedAt)) || merged.updated_at || new Date().toISOString()
                 localStorage.setItem('couple_v1_last_sync', srvAt); localStorage.setItem('couple_v1_last_push_err',''); localStorage.setItem('couple_v1_had_remote','1'); localStorage.setItem('couple_v1_last_mutation', mutationId); localStorage.setItem('couple_v1_last_confirmed_at', srvAt)
               } catch {}
-              // @ts-ignore retry may hold merged timestamp
               try { return (retry && retry.data && retry.data[0] && ((retry.data[0] as any).updated_at || (retry.data[0] as any).updatedAt)) || (typeof merged !== 'undefined' ? merged.updated_at : new Date().toISOString()) } catch { return new Date().toISOString() }
             }
           } catch (e:any) { console.warn('[sync] merge retry ex', e?.message||e) }
-          // if still conflict, treat as failed but reload will recover
           return false
         }
       } else {
-        // no revision column - simple update
-        const q = await sb.from(getTable()).update(payload).eq('id', getRowId()).select()
+        const q = await sb.from(getTable()).update(payload).eq('id', hid).select()
         res = q.data; err = q.error
       }
       if (err) {
@@ -442,14 +433,11 @@ export async function remoteSave(partial: Partial<RemoteData> & { allowEmpty?: b
         try { localStorage.setItem('couple_v1_last_push_err', err.message.slice(0,180)) } catch {}
         return false
       }
-      // Verify server actually stored our mutation — prevents false Saved
       if (res && res[0]) {
         const serverMut = (res[0] as any)?.meta?.lastMutationId
         if (serverMut && serverMut !== mutationId) {
           console.warn('[sync] server mutation mismatch expected', mutationId.slice(0,8), 'got', String(serverMut).slice(0,8))
-          // Don't treat as fatal yet, but ensure we don't lie about revision
         }
-        // Verify revision advanced
         if (typeof (res[0] as any).revision === 'number' && (res[0] as any).revision <= expectedRev) {
           console.warn('[sync] revision did not advance', expectedRev, '->', (res[0] as any).revision)
         }
@@ -460,19 +448,15 @@ export async function remoteSave(partial: Partial<RemoteData> & { allowEmpty?: b
         try { localStorage.setItem('couple_v1_revision', String(payload.revision)) } catch {}
       }
     }
-    // Optional normalized mirror (non-blocking) for chore_occurrences path forward
     try {
       const choresForNorm = (payload as any).chores
       if (Array.isArray(choresForNorm) && choresForNorm.length>0) {
         import('./normalized').then(m=> m.syncChoreOccurrencesToSupabase(choresForNorm as any)).catch(()=>{})
       }
     } catch {}
-    // Only set had_remote / last_sync after verified server write — not on load
-    // Use server-confirmed timestamp if available, else our payload timestamp, else now. This becomes the truthful Saved time.
     let confirmedAt = payload.updated_at
     try {
-      // res from last successful update holds server row, if not, try to read from latest res
-      // @ts-ignore res may be undefined in insert path, fallback to payload
+      // @ts-ignore res may be undefined in insert path
       const serverAt = (typeof res !== 'undefined' && res && res[0] && ((res[0] as any).updated_at || (res[0] as any).updatedAt)) || payload.updated_at
       if (serverAt) confirmedAt = serverAt
     } catch {}
@@ -486,13 +470,14 @@ export async function remoteSave(partial: Partial<RemoteData> & { allowEmpty?: b
 }
 
 export function subscribeRemote(cb: (data: RemoteData)=>void) {
+  const hid = getRowId()
+  if (!hid) return ()=>{}
   const sb = getSupabase()
   if (!sb) return ()=>{}
   try {
-    const ch = sb.channel('couple_data_'+getRowId())
-      .on('postgres_changes', { event: '*', schema: 'public', table: getTable(), filter: `id=eq.${getRowId()}` }, (payload:any)=>{
+    const ch = sb.channel('couple_data_'+hid)
+      .on('postgres_changes', { event: '*', schema: 'public', table: getTable(), filter: `id=eq.${hid}` }, (payload:any)=>{
         if (payload.eventType === 'DELETE') {
-          // DELETE emits old row – do NOT treat as current data (stale emit bug)
           console.warn('[sync] realtime DELETE ignored — not applying old snapshot')
           return
         }

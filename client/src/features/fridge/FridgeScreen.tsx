@@ -166,46 +166,44 @@ function FridgePage(props: FridgeProps | any) {
       )}
 
 
-      {/* ——— fridge hero – pixel perfect to your double phone ref ——— */}
-      <div className="relative overflow-hidden rounded-[28px] px-6 pt-4 pb-6" style={{ background: "#FDF0E6", minHeight: 190, boxShadow:"0 8px 28px rgba(60,40,20,0.06), inset 0 1px 0 rgba(255,255,255,0.8)" }}>
-        {/* organic blobs – match ref */}
-        <div className="pointer-events-none absolute -right-10 top-[-22px] h-[138px] w-[138px]" style={{ background:"#F3C9AC", opacity:0.68, borderRadius:"48% 52% 46% 54% / 42% 44% 56% 58%" }} />
-        <div className="pointer-events-none absolute right-[12px] top-[10px] h-[96px] w-[96px]" style={{ background:"#CBDCD2", opacity:0.82, borderRadius:"55% 45% 60% 40% / 45% 50% 50% 55%" }} />
-        <div className="pointer-events-none absolute right-[66px] top-[42px] h-[72px] w-[72px]" style={{ background:"#E8BEA3", opacity:0.62, borderRadius:"60% 40% 50% 50% / 60% 40% 60% 40%" }} />
-        {/* faint palm shadow */}
-        <div className="pointer-events-none absolute left-[44%] top-[6px] h-[34px] w-[72px] rotate-[-12deg] opacity-[0.10]" style={{ background:"radial-gradient(ellipse at 50% 50%, #6B6A4B 0%, transparent 72%)" }} />
+            {/* ——— fridge hero – pixel perfect to your double phone ref ——— */}
+      <div className="relative overflow-hidden rounded-[28px] px-6 pt-4 pb-6 dark:hero-dark" style={{ background: "#FDF6EF", minHeight: 220, boxShadow:"0 8px 28px rgba(60,40,20,0.06), inset 0 1px 0 rgba(255,255,255,0.9)" }}>
+        {/* perfect circles - match goal mock */}
+        <div className="pointer-events-none absolute -right-[18px] -top-[28px] h-[168px] w-[168px] rounded-full" style={{ background:"#F9DCC0", opacity:0.95 }} />
+        <div className="pointer-events-none absolute right-[28px] top-[36px] h-[112px] w-[112px] rounded-full" style={{ background:"#DDE8DC", opacity:0.95 }} />
+        <div className="pointer-events-none absolute right-[92px] top-[8px] h-[64px] w-[64px] rounded-full" style={{ background:"#EBCFB3", opacity:0.88 }} />
+        {/* faint leaf shadow top center */}
+        <div className="pointer-events-none absolute left-[46%] top-[4px] h-[28px] w-[88px] rotate-[-10deg] opacity-[0.09]" style={{ background:"radial-gradient(ellipse at 50% 50%, #5A5A3A 0%, transparent 70%)" }} />
 
-        {/* mugs / tray / vase – tight crop bottom-right */}
+        {/* mugs / tray / vase – flush bottom edge */}
         <img
           src="./fridge-mugs-transparent.png"
           alt=""
           className="pointer-events-none absolute select-none"
-          style={{ right:-12, bottom:-10, width:178, height:"auto", objectFit:"contain", filter:"drop-shadow(0 8px 16px rgba(80,52,32,0.16))", transform:"rotate(-0.6deg)" }}
+          style={{ right:-8, bottom:0, width:196, height:"auto", objectFit:"contain", filter:"drop-shadow(0 10px 18px rgba(80,52,32,0.18))" }}
           loading="eager"
         />
 
         <div className="relative z-[1]">
-          <div className="text-[11px] font-[600] tracking-[0.16em] uppercase text-[#958B84]" style={{ fontFamily:"Inter, system-ui, sans-serif" }}>{dateLabel}</div>
+          <div className="text-[11px] font-[700] tracking-[0.14em] uppercase text-[#9E948E]" style={{ fontFamily:"Inter, system-ui, sans-serif" }}>{dateLabel}</div>
 
-          <div className="mt-4 max-w-[56%]">
-            <div className="text-[20px] font-[700] leading-[0.96] text-[#1B1511] tracking-[-0.01em]" style={{ fontFamily:"Fraunces, serif" }}>{greeting}</div>
-            <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0">
-              <span className="text-[42px] font-[800] tracking-[-0.03em] text-[#14100D]" style={{ fontFamily:"Fraunces, serif", lineHeight:0.92 }}>{currentName}</span>
+          <div className="mt-4 max-w-[58%]">
+            <div className="text-[32px] font-[700] leading-[0.92] text-[#211A15] tracking-[-0.02em]" style={{ fontFamily:"Fraunces, serif" }}>{greeting}</div>
+            <div className="mt-1 flex items-baseline">
+              <span className="text-[44px] font-[800] tracking-[-0.03em] text-[#15110E]" style={{ fontFamily:"Fraunces, serif", lineHeight:0.94 }}>{currentName}</span>
             </div>
-            <div className="mt-0.5 flex items-baseline gap-1.5">
-              <span className="text-[15px] font-[400] text-[#8C8380]" style={{ fontFamily:"Inter, sans-serif" }}>with</span>
-              <span className="text-[28px] font-[500] italic text-[#C17152]" style={{ fontFamily:'"Pinyon Script", "Snell Roundhand", cursive', letterSpacing:"-0.01em" }}>{partnerName}</span>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-[13px] font-[500] text-[#8F8883]" style={{ fontFamily:"Inter, sans-serif" }}>with</span>
+              <span className="text-[26px] font-[400] italic text-[#C17152]" style={{ fontFamily:'"Pinyon Script", "Snell Roundhand", cursive' }}>{partnerName}</span>
             </div>
-            <div className="mt-3 flex items-center gap-2">
-              <span className="h-px w-7 bg-[#D8CCC2]" />
-              <span className="text-[10.5px] font-[650] tracking-[0.14em] uppercase text-[#8D837C]">{currentName.toUpperCase()} ♥ {partnerName.toUpperCase()} • BEIRT</span>
+            <div className="mt-4 flex items-center gap-2.5">
+              <span className="h-px w-8 bg-[#DDD2C9]" />
+              <span className="text-[10.5px] font-[700] tracking-[0.13em] uppercase text-[#8D837C]">{currentName.toUpperCase()} ♥ {partnerName.toUpperCase()} • BEIRT</span>
             </div>
           </div>
         </div>
 
         <div className="absolute bottom-2.5 right-3 z-[2]">{syncMinimal}</div>
-      </div>
-        </div>
       </div>
 
       <NeedsYou currentUser={currentUser} calendar={activeCalendar as any} chores={activeChores as any} nowMs={nowMs} setTab={setTab as any} />

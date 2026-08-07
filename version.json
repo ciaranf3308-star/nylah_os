@@ -1,8 +1,1 @@
-{
-  "build": "v168-fridge-hero-true-match",
-  "code": 168,
-  "version": "168.0.0",
-  "changelog": "true match hero: smaller good evening, tighter blobs, mugs bottom-anchored 178px, no dark duplicate neg margin, polished tracking",
-  "mandatory": false,
-  "builtAt": "2026-08-07T22:45:00Z"
-}
+{"build":"v169-fridge-hero-circles","code":169,"version":"169.0.0","changelog":"circles not organic, 32/44 greeting/name, mugs 196 flush bottom edge, true ref light","mandatory":false,"builtAt":"2026-08-07T23:17:00Z"}

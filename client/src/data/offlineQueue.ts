@@ -100,8 +100,11 @@ export function persistQueueSync(queue: QueuedOp[]) {
 
 async function reallyOnline(): Promise<boolean> {
   try {
-    if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) return false
-  } catch { return false }
+    if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) {
+      // allow optimistic attempt anyway unless definitely offline for long
+      return false
+    }
+  } catch {}
   // quick reachable probe – treat 401/404/400 as reachable (anon public)
   try {
     let anon = ''
@@ -119,7 +122,7 @@ async function reallyOnline(): Promise<boolean> {
     }
     if (!anon) anon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsbGxlYnNqdGdpaHN4aGNtY3ZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NDQxMjQsImV4cCI6MjEwMTMyMDEyNH0.Q6PuA6nvTI__DEB0i7akLusljjjeYu_0IxQICOc5oSQ'
     const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null
-    const timeout = ctrl ? setTimeout(() => ctrl.abort(), 2000) : null
+    const timeout = ctrl ? setTimeout(() => ctrl.abort(), 2500) : null
     const resp = await fetch('https://zlllebsjtgihsxhcmcvb.supabase.co/rest/v1/', {
       method: 'HEAD',
       headers: { apikey: anon } as any,
@@ -130,7 +133,8 @@ async function reallyOnline(): Promise<boolean> {
   } catch {
     // if probe fails but navigator says online, assume online (optimistic) to allow drain attempt
     try { if (typeof navigator !== 'undefined' && (navigator as any).onLine !== false) return true } catch {}
-    return false
+    try { if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) return false } catch {}
+    return true
   }
 }
 
@@ -158,7 +162,10 @@ export async function drainOps(sb: SupaLike): Promise<boolean> {
   if (q.length === 0) return true
 
   const online = await reallyOnline()
-  if (!online) return false
+  if (!online) {
+    console.warn('[offlineQueue] probe says offline — attempting drain anyway optimistically')
+    // do not early return - try anyway
+  }
 
   // clone to iterate, but mutate source via splice
   let idx = 0

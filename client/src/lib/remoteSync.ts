@@ -20,8 +20,12 @@ function getRowId(): string | null {
 
 export async function reallyOnline(): Promise<boolean> {
   try {
-    if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) return false
-  } catch { return false }
+    if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) {
+      // double-check: if we have cached data, still allow attempt - headless can lie
+      // only hard-block if both offline flag AND no cached Supabase URL
+      return false
+    }
+  } catch {}
   try {
     let anon = ''
     try {
@@ -38,7 +42,7 @@ export async function reallyOnline(): Promise<boolean> {
     }
     if (!anon) anon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsbGxlYnNqdGdpaHN4aGNtY3ZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NDQxMjQsImV4cCI6MjEwMTMyMDEyNH0.Q6PuA6nvTI__DEB0i7akLusljjjeYu_0IxQICOc5oSQ'
     const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null
-    const t = ctrl ? setTimeout(() => ctrl.abort(), 2000) : null
+    const t = ctrl ? setTimeout(() => ctrl.abort(), 2500) : null
     const resp = await fetch('https://zlllebsjtgihsxhcmcvb.supabase.co/rest/v1/', {
       method: 'HEAD',
       headers: { apikey: anon } as any,
@@ -48,7 +52,9 @@ export async function reallyOnline(): Promise<boolean> {
     return resp.ok || resp.status === 401 || resp.status === 404 || resp.status === 400
   } catch {
     try { if (typeof navigator !== 'undefined' && (navigator as any).onLine !== false) return true } catch {}
-    return false
+    // optimistic: allow drain attempt, let actual upsert error decide offline
+    try { if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) return false } catch {}
+    return true
   }
 }
 
@@ -319,7 +325,10 @@ export async function remoteSaveOperations(ops: QueuedOp[]): Promise<boolean> {
     return false
   }
   const online = await reallyOnline()
-  if (!online) return false
+  if (!online) {
+    console.warn('[supabase] offline probe says offline — will still attempt upsert optimistically')
+    // do not early return - attempt anyway, let actual error decide
+  }
 
   for (const op of ops) {
     if (!op || !op.id) continue

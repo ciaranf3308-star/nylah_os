@@ -663,9 +663,8 @@ export function useV1AppShellState() {
     }
     const onlineNow = await reallyOnline();
     if (!onlineNow) {
-      offlineFailCountRef.current++;
-      setSyncStatus({ kind:'offline-queued', queueCount: mutationQueueRef.current.length } as any);
-      return false;
+      console.warn('[sync] offline probe false — still attempting save optimistically')
+      // do not return, try anyway
     }
     try {
       setSyncStatus({ kind:'saving' } as any);

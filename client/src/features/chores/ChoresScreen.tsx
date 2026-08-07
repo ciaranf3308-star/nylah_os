@@ -506,65 +506,175 @@ export default function ChoresScreen(props: any) {
         </div>
       </BottomSheet>
 
-      <BottomSheet open={showAdd} onClose={()=> setShowAdd(false)} title="Add chore — pain = points">
-        <div className="space-y-3.5">
-          <input id="chore-title" placeholder="Title — e.g. Clean kitchen, Bins, Dishes" className="w-full h-[52px] rounded-[16px] border bg-[var(--card-bg)] px-4 text-[14px] shadow-sm" style={{borderColor:"var(--border)", minHeight:52}} autoFocus />
-          <div className="flex gap-1.5">
-            {templates.slice(0,3).map(t=> <button key={t.k} onClick={()=>{ const el=document.getElementById("chore-title") as HTMLInputElement; if(el) el.value=t.title; setAddIcon(t.icon); setAddPain(t.k==="Bins"?3:t.k==="Dishes"?4:6); }} className="h-[36px] rounded-full border bg-[var(--card-bg)] px-3 text-[11px]" style={{borderColor:"var(--border)", minHeight:36}}>{t.k}</button>)}
-            <button onClick={()=> setShowRules(true)} className="h-[36px] rounded-full border bg-[var(--chip-bg)] px-3 text-[10px]" style={{borderColor:"var(--border)"}}>How scoring works?</button>
+            <BottomSheet open={showAdd} onClose={()=> setShowAdd(false)} title="">
+        <div className="space-y-5 px-1">
+          {/* Masthead — editorial */}
+          <div className="pt-1 pb-0">
+            <div className="font-['Fraunces'] text-[22px] font-[680] tracking-[-0.01em] text-[var(--text)] leading-[1.05]">New chore</div>
+            <div className="font-['Fraunces'] text-[12.5px] italic text-[var(--muted)] mt-1 tracking-[0.01em]">pain = points • a tiny ritual, not a form</div>
           </div>
 
-          <div className="rounded-[16px] border bg-[var(--card-bg)] px-4 py-3 space-y-2" style={{borderColor:"var(--border)"}}>
-            <div className="flex items-center justify-between">
-              <span className="text-[12px] font-semibold">How annoying — {addPain}/10</span>
-              <span className="text-[11px] rounded-full bg-[#0A0A0A] text-white px-2.5 py-1">{addPain*10}pts {addBonus?"→ "+(addPain*10*1.15).toFixed(0)+" bonus":""}</span>
-            </div>
-            <input type="range" min={1} max={10} value={addPain} onChange={e=> setAddPain(Number(e.target.value))} className="w-full accent-[#0A0A0A] h-[24px]" />
-            <div className="flex justify-between text-[10px] text-[var(--muted)]"><span>1 Tiny 10pts</span><span>5 Medium 50pts</span><span>10 Brutal 100pts</span></div>
-            <div className="text-[11px] text-[var(--muted)]"><b>{(()=>{ const p=addPain; if(p<=2) return "Tiny effort"; if(p<=4) return "Light effort"; if(p<=6) return "Medium effort"; if(p<=8) return "High effort"; return "Brutal"; })()}</b> — {addPain} × 10 = {addPain*10} base. Why not more than 100? Keeps it fair. Overdue or race adds 15% extra, max 1.5×.</div>
-            <label className="flex items-center gap-2 text-[11px] pt-1"><input type="checkbox" checked={addBonus} onChange={e=> setAddBonus(e.target.checked)} /> Bonus 1.15× — only for truly awful jobs (under 10% of chores)</label>
-          </div>
-
-          <div className="grid grid-cols-4 gap-1.5">
-            {(["one-off","daily","weekly","monthly"] as const).map(f=> (
-              <button key={f} onClick={()=>{ setAddType(f==="one-off"?"one-off":"repeat"); setAddFreq(f==="one-off"?"once":f as any); }} className={"h-[44px] rounded-[12px] border text-[11px] font-semibold capitalize "+( (f==="one-off" && addType==="one-off") || addFreq===f ? "bg-[#0A0A0A] text-white border-[#0A0A0A]" : "bg-[var(--card-bg)] text-[var(--text-secondary)]")} style={{borderColor:"var(--border)", minHeight:44}}>{f}</button>
-            ))}
-          </div>
-          {addType!=="one-off" && (
-            <div className="grid grid-cols-7 gap-1">
-              {["Mo","Tu","We","Th","Fr","Sa","Su"].map((d,i)=> (
-                <button key={d} onClick={()=> { const a=[...addWeekdays]; a[i]=!a[i]; setAddWeekdays(a); }} className={"h-[40px] rounded-full border text-[10px] font-medium "+(addWeekdays[i]?"bg-[#0A0A0A] text-white border-[#0A0A0A]":"bg-[var(--card-bg)]")} style={{borderColor:"var(--border)", minHeight:40}}>{d}</button>
-              ))}
-            </div>
-          )}
-
-          <div className="space-y-1.5">
-            <div className="text-[11px] font-semibold tracking-wide uppercase text-[var(--muted)] flex items-center justify-between"><span>Pick an icon</span><span className="text-[10px] font-medium normal-case opacity-60">{addPain*10}pts badge</span></div>
-            <div className="grid grid-cols-5 gap-2 max-h-[116px] overflow-y-auto no-scrollbar p-1 rounded-[12px] bg-[var(--chip-bg)]/30">
-              {ALL_CHORE_ICON_IDS.map(id=> (
-                <button key={id} onClick={()=> setAddIcon(id)} className={"grid h-[44px] w-[44px] place-items-center rounded-full border text-[12px] active:scale-[0.96] transition-all"} style={{minHeight:44, minWidth:44, background: addIcon===id ? "#0A0A0A" : "var(--card-bg)", color: addIcon===id ? "white" : "var(--text)", borderColor: addIcon===id ? "#0A0A0A" : "var(--border)"}}>
-                  <ChoreIcon id={id} size={18} />
+          {/* Title input — boutique */}
+          <div className="space-y-2.5">
+            <input
+              id="chore-title"
+              placeholder="Bins, dishes, laundry…"
+              className="w-full h-[56px] rounded-[18px] border px-[18px] text-[15.5px] font-[500] tracking-[-0.01em] placeholder:text-[var(--muted)]/55 focus:outline-none focus:ring-[3px] focus:ring-[#F7E1CC]/60 focus:border-[#EADFCE] transition-all"
+              style={{ background: "#FFFDFA", borderColor: "#EADFCE", color: "var(--text)", minHeight:56 }}
+              autoFocus
+            />
+            <div className="flex items-center gap-2 flex-wrap">
+              {templates.slice(0,3).map((t:any)=>(
+                <button
+                  key={t.k}
+                  onClick={()=>{ const el=document.getElementById("chore-title") as HTMLInputElement; if(el) el.value=t.title; setAddIcon(t.icon); setAddPain(t.k==="Bins"?3:t.k==="Dishes"?4:6); }}
+                  className="h-[28px] rounded-full border px-3 text-[11.5px] font-[520] tracking-[0.01em] transition hover:bg-[#FFFDFA]"
+                  style={{ background:"#FFF8EF", borderColor:"#EAE0D2", color:"var(--text-secondary)"}}
+                >
+                  <span className="inline-flex items-center gap-1.5"><span className="h-1 w-1 rounded-full bg-[#D07A5F] opacity-70" />{t.k}</span>
                 </button>
               ))}
+              <button onClick={()=> setShowRules(true)} className="text-[11px] font-[450] underline decoration-dotted underline-offset-4 text-[var(--muted)] hover:text-[var(--text-secondary)]">How scoring works?</button>
             </div>
           </div>
 
-          <button onClick={()=>{
-            const el=document.getElementById("chore-title") as HTMLInputElement;
-            if(!el?.value.trim()) return;
-            const nowISO=new Date().toISOString();
-            const pain=Math.min(10, Math.max(1, addPain||5));
-            const base=pain*10;
-            const mult = addBonus?1.15:1;
-            const fd = addType==="one-off" ? undefined : (addWeekdays.some(Boolean) ? ["Mo","Tu","We","Th","Fr","Sa","Su"].filter((_,i)=>addWeekdays[i]).join(",") : addFreq);
-            const nc:any={ id: uid("chk"), title:el.value.trim(), type:addType, frequency:addFreq, frequencyDetail: fd, createdAt:nowISO, updatedAt:nowISO, pain, basePoints:base, swipes:{aisling:null,ciaran:null}, status:"deck", assignedTo:null, multiplier:mult, timeWindowHours:24, icon: addIcon };
-            setChores((p:any)=> [nc, ...p]); setShowAdd(false);
-            setAddPain(5); setAddBonus(false);
-            triggerPointsPop(nc.id, base);
-            setToast(`${nc.title} • ${base}pts ${addBonus?"1.15×":""} → deck`);
-            setTimeout(()=>setToast(null),2500);
-          }} className="w-full h-[56px] rounded-[16px] bg-[#0A0A0A] text-white text-[15px] font-semibold active:scale-[0.96]" style={{minHeight:56}}>Add • {addPain*10}pts {addBonus?"1.15× bonus":""} • deck</button>
-          <div className="text-[10px] text-[var(--muted)] text-center">Tap "?" top-right any deck card to see details. Championship resets 1st 00:00 {HOUSEHOLD_TZ}.</div>
+          {/* Effort — dot scale */}
+          <div className="rounded-[18px] border bg-[#FFFCF8] px-4 py-3.5" style={{borderColor:"#EDE2D2"}}>
+            <div className="flex items-baseline justify-between">
+              <span className="text-[10.5px] font-[650] tracking-[0.12em] uppercase text-[#8A7D6E]">How heavy?</span>
+              <span className="font-['Fraunces'] text-[11.5px] italic text-[var(--muted)] tabular-nums">
+                {(()=>{ const p=addPain; if(p<=2) return "Whisper"; if(p<=4) return "Light"; if(p<=6) return "Medium"; if(p<=8) return "Hefty"; return "Brutal"; })()} — {addPain*10} pts
+              </span>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-[6px]">
+              {[1,2,3,4,5,6,7,8,9,10].map(n=>{
+                const active = n<=addPain;
+                const frac = n/10;
+                const fill = active
+                  ? (frac<0.4 ? "#D8CFC3" : frac<0.7 ? "#D7B09A" : "#D07A5F")
+                  : "transparent";
+                return (
+                  <button
+                    key={n}
+                    onClick={()=> setAddPain(n)}
+                    aria-label={`Pain ${n}`}
+                    className="grid h-8 w-8 place-items-center rounded-full border transition-all active:scale-[0.92]"
+                    style={{
+                      borderColor: active ? "#E0CEB8" : "#E8DDCF",
+                      background: active ? fill : "#FFFEFB",
+                      boxShadow: active ? "0 1px 0 rgba(0,0,0,0.04)" : "none",
+                      minHeight:32, minWidth:32
+                    }}
+                  >
+                    <span className="h-[8px] w-[8px] rounded-full" style={{ background: active ? (n===addPain ? "#121214" : fill) : "#E8DDCF" }} />
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-2.5 flex items-center justify-between text-[10.5px]">
+              <span className="text-[var(--muted)]/70 font-[450]">1 • Tiny 10</span>
+              <span className="font-['Fraunces'] text-[11px] text-[var(--text-secondary)]">{addPain} × 10 = <b>{addPain*10}</b> base {addBonus? <i className="not-italic text-[#D07A5F]">+15%</i>:null}</span>
+              <span className="text-[var(--muted)]/70 font-[450]">10 • 100</span>
+            </div>
+            <div className="mt-2">
+              <button
+                onClick={()=> setAddBonus(v=>!v)}
+                className={"text-[11px] font-[450] tracking-[0.01em] "+(addBonus?"text-[#9A6754]":"text-[var(--muted)]")}
+              >
+                <span className="underline decoration-dotted underline-offset-4">{addBonus? "✓ 15% awful-job bonus on":"add 15% for awful?"}</span>{addBonus? <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full border bg-[#FFF1E6] border-[#E8CBB6]">bonus</span>:null}
+              </button>
+            </div>
+          </div>
+
+          {/* Frequency — pill rail */}
+          <div className="space-y-2.5">
+            <span className="text-[10.5px] font-[650] tracking-[0.12em] uppercase text-[#8A7D6E]">How often?</span>
+            <div className="grid w-full grid-cols-4 rounded-[14px] p-[3px] gap-[2px]" style={{background:"#F5EEE6", border:"1px solid #EFE3D3"}}>
+              {(["one-off","daily","weekly","monthly"] as const).map(f=> {
+                const active = (f==="one-off" && addType==="one-off") || addFreq===f;
+                return (
+                  <button
+                    key={f}
+                    onClick={()=>{ setAddType(f==="one-off"?"one-off":"repeat"); setAddFreq(f==="one-off"?"once":f as any); }}
+                    className={"h-[40px] rounded-[10px] text-[12px] font-[600] capitalize tracking-[0.01em] transition-all "+(active?"bg-white shadow-[0_1px_6px_rgba(0,0,0,0.08)] text-[var(--text)]":"text-[var(--muted)] hover:text-[var(--text-secondary)]")}
+                    style={{minHeight:40}}
+                  >
+                    {f==="one-off"?"Once":f}
+                  </button>
+                );
+              })}
+            </div>
+            {addType!=="one-off" && (
+              <div className="flex items-center gap-1.5 pt-1 flex-wrap">
+                {["M","T","W","T","F","S","S"].map((d,i)=> {
+                  const long=["Mo","Tu","We","Th","Fr","Sa","Su"][i];
+                  const active=addWeekdays[i];
+                  return (
+                    <button
+                      key={long}
+                      onClick={()=> { const a=[...addWeekdays]; a[i]=!a[i]; setAddWeekdays(a); }}
+                      className={"grid h-[36px] w-[36px] place-items-center rounded-full border text-[11px] font-[600] transition-all active:scale-[0.96] "+(active?"bg-[#121214] text-white border-[#121214]":"bg-[#FFFEFB] text-[#7A6E61]")}
+                      style={{borderColor: active ? "#121214" : "#E1D8CC", minHeight:36, minWidth:36}}
+                      aria-pressed={active}
+                    >
+                      {d}
+                    </button>
+                  );
+                })}
+                <span className="ml-1 text-[10px] text-[var(--muted)]/70">{addWeekdays.filter(Boolean).length ? `${addWeekdays.filter(Boolean).length} days` : "pick days"}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Icons — refined */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10.5px] font-[650] tracking-[0.12em] uppercase text-[#8A7D6E]">Mark</span>
+              <span className="text-[10px] font-[450] text-[var(--muted)]/60 tabular-nums">{addPain*10} pts • {addIcon}</span>
+            </div>
+            <div className="rounded-[14px] border bg-[#FFFCF8] p-2" style={{borderColor:"#EDE2D2"}}>
+              <div className="grid grid-cols-5 gap-2 max-h-[148px] overflow-y-auto no-scrollbar p-1">
+                {(ALL_CHORE_ICON_IDS as any).map((id:string)=> {
+                  const active = addIcon===id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={()=> setAddIcon(id as any)}
+                      className={"relative grid h-[44px] w-[44px] place-items-center rounded-[12px] border text-[12px] transition-all active:scale-[0.96] "+(active?"bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] border-[#121214]":"bg-[#FFFEFB] border-[#EADFCE] hover:border-[#D9CBB6]")}
+                      style={{minHeight:44, minWidth:44}}
+                    >
+                      <ChoreIcon id={id as any} size={18} />
+                      {active && <span className="pointer-events-none absolute -bottom-[4px] left-1/2 h-[2px] w-[18px] -translate-x-1/2 rounded-full bg-[#D07A5F]" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Primary CTA */}
+          <button
+            onClick={()=>{
+              const el=document.getElementById("chore-title") as HTMLInputElement;
+              if(!el?.value.trim()) return;
+              const nowISO=new Date().toISOString();
+              const pain=Math.min(10, Math.max(1, addPain||5));
+              const base=pain*10;
+              const mult = addBonus?1.15:1;
+              const fd = addType==="one-off" ? undefined : (addWeekdays.some(Boolean) ? ["Mo","Tu","We","Th","Fr","Sa","Su"].filter((_,i)=>addWeekdays[i]).join(",") : addFreq);
+              const nc:any={ id: uid("chk"), title:el.value.trim(), type:addType, frequency:addFreq, frequencyDetail: fd, createdAt:nowISO, updatedAt:nowISO, pain, basePoints:base, swipes:{aisling:null,ciaran:null}, status:"deck", assignedTo:null, multiplier:mult, timeWindowHours:24, icon: addIcon };
+              setChores((p:any)=> [nc, ...p]); setShowAdd(false);
+              setAddPain(5); setAddBonus(false);
+              triggerPointsPop(nc.id, base);
+              setToast(`${nc.title} • ${base}pts ${addBonus?"1.15×":""} → deck`);
+              setTimeout(()=>setToast(null),2500);
+            }}
+            className="w-full h-[56px] rounded-[16px] bg-[#121214] text-[#FFFEFB] text-[15px] font-[650] tracking-[-0.01em] active:scale-[0.98] shadow-[0_8px_22px_rgba(18,18,20,0.18)] flex items-center justify-center gap-2"
+            style={{minHeight:56, fontFamily:"Fraunces, ui-serif, Georgia, serif"}}
+          >
+            <span className="h-[6px] w-[6px] rounded-full bg-[#A8D5BA]" /> Add to deck — {addPain*10} pts
+          </button>
+          <div className="text-[10px] text-[var(--muted)]/60 text-center font-['Fraunces'] italic">Resets {HOUSEHOLD_TZ} • pain is points, not priority</div>
         </div>
       </BottomSheet>
 

@@ -1,1 +1,1 @@
-{"build":"v133-beirt-scoreboard-icons","code":133,"changelog":"Championship proper scoreboard — 50/50 fix, no duplicate RESETS, leaderboard table, clear head-to-head + Race to 600 + timer + streak — expanded 84-icon library with categories for chore picker — deck card jazzed with color wash & bigger icon"}
+{"build":"v134-beirt-light-scoreboard","code":134,"changelog":"v5 lighter airy scoreboard — removed black #121214 slab, theme-aware card-bg, soft chips for Lead/Share/Streak, thin head-to-head 10px, thin Race 6px, lighter timer chip, less overbearing"}

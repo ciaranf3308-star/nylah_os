@@ -122,7 +122,7 @@ function ShoppingPageFacelift(props: any) {
   const [showBought, setShowBought] = useState(false);
   const [confirmDelId, setConfirmDelId] = useState<string|null>(null);
 
-  const activeItems = useMemo(()=> items.filter((s:any)=> !(s as any).deletedAt && !(s as any).archivedAt), [items]);
+  const activeItems = useMemo(()=> items.filter((s:any)=> !(s as any).deletedAt && !(s as any).archivedAt && (s as any).item?.trim()), [items]);
   const boughtAll = useMemo(()=> activeItems.filter(s=> s.purchased).sort((a,b)=> new Date((b as any).lastDoneAt||b.createdAt).getTime()-new Date((a as any).lastDoneAt||a.createdAt).getTime()), [activeItems]);
 
   const filtered = useMemo(()=>{

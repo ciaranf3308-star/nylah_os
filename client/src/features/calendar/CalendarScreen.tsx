@@ -461,7 +461,7 @@ function CalendarPageV2(props: any) {
             </span>
             <span className="mt-0.5 flex items-center gap-1.5">
               <span className="block text-[11px] truncate max-w-[150px]" style={{color:'var(--muted)'}}>{sub || forLabel}</span>
-              {isPending && <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold border" style={{background:'#121214', color:'#FFFEFB', borderColor:'rgba(255,255,255,0.08)'}}><span style={{color:'var(--accent)'}}>✦</span> Needs you</span>}
+              {isPending && <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold border" style={{background:'var(--chip-bg)', color:'var(--text)', borderColor:'var(--border)'}}><span style={{color:'var(--accent)'}}>✦</span> Needs you</span>}
             </span>
           </span>
           <span className="shrink-0 rounded-full h-8 w-8 grid place-items-center border text-[12px]" style={{background:'var(--chip-bg)', borderColor:'var(--border)', color:'var(--muted)'}} aria-hidden="true">›</span>
@@ -576,9 +576,9 @@ function CalendarPageV2(props: any) {
                       className={"relative min-h-[44px] w-full rounded-[14px] grid place-items-center border transition-all active:scale-[0.96] py-2.5 " + (isSel ? "" : isToday ? "" : "")}
                       style={{
                         minHeight:44,
-                        background: isSel ? '#121214' : isToday ? 'rgba(255,107,38,0.14)' : 'var(--card-bg)',
-                        color: isSel ? '#FFFEFB' : 'var(--text)',
-                        borderColor: isSel ? '#121214' : isToday ? 'rgba(255,107,38,0.28)' : 'var(--border)',
+                        background: isSel ? 'var(--text)' : isToday ? 'rgba(255,107,38,0.14)' : 'var(--card-bg)',
+                        color: isSel ? 'var(--app-bg)' : 'var(--text)',
+                        borderColor: isSel ? 'var(--text)' : isToday ? 'rgba(255,107,38,0.28)' : 'var(--border)',
                         boxShadow: isSel ? '0 8px 20px rgba(0,0,0,0.22), 0 0 0 1px #121214 inset' : isToday ? '0 0 0 4px rgba(255,107,38,0.10), 0 4px 16px rgba(255,107,38,0.12)' : '0 1px 0 rgba(255,255,255,0.86) inset',
                         fontFamily: 'Fraunces, var(--font-display)',
                         fontWeight: isSel || isToday ? 600 : 500,

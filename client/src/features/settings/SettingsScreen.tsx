@@ -258,7 +258,7 @@ export function SettingsScreen(props: any = {}){
             </div>
             <div className="space-y-1">
               <div className="text-[10px] uppercase tracking-wide text-[var(--muted)] font-semibold">debug JSON — paste to support</div>
-              <pre className="max-h-[160px] overflow-auto rounded-[10px] border bg-[#FFFCF8] p-2.5 text-[10px] font-mono leading-[1.35] text-[#2B211E]" style={{borderColor:"var(--border)", whiteSpace:"pre-wrap", wordBreak:"break-word"}}>{debugJson}</pre>
+              <pre className="max-h-[160px] overflow-auto rounded-[10px] border bg-[var(--chip-bg)] p-2.5 text-[10px] font-mono leading-[1.35] text-[var(--text)]" style={{borderColor:"var(--border)", whiteSpace:"pre-wrap", wordBreak:"break-word"}}>{debugJson}</pre>
             </div>
             {/* Inline DataTruth style summary — keep compact */}
             <div className="text-[10px] text-[var(--muted)]">100vw 390→100vw QA 44px spring cubic-bezier(0.34,1.56,0.64,1) • Fraunces 26/17 Inter 16 • charcoal #121214 card #232326 chip #2C2C30 nav #FF6B26</div>

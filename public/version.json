@@ -1,9 +1,9 @@
 {
-  "build": "v110-agenda-dark-readability-peach-midnight",
-  "builtAt": "2026-08-06T12:55:00.000Z",
-  "changelog": "Fix agenda dark readability — replace hardcoded bg-[#0A0A0A] black pills/dots/rings with theme vars var(--nav-active-bg)/text, making selected pill, Today dot, Today•Dublin badge, +Add, Yes, Yes again, Add event visible in midnight charcoal; keep peach parity black-on-white; keep old assets transitional",
-  "code": 110,
+  "build": "v132-beirt-logo-transparent",
+  "builtAt": "2026-08-07T14:45:00.000Z",
+  "changelog": "Fix polish — empty shop filter, calendar pending dark-safe, settings debug dark-safe, transparent Beirt logo beige house mint orange on black",
+  "code": 132,
   "mandatory": false,
-  "timestamp": "2026-08-06T12:55:00.000Z",
-  "version": "110.0.0"
+  "timestamp": "2026-08-07T14:45:00.000Z",
+  "version": "132.0.0"
 }

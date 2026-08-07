@@ -1,8 +1,8 @@
 // ChoreAdmin.tsx — Admin template editor, recurrence weekday picker + This/Future split, icons ALL_CHORE_ICON_IDS, CHORE_ICON_BY_TEMPLATE
 import { useState, useRef } from "react";
 import type { ChoreV2 } from "./choreTypes";
-import { ChoreIcon, ALL_CHORE_ICON_IDS } from "../../lib/choreIcons";
-import type { ChoreIconId } from "../../lib/choreIcons";
+import { ChoreIcon, ALL_CHORE_ICON_IDS, CATEGORY_MAP, ICON_CATEGORIES } from "../../lib/choreIcons";
+import type { ChoreIconId, IconCategory } from "../../lib/choreIcons";
 import { uid } from "../../shared/utils/helpers";
 import { toLocalKeyDublin, HOUSEHOLD_TZ } from "./choreScoring";
 
@@ -26,6 +26,7 @@ export function ChoreAdmin({ active, chores, setChores, currentUser, monthKey, t
   const [editBonus, setEditBonus] = useState(false);
   const [editType, setEditType] = useState<"one-off"|"repeat">("one-off");
   const [editIcon, setEditIcon] = useState<ChoreIconId>('broom');
+  const [iconCat, setIconCat] = useState<IconCategory>('Kitchen');
   const [holdProgress, setHoldProgress] = useState(0);
   const [futureEdit, setFutureEdit] = useState<"this"|"future">("this");
   const holdRef = useRef<any>(null);
@@ -123,14 +124,21 @@ export function ChoreAdmin({ active, chores, setChores, currentUser, monthKey, t
             ))}
           </div>
           <div className="space-y-1.5">
-            <div className="text-[11px] font-semibold tracking-wide uppercase text-[var(--muted)]">Pick an icon (gives pizazz) — {ALL_CHORE_ICON_IDS.length} icons</div>
-            <div className="grid grid-cols-5 gap-2 max-h-[140px] overflow-y-auto no-scrollbar snap-y pb-1" style={{scrollbarWidth:"thin"}}>
-              {ALL_CHORE_ICON_IDS.map(id=> (
-                <button key={id} onClick={()=> setEditIcon(id)} className="grid h-[48px] w-[48px] place-items-center rounded-full border text-[14px] active:scale-[0.96] transition-all" style={{minHeight:48, minWidth:48, transition:"transform 180ms cubic-bezier(0.34,1.56,0.64,1)", background: editIcon===id ? "#0A0A0A" : "var(--chip-bg)", color: editIcon===id ? "white" : "var(--text)", borderColor: editIcon===id ? "#0A0A0A" : "var(--border)"}}>
-                  <ChoreIcon id={id} size={20} />
+            <div className="text-[11px] font-semibold tracking-wide uppercase text-[var(--muted)] flex items-center justify-between">Pick an icon — {ALL_CHORE_ICON_IDS.length} icons <span className="normal-case font-medium text-[10px] bg-white/60 px-2 py-0.5 rounded-full">{editIcon}</span></div>
+            <div className="flex gap-1 overflow-auto no-scrollbar p-1 rounded-full border bg-[var(--chip-bg)]/60" style={{borderColor:"var(--border)"}}>
+              {ICON_CATEGORIES.map(cat=> (
+                <button key={cat} onClick={()=> setIconCat(cat)} className={"h-[32px] shrink-0 whitespace-nowrap rounded-full px-3 text-[11px] font-semibold "+(iconCat===cat?"bg-[#0A0A0A] text-white":"text-[var(--muted)]")} style={{minHeight:32}}>{cat}</button>
+              ))}
+            </div>
+            <div className="grid grid-cols-6 gap-2 max-h-[192px] overflow-y-auto no-scrollbar snap-y pb-1 pt-1" style={{scrollbarWidth:"thin"}}>
+              {(CATEGORY_MAP[iconCat] || CATEGORY_MAP.Kitchen).map(id=> (
+                <button key={id} onClick={()=> setEditIcon(id)} className="grid h-[50px] w-[50px] place-items-center rounded-[14px] border text-[14px] active:scale-[0.94] transition-all relative" style={{minHeight:50, minWidth:50, transition:"transform 160ms cubic-bezier(0.34,1.56,0.64,1)", background: editIcon===id ? "#121214" : "var(--card-bg)", color: editIcon===id ? "white" : "var(--text)", borderColor: editIcon===id ? "#121214" : "var(--border)", boxShadow: editIcon===id ? "0 6px 14px rgba(0,0,0,0.18)" : "none"}}>
+                  <ChoreIcon id={id} size={22} />
+                  {editIcon===id && <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-[#A8D5BA] text-[9px] text-[#0B1A12]">✓</span>}
                 </button>
               ))}
             </div>
+            <button onClick={()=> setIconCat(cat=> cat)} className="text-[10px] text-[var(--muted)] underline decoration-dotted">Showing {CATEGORY_MAP[iconCat]?.length || 0} in {iconCat} • switch tabs for more</button>
           </div>
           <div className="grid grid-cols-4 gap-1.5">
             {(["one-off","daily","weekly","monthly"] as const).map(f=> (

@@ -92,9 +92,10 @@ export function ChoreDeck(props: Props) {
           }}
           onClick={()=>{ try{ if(navigator.vibrate) navigator.vibrate(10);}catch{} }}
         >
-          <div className="pointer-events-none absolute inset-0 rounded-[28px] opacity-[0.12] mix-blend-multiply" style={{ backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`}} aria-hidden="true" />
-          <div className="absolute right-4 top-4 grid h-[64px] w-[64px] place-items-center rounded-full border text-[var(--text)]" style={{background:"var(--chip-bg, #F7EFE8)", borderColor:"var(--border, #E8DDD3)", boxShadow:"var(--shadow-soft, 0 8px 24px rgba(0,0,0,0.08))"}} aria-hidden="true">
-            <ChoreIcon id={iconId as any} size={28} />
+          <div className="pointer-events-none absolute inset-0 rounded-[28px] opacity-[0.08] mix-blend-multiply" style={{ backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`}} aria-hidden="true" />
+          <div className="absolute -right-6 -top-10 h-[140px] w-[140px] rounded-full blur-[22px] opacity-[0.28] pointer-events-none" style={{ background: (iconId==='bins'||iconId==='trash'||iconId==='recycling') ? '#FEF3C7' : (iconId==='dishes'||iconId==='cooking'||iconId==='kitchen') ? '#FFEDD5' : (iconId==='laundry'||iconId==='ironing'||iconId==='fold') ? '#E0E7FF' : (iconId==='bathroom'||iconId==='sink'||iconId==='mop') ? '#CCFBF1' : (iconId==='garden'||iconId==='lawn'||iconId==='plant') ? '#DCFCE7' : '#F7EFE8' }} aria-hidden="true" />
+          <div className="absolute right-4 top-4 grid h-[68px] w-[68px] place-items-center rounded-[18px] border bg-white text-[var(--text)] rotate-[2deg] shadow-[0_8px_22px_rgba(0,0,0,0.10)]" style={{borderColor:"var(--border)"}} aria-hidden="true">
+            <ChoreIcon id={iconId as any} size={32} />
           </div>
           {large && dragX < -60 && (
             <div className="pointer-events-none absolute inset-0 rounded-[28px] flex items-center justify-start pl-8 gap-3" style={{ background:"rgba(254,226,226,0.92)", border:"1px solid #FECACA"}}>

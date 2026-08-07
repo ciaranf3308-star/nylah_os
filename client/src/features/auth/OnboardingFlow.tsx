@@ -392,52 +392,25 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
   };
 
 
-  if (step==="welcome") {
+    if (step==="welcome") {
     return (
       <div className="absolute inset-0 z-[90] flex min-h-dvh w-full flex-col bg-[#FEF7F0] overflow-hidden">
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');`}</style>
 
-        {/* Top content */}
-        <div className="flex-1 flex flex-col items-center px-6 pt-[56px]">
-          {/* Logo icon — house with two people */}
+        {/* Top content — logo + headline */}
+        <div className="flex flex-col items-center px-6 pt-[48px]">
           <div className="relative flex flex-col items-center">
             <div className="h-[72px] w-[86px] relative grid place-items-center">
-              {/* house outline + persons - matches screenshot: tan house, sage & terracotta */}
               <svg width="88" height="80" viewBox="0 0 88 82" fill="none" xmlns="http://www.w3.org/2000/svg" className="overflow-visible">
-                {/* house stroke */}
-                <path
-                  d="M44 4.5L8.5 30.5V30.9L12.2 30.9V68.2C12.2 72.8 16 77 21.2 77H66.8C72 77 75.8 72.8 75.8 68.2V30.9H79.5L44 4.5Z"
-                  stroke="#E7C5A3"
-                  strokeWidth="4.2"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                  fill="white"
-                  fillOpacity="0.0"
-                />
-                {/* inner white */}
-                <path
-                  d="M44 7.2L11.8 31.6V67.6C11.8 71.2 15.8 74.6 21.4 74.6H66.6C72.2 74.6 76.2 71.2 76.2 67.6V31.6L44 7.2Z"
-                  fill="#FFFEFB"
-                />
-                {/* left person mint */}
+                <path d="M44 4.5L8.5 30.5V30.9L12.2 30.9V68.2C12.2 72.8 16 77 21.2 77H66.8C72 77 75.8 72.8 75.8 68.2V30.9H79.5L44 4.5Z" stroke="#E7C5A3" strokeWidth="4.2" strokeLinejoin="round" strokeLinecap="round" fill="none"/>
+                <path d="M44 7.2L11.8 31.6V67.6C11.8 71.2 15.8 74.6 21.4 74.6H66.6C72.2 74.6 76.2 71.2 76.2 67.6V31.6L44 7.2Z" fill="#FFFEFB"/>
                 <circle cx="30.5" cy="36" r="10.2" fill="#A9C4B5"/>
                 <path d="M18.2 68 C18.2 54.6 24.4 49.6 30.6 49.6 C36.8 49.6 43 54.6 43 68" fill="#A9C4B5"/>
-                {/* right terracotta */}
                 <circle cx="55.5" cy="36" r="10.2" fill="#C97A48"/>
                 <path d="M43.2 68 C43.2 54.6 49.6 49.6 55.8 49.6 C62 49.6 68.2 54.6 68.2 68" fill="#C97A48"/>
-                {/* house stroke on top again for crisp */}
-                <path
-                  d="M44 4.5L8.5 30.5V30.9L12.2 30.9V68.2C12.2 72.8 16 77 21.2 77H66.8C72 77 75.8 72.8 75.8 68.2V30.9H79.5L44 4.5Z"
-                  stroke="#E2B994"
-                  strokeWidth="4.2"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                  fill="none"
-                />
+                <path d="M44 4.5L8.5 30.5V30.9L12.2 30.9V68.2C12.2 72.8 16 77 21.2 77H66.8C72 77 75.8 72.8 75.8 68.2V30.9H79.5L44 4.5Z" stroke="#E2B994" strokeWidth="4.2" strokeLinejoin="round" strokeLinecap="round" fill="none"/>
               </svg>
             </div>
-
-            {/* Beirt wordmark */}
             <div className="font-display text-[48px] font-bold leading-[0.95] tracking-[-0.03em] text-[#151210] -mt-1" style={{fontFamily:"Fraunces, Georgia, serif"}}>Beirt</div>
             <div className="mt-1.5 flex items-center gap-2 text-[10.5px] font-semibold tracking-[0.18em] uppercase">
               <span className="text-[#8AA99B]">HOME</span>
@@ -448,107 +421,31 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
             </div>
           </div>
 
-          {/* Headline + copy */}
-          <div className="mt-10 flex w-full max-w-[340px] flex-col items-center text-center">
-            <h1 className="font-display text-[36px] font-bold leading-[0.96] tracking-[-0.03em] text-[#161210]" style={{fontFamily:"Fraunces, Georgia, serif"}}>
-              A home runs<br/>better together
-            </h1>
-            <p className="mt-4 max-w-[312px] text-[13.5px] leading-[1.55] tracking-[-0.01em] text-[#6E5F55]">
-              Beirt is your private space for two.<br/>
-              Stay organised, share responsibilities,<br/>
-              and build a stronger home—together.
-            </p>
-          </div>
+          <h1 className="mt-8 font-display text-[32px] font-bold leading-[0.96] tracking-[-0.03em] text-[#161210] text-center" style={{fontFamily:"Fraunces, Georgia, serif"}}>
+            A home runs<br/>better together
+          </h1>
+          <p className="mt-3 max-w-[312px] text-[13px] leading-[1.55] text-[#6E5F55] text-center">
+            Beirt is your private space for two.<br/>
+            Stay organised, share responsibilities,<br/>
+            and build a stronger home—together.
+          </p>
         </div>
 
-        {/* Illustration + organic blobs — matches screenshot warm peach / sage */}
-        <div className="relative mt-6 w-full h-[300px] shrink-0 overflow-hidden">
-          {/* blobs under */}
-          <div className="absolute inset-0">
-            {/* big left peach arch shadow (faint leaf shade left edge) */}
-            <div className="absolute -left-[92px] top-[18px] h-[260px] w-[260px] rounded-full bg-[#F2C59F]/75 blur-[0px]" style={{borderRadius: "62% 38% 52% 48% / 44% 54% 46% 56%"}} />
-            {/* palm shadow silhouette very faint left */}
-            <div className="absolute left-[2px] top-[8px] opacity-[0.18] pointer-events-none">
-              <svg width="96" height="110" viewBox="0 0 96 110" fill="none"><path d="M28 92 C18 78 12 62 22 46 M28 92 C32 72 44 56 60 44 M28 92 C40 84 54 78 70 74 M28 92 C38 94 52 96 66 96" stroke="#8A6F5A" strokeWidth="0" /><g fill="#CDB8A3" opacity="0.45"><ellipse cx="18" cy="36" rx="14" ry="28" transform="rotate(-32 18 36)"/><ellipse cx="38" cy="22" rx="12" ry="22" transform="rotate(-12 38 22)"/><ellipse cx="56" cy="28" rx="10" ry="18" transform="rotate(18 56 28)"/><ellipse cx="66" cy="54" rx="12" ry="16" transform="rotate(38 66 54)"/></g></svg>
-            </div>
-            {/* center big peach oval behind table */}
-            <div className="absolute left-1/2 top-[58px] -translate-x-1/2 h-[300px] w-[560px] rounded-[50%] bg-[#EAC39E] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]" />
-            {/* right sage blob */}
-            <div className="absolute -right-[54px] top-[6px] h-[284px] w-[248px] bg-[#D4DED1] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]" style={{borderRadius: "48% 52% 68% 32% / 38% 42% 58% 62%"}} />
-            {/* small subtle spot peach light */}
-            <div className="absolute left-[36%] top-[78px] h-[84px] w-[84px] rounded-full bg-[#F2D2B0]/90 blur-[2px]" />
-          </div>
-
-          {/* Table top line — light wood */}
-          <div className="absolute left-1/2 bottom-[104px] -translate-x-1/2 w-[390px] h-[2px] bg-[#D8C7B3]/70 rounded-full" />
-
-          {/* Scene: plant tray + pot + candle + mugs — pixel close to screenshot */}
-          <div className="absolute inset-x-0 bottom-[112px] flex justify-center pointer-events-none">
-            <div className="relative w-[360px] h-[118px]">
-              {/* light tray */}
-              <div className="absolute left-[22px] bottom-[10px] w-[148px] h-[40px]">
-                <div className="absolute bottom-0 left-0 right-0 h-[22px] rounded-[12px] bg-[#FBF3EA] border border-[#E8DBCD] shadow-[0_3px_10px_rgba(0,0,0,0.07),inset_0_1px_0_white]" />
-                <div className="absolute -top-0 left-[8px] right-[8px] h-[18px] rounded-[9px] bg-[#FFFCF7]/90 border border-white/70" />
-              </div>
-              {/* pot */}
-              <div className="absolute left-[42px] bottom-[24px] w-[68px] h-[56px]">
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60px] h-[38px] rounded-[10px_10px_18px_18px] bg-[#D8CFC3] border border-[#CFC2B2] shadow-[inset_0_1px_0_white,0_2px_6px_rgba(0,0,0,0.08)]" />
-                <div className="absolute bottom-[32px] left-1/2 -translate-x-1/2 w-[56px] h-[6px] rounded-full bg-[#C9BCAE]/70" />
-              </div>
-              {/* plant leaves — simple organic */}
-              <div className="absolute left-[28px] bottom-[52px] w-[92px] h-[78px]">
-                <svg width="92" height="78" viewBox="0 0 92 78" fill="none" className="overflow-visible">
-                  <g fill="#5E8B6A">
-                    <ellipse cx="34" cy="54" rx="14" ry="10" transform="rotate(-28 34 54)"/>
-                    <ellipse cx="22" cy="46" rx="12" ry="8" transform="rotate(-38 22 46)"/>
-                    <ellipse cx="48" cy="26" rx="13" ry="9" transform="rotate(-16 48 26)"/>
-                    <ellipse cx="62" cy="34" rx="12" ry="8" transform="rotate(18 62 34)"/>
-                    <ellipse cx="54" cy="50" rx="11" ry="8" transform="rotate(6 54 50)"/>
-                  </g>
-                  <g fill="#7BAF8B">
-                    <ellipse cx="40" cy="38" rx="10" ry="7" transform="rotate(-10 40 38)"/>
-                    <ellipse cx="28" cy="34" rx="9" ry="6" transform="rotate(-24 28 34)"/>
-                  </g>
-                  <path d="M44 62 Q 46 44 52 26" stroke="#4A6E56" strokeWidth="1.2" strokeLinecap="round" fill="none" opacity="0.7"/>
-                  <path d="M38 60 Q 30 46 22 38" stroke="#4A6E56" strokeWidth="1" strokeLinecap="round" fill="none" opacity="0.55"/>
-                </svg>
-              </div>
-              {/* candle terracotta ribbed */}
-              <div className="absolute left-[132px] bottom-[24px] w-[28px] h-[34px] rounded-[8px] bg-[#B86B44] shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_8px_rgba(0,0,0,0.12)]">
-                <div className="absolute inset-[3px_3px_0_3px] rounded-[6px] bg-[#C77A52]/90" />
-                {/* wick */}
-                <div className="absolute -top-[7px] left-1/2 -translate-x-1/2 w-[2px] h-[8px] rounded-full bg-[#2B2B2B]" />
-                <div className="absolute -top-[9px] left-1/2 -translate-x-1/2 w-[3px] h-[3px] rounded-full bg-[#FFE8C4]" />
-                {/* ribs */}
-                <div className="absolute inset-y-[5px] left-[4px] w-[2px] rounded-full bg-[#A85E3C]/60" />
-                <div className="absolute inset-y-[5px] left-[9px] w-[2px] rounded-full bg-[#A85E3C]/35" />
-                <div className="absolute inset-y-[5px] right-[7px] w-[2px] rounded-full bg-[#A85E3C]/35" />
-              </div>
-
-              {/* mugs — mint + terracotta like screenshot */}
-              <div className="absolute right-[36px] bottom-[18px] flex items-end gap-[10px]">
-                {/* mint mug */}
-                <div className="relative w-[62px] h-[56px]">
-                  <div className="absolute bottom-0 left-0 w-[58px] h-[48px] rounded-[12px_12px_18px_18px] bg-[#A8C2B3] border border-[#9AB4A5]/60 shadow-[inset_0_2px_0_rgba(255,255,255,0.65),0_3px_10px_rgba(0,0,0,0.08)]" />
-                  <div className="absolute top-[6px] left-[4px] right-[7px] h-[14px] rounded-[8px_8px_4px_4px] bg-[#BFD4C9]/80" />
-                  <div className="absolute -right-[2px] top-[12px] w-[14px] h-[22px] rounded-[0_10px_10px_0] border-[3px] border-[#A8C2B3] bg-transparent" />
-                </div>
-                {/* terracotta mug */}
-                <div className="relative w-[68px] h-[60px] -mb-[2px]">
-                  <div className="absolute bottom-0 left-0 w-[62px] h-[52px] rounded-[13px_13px_19px_19px] bg-[#C07A4B] border border-[#A96A41]/40 shadow-[inset_0_2px_0_rgba(255,255,255,0.35),0_4px_12px_rgba(0,0,0,0.12)]" />
-                  <div className="absolute top-[6px] left-[5px] right-[7px] h-[15px] rounded-[9px_9px_4px_4px] bg-[#D08A5E]/85" />
-                  <div className="absolute -right-[3px] top-[14px] w-[16px] h-[24px] rounded-[0_11px_11px_0] border-[3.2px] border-[#C07A4B] bg-transparent" />
-                </div>
-              </div>
-
-            </div>
-          </div>
+        {/* Photoreal illustration — chopped from your target, pixel perfect */}
+        <div className="relative mt-5 w-full flex-1 min-h-[300px] overflow-hidden">
+          <img
+            src="./onboarding-mid-photo.jpg"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover object-[center_top] scale-[1.04]"
+            draggable={false}
+          />
+          {/* subtle top fade into beige so text meets photo softly */}
+          <div className="absolute inset-x-0 top-0 h-[64px] bg-gradient-to-b from-[#FEF7F0] to-transparent pointer-events-none" />
         </div>
 
-        {/* Bottom sheet — charcoal black */}
-        <div className="w-full px-[18px] pb-[max(18px,env(safe-area-inset-bottom))] mt-auto">
+        {/* Bottom sheet — charcoal */}
+        <div className="w-full px-[18px] pb-[max(18px,env(safe-area-inset-bottom))] mt-auto bg-[#FEF7F0]">
           <div className="mx-auto w-full max-w-[384px] rounded-[26px] bg-[#101214] px-[18px] pt-[14px] pb-[18px] shadow-[0_22px_60px_rgba(0,0,0,0.42),0_2px_0_rgba(255,255,255,0.04)_inset] border border-white/[0.04]">
-            {/* primary CTA — orange with black arrow circle */}
             <button
               onClick={()=> setStep("create_names")}
               className="group relative w-full h-[54px] rounded-full bg-[#D07A41] text-white font-semibold text-[15.5px] tracking-[-0.01em] active:scale-[0.98] transition-transform flex items-center pr-[6px] pl-6 shadow-[0_4px_18px_rgba(208,122,65,0.28),inset_0_1px_0_rgba(255,255,255,0.3)]"
@@ -559,7 +456,6 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
               </span>
             </button>
 
-            {/* secondary — outline mint, dark */}
             <button
               onClick={startJoin}
               className="mt-3 w-full h-[52px] rounded-full border border-[#A8C5B5]/75 bg-transparent flex items-center px-[14px] gap-[14px] text-white active:scale-[0.98] transition"
@@ -571,7 +467,6 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeOpacity="0.8" strokeWidth="1.6"><path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
 
-            {/* footer privacy */}
             <div className="mt-4 flex items-center gap-3 px-1">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <span className="grid h-[22px] w-[22px] place-items-center rounded-full bg-white/[0.06] border border-white/[0.06]">
@@ -591,6 +486,7 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
       </div>
     );
   }
+
 
   return (
     <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[var(--bg)] px-4 overflow-auto backdrop-blur-[2px]" style={{ background: "linear-gradient(180deg,#FEF6EE 0%,#FEF3E8 38%,#FFFEFB 100%)" }}>

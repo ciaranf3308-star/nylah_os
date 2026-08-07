@@ -1,8 +1,8 @@
 {
-  "build": "v162-beirt-onboarding-match",
-  "code": 162,
-  "version": "162.0.0",
-  "changelog": "onboarding welcome matches screenshot: Beirt logo tan house mint terracotta HOME PEOPLE TOGETHER headline, boutique warm, bottom charcoal sheet with orange Create and mint outline I have a code",
+  "build": "v163-beirt-photoreal-perfect",
+  "code": 163,
+  "version": "163.0.0",
+  "changelog": "photoreal onboarding: use your target image mid-photo for blobs+table real mugs/plant/candle, chopped bottom sheet overlay real buttons, logo/headline sharp text, meta generic",
   "mandatory": false,
-  "builtAt": "2026-08-07T21:32:00Z"
+  "builtAt": "2026-08-07T21:53:00Z"
 }

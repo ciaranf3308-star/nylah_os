@@ -1505,9 +1505,8 @@ function OnboardingFlow({ onComplete }: { onComplete: (hid: string)=>void }) {
   return (
     <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[var(--bg)] px-6 overflow-auto" style={{ background: "linear-gradient(180deg,var(--chip-bg) 0%,var(--card-bg) 60%,var(--wash-top) 100%)" }}>
       <div className="w-full max-w-[360px] rounded-[28px] border bg-[var(--card-bg)] shadow-[0_18px_50px_rgba(0,0,0,0.10)] px-6 py-7 flex flex-col items-center" style={{ borderColor:"var(--border)" }}>
-                {step==="welcome" && (
-          <div className="w-full -m-7 flex min-h-[92vh] flex-col bg-[#FEF7F0]">
-            {/* logo */}
+                        {step==="welcome" && (
+          <div className="w-full -m-7 flex min-h-dvh flex-col bg-[#FEF7F0] overflow-hidden">
             <div className="flex flex-col items-center pt-[48px] px-6">
               <svg width="88" height="80" viewBox="0 0 88 82" fill="none" className="overflow-visible mb-2"><path d="M44 4.5L8.5 30.5V30.9L12.2 30.9V68.2C12.2 72.8 16 77 21.2 77H66.8C72 77 75.8 72.8 75.8 68.2V30.9H79.5L44 4.5Z" stroke="#E2B994" strokeWidth="4.2" strokeLinejoin="round" strokeLinecap="round" fill="none"/><path d="M44 7.2L11.8 31.6V67.6C11.8 71.2 15.8 74.6 21.4 74.6H66.6C72.2 74.6 76.2 71.2 76.2 67.6V31.6L44 7.2Z" fill="#FFFEFB"/><circle cx="30.5" cy="36" r="10.2" fill="#A9C4B5"/><path d="M18.2 68 C18.2 54.6 24.4 49.6 30.6 49.6 C36.8 49.6 43 54.6 43 68" fill="#A9C4B5"/><circle cx="55.5" cy="36" r="10.2" fill="#C97A48"/><path d="M43.2 68 C43.2 54.6 49.6 49.6 55.8 49.6 C62 49.6 68.2 54.6 68.2 68" fill="#C97A48"/><path d="M44 4.5L8.5 30.5V30.9L12.2 30.9V68.2C12.2 72.8 16 77 21.2 77H66.8C72 77 75.8 72.8 75.8 68.2V30.9H79.5L44 4.5Z" stroke="#E2B994" strokeWidth="4.2" strokeLinejoin="round" strokeLinecap="round" fill="none"/></svg>
               <div className="font-display text-[44px] font-bold leading-[0.95] tracking-[-0.03em] text-[#151210]" style={{fontFamily:"Fraunces, Georgia, serif"}}>Beirt</div>
@@ -1515,13 +1514,11 @@ function OnboardingFlow({ onComplete }: { onComplete: (hid: string)=>void }) {
               <h1 className="mt-8 font-display text-[32px] font-bold leading-[0.96] tracking-[-0.03em] text-[#161210] text-center" style={{fontFamily:"Fraunces, Georgia, serif"}}>A home runs<br/>better together</h1>
               <p className="mt-3 max-w-[312px] text-[13px] leading-[1.55] text-[#6E5F55] text-center">Beirt is your private space for two.<br/>Stay organised, share responsibilities,<br/>and build a stronger home—together.</p>
             </div>
-            <div className="relative mt-6 w-full h-[280px] shrink-0 overflow-hidden">
-              <div className="absolute -left-[92px] top-[18px] h-[260px] w-[260px] rounded-full bg-[#F2C59F]/75" style={{borderRadius:"62% 38% 52% 48% / 44% 54% 46% 56%"}}/>
-              <div className="absolute left-1/2 top-[58px] -translate-x-1/2 h-[300px] w-[560px] rounded-[50%] bg-[#EAC39E]"/>
-              <div className="absolute -right-[54px] top-[6px] h-[284px] w-[248px] bg-[#D4DED1]" style={{borderRadius:"48% 52% 68% 32% / 38% 42% 58% 62%"}}/>
-              <div className="absolute inset-x-0 bottom-[104px] flex justify-center"><div className="relative w-[360px] h-[92px]"><div className="absolute left-[22px] bottom-[10px] w-[148px] h-[22px] rounded-[12px] bg-[#FBF3EA] border border-[#E8DBCD]"/><div className="absolute left-[42px] bottom-[24px] w-[60px] h-[38px] rounded-[10px_10px_18px_18px] bg-[#D8CFC3] border border-[#CFC2B2]"/><div className="absolute right-[36px] bottom-[18px] flex items-end gap-[10px]"><div className="relative w-[58px] h-[48px] rounded-[12px_12px_18px_18px] bg-[#A8C2B3] border border-[#9AB4A5]/60"/><div className="relative w-[62px] h-[52px] rounded-[13px_13px_19px_19px] bg-[#C07A4B] border border-[#A96A41]/40"/></div></div></div>
+            <div className="relative mt-5 w-full flex-1 min-h-[300px] overflow-hidden">
+              <img src="./onboarding-mid-photo.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-[center_top] scale-[1.04]" draggable={false} />
+              <div className="absolute inset-x-0 top-0 h-[64px] bg-gradient-to-b from-[#FEF7F0] to-transparent pointer-events-none" />
             </div>
-            <div className="w-full px-[18px] pb-[18px] mt-auto">
+            <div className="w-full px-[18px] pb-[18px] mt-auto bg-[#FEF7F0]">
               <div className="mx-auto w-full max-w-[384px] rounded-[26px] bg-[#101214] px-[18px] pt-[14px] pb-[18px] border border-white/[0.04]">
                 <button onClick={()=> setStep("create_names")} className="group relative w-full h-[54px] rounded-full bg-[#D07A41] text-white font-semibold text-[15.5px] flex items-center pr-[6px] pl-6"><span className="flex-1 text-center">Create our space</span><span className="grid h-[40px] w-[40px] place-items-center rounded-full bg-[#0A0A0A] text-white"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span></button>
                 <button onClick={startJoin} className="mt-3 w-full h-[52px] rounded-full border border-[#A8C5B5]/75 bg-transparent flex items-center px-[14px] gap-[14px] text-white"><span className="grid h-[34px] w-[38px] place-items-center rounded-full border border-[#A8C5B5]/55 bg-white/[0.03]"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B9D3C2" strokeWidth="1.5"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M6 8h3M6 12h3M6 16h3M15 8h4M15 12h4M15 16h4" strokeLinecap="round"/></svg></span><span className="flex-1 text-left text-[14.5px] font-medium">I have a code</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeOpacity="0.8" strokeWidth="1.6"><path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
@@ -1529,8 +1526,7 @@ function OnboardingFlow({ onComplete }: { onComplete: (hid: string)=>void }) {
               </div>
             </div>
           </div>
-        )}
-        {step==="create_names" && (
+        )}        {step==="create_names" && (
           <>
             <div className="w-full text-left">
               <button onClick={()=> setStep("welcome")} className="text-[11px] text-[#8B7357]">← Back</button>
@@ -5222,7 +5218,7 @@ function BlueprintPanel({
 }) {
   const [showDev, setShowDev] = useState(false);
   const [householdName, setHouseholdName] = useState(()=> {
-    try { return localStorage.getItem("couple_v1_household_name") || "Aisling & Ciaran"; } catch { return "Aisling & Ciaran"; }
+    try { return localStorage.getItem("couple_v1_household_name") || "Home"; } catch { return "Home"; }
   });
 
   function updateHouseholdName(name:string){

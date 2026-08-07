@@ -1,8 +1,8 @@
 {
-  "build": "v160-pull-refresh-pin-fix",
-  "code": 160,
-  "changelog": "fix pull-to-refresh logout (default remember, sessionStorage restore, no aggressive clear), enforce PIN for both accounts when switching, default stay-logged-in true",
+  "build": "v163-beirt-photoreal-perfect",
+  "code": 163,
+  "version": "163.0.0",
+  "changelog": "photoreal onboarding: use your target image mid-photo for blobs+table real mugs/plant/candle, chopped bottom sheet overlay real buttons, logo/headline sharp text, meta generic",
   "mandatory": false,
-  "builtAt": "2026-08-07T21:20:00Z",
-  "version": "160.0.0"
+  "builtAt": "2026-08-07T21:53:00Z"
 }

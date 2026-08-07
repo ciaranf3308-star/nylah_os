@@ -52,10 +52,16 @@ export function WhoScreen({ onPick, onSelect }: { onPick?: (k: PersonKey)=>void;
           <div className="text-[11px] uppercase tracking-wide text-[var(--muted)] mt-1">private • just you two</div>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          {(["aisling","ciaran"] as PersonKey[]).map(k=>{
-            const p = PERSONS[k];
-            const customName = names[k] || p.name;
-            const initial = customName.trim().slice(0,1).toUpperCase() || p.initial;
+          {((): PersonKey[] => {
+            try {
+              const raw = getHouseholdPersonsRaw();
+              if (raw && raw.length >= 2) return raw.map((x:any)=>x.key).filter(Boolean) as PersonKey[];
+            } catch {}
+            return ["person_1","person_2"] as PersonKey[];
+          })().map(k=>{
+            const p = (PERSONS as any)[k] || { name: names[k] || k, initial: (names[k]||k).slice(0,1).toUpperCase(), accent2: "#FF6B26" } as any;
+            const customName = names[k] || (p as any).name || k;
+            const initial = customName.trim().slice(0,1).toUpperCase() || (p as any).initial || "?";
             return (
               <button
                 key={k}

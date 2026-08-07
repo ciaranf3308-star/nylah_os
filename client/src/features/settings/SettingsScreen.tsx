@@ -193,7 +193,7 @@ export function SettingsScreen(props: any = {}){
 
   const showEmptyWarning = useMemo(()=>{
     const localEmpty = (safeChores.length+safeCalendar.length+safeShopping.length+safeNotes.length)===0;
-    const effIsTest = effId==="nylah-98jylh" || effId==="nylah-fbkf2m" || effId.startsWith("nylah-");
+    const effIsTest = effId==="nylah-98jylh" || effId==="nylah-fbkf2m" || (effId && typeof effId.startsWith==="function" && effId.startsWith("nylah-"));
     if(localEmpty && effIsTest) return `You're on ${effId} which is empty — create or recover a household`;
     if(localEmpty) return "Local is empty — try Force Pull from server";
     if(effIsTest) return `You are on ${effId}`;

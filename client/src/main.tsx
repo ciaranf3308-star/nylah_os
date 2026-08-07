@@ -3,6 +3,24 @@ import React from "react";
 import { App } from "./App";
 import "./theme.css";
 
+// V159 outside-login wipe — ?wipe=1 clears stale cache before anything loads
+try{
+  const sp = new URLSearchParams(location.search);
+  if(sp.get("wipe")==="1" || sp.has("wipe")){
+    const keep = new Set(["couple_v1_supabase_url","couple_v1_supabase_anon","couple_v1_supabase_anon_key"]);
+    try{
+      const del:string[]=[];
+      for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.startsWith("couple_v1_") && !keep.has(k)) del.push(k); for(let j=0;j<localStorage.length;j++){ const k2=localStorage.key(j); if(k2 && k2.startsWith("idb_")) del.push(k2); break; } }
+      // second pass for idb_ prefix clean
+      for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.startsWith("idb_")) del.push(k); }
+      for(const k of del){ try{ localStorage.removeItem(k); }catch{} }
+    }catch{}
+    try{ indexedDB.deleteDatabase("couple_v1_idb"); }catch{}
+    sp.delete("wipe");
+    try{ const qs=sp.toString(); const next=location.pathname+(qs?"?"+qs:"")+ (location.hash||""); history.replaceState(null,"",next); }catch{}
+  }
+}catch{}
+
 class ErrorBoundary extends React.Component<any,{hasError:boolean; err:any}>{
   constructor(p:any){ super(p); this.state={hasError:false, err:null} }
   static getDerivedStateFromError(err:any){ return {hasError:true, err} }

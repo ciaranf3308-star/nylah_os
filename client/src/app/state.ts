@@ -12,6 +12,8 @@ saveSupabaseConfig,
 TOKEN as SB_TOKEN,
 TABLE as SB_TABLE,
 ROW_ID as SB_ROW_ID,
+clearLocalCacheOutsideLogin,
+getEffectiveRowId,
 } from "../lib/supabase";
 import type {
 PersonKey,
@@ -382,7 +384,7 @@ export function shouldShowOnboarding(): boolean {
     try{ if(localStorage.getItem("couple_v1_force_onboard")==="1") return true; }catch{}
     try {
       const sp = new URLSearchParams(location.search);
-      if (sp.get("force_onboard")==="1" || sp.get("recover")) return true;
+      if (sp.get("force_onboard")==="1" || sp.get("recover") || sp.get("wipe")==="1") return true;
       if (sp.has("onboard")) {
         if (sp.get("onboard")==="0") return false;
         if (sp.get("onboard")==="1") return true;
@@ -405,8 +407,11 @@ export type SyncStatus = {
   updatedElsewhere?: boolean;
 };
 
-// ---- Mutation Queue type (verbatim from V1AppShell) ----
-export type QueuedMutation = { mutationId: string; revision: number; payload: any; createdAt: string; retries: number };
+// ---- Mutation Queue types (V159 op-log) ----
+import type { QueuedOp } from "../data/offlineQueue"
+export type QueuedMutation = QueuedOp
+export type { QueuedOp }
+
 
 // ---- Saved timestamps helpers ----
 export function getLastConfirmedAt(): string | null {
@@ -469,15 +474,14 @@ export function useV1AppShellState() {
     try { return JSON.stringify(a) === JSON.stringify(b); } catch { return false; }
   }
 
-  const mutationQueueRef = useRef<QueuedMutation[]>([]);
+  const mutationQueueRef = useRef<QueuedOp[]>([]);
   const queueHydratedRef = useRef(false);
   const offlineFailCountRef = useRef(0);
   const lastOnlineProbeRef = useRef<number>(0);
   const reallyOnline = async (): Promise<boolean> => {
-    // Real reachability: must distinguish offline, unreachable, reachable
     try {
-      if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) return false;
-    } catch {}
+      if (typeof navigator !== 'undefined' && (navigator as any).onLine === false) return false
+    } catch { return false }
     try {
       const url = "https://zlllebsjtgihsxhcmcvb.supabase.co/rest/v1/";
       let anon = "";
@@ -499,32 +503,45 @@ export function useV1AppShellState() {
       clearTimeout(timeout);
       return resp.ok || resp.status===401 || resp.status===404 || resp.status===400;
     } catch {
-      return false;
+      return true; // optimistic when probe fails but navigator says online
     }
   };
+
+  // Early wipe handling (V159) — ?wipe=1, ?force_onboard=1, ?recover cleans local before any load
+  useEffect(()=>{
+    try {
+      const sp = new URLSearchParams(location.search);
+      if (sp.get("wipe")==="1" || sp.get("force_onboard")==="1" || sp.get("recover")) {
+        clearLocalCacheOutsideLogin();
+        if (sp.get("wipe")==="1") {
+          sp.delete("wipe");
+          const newUrl = location.pathname + (sp.toString() ? "?" + sp.toString() : "");
+          history.replaceState(null, "", newUrl);
+        }
+      }
+    } catch {}
+  }, []);
 
   useEffect(()=>{
     (async()=>{
       try {
         const db = await openIdb();
         if (!db) return;
-        const q = await idbGet<QueuedMutation[]>('mutation_queue');
+        const q = await idbGet<QueuedOp[]>('mutation_queue') as any;
         if (Array.isArray(q) && q.length>0) {
-          const filtered = q.filter((m:any)=>{
-            try {
-              const p = (m as any).payload || {}
-              const tot = (Array.isArray(p.chores)? p.chores.length:0)+(Array.isArray(p.calendar)? p.calendar.length:0)+(Array.isArray(p.shopping)? p.shopping.length:0)+(Array.isArray(p.notes)? p.notes.length:0)
-              if (tot===0) return false
-              return true
-            } catch { return true }
-          })
+          const filtered = (q as any[]).filter((m:any)=>{
+            if (!m) return false;
+            if (!m.id || !m.kind || !m.op) return false;
+            if (!m.mutationId) return false;
+            return true;
+          }) as QueuedOp[];
           if (filtered.length !== q.length) {
-            console.log(`[sync] V22 cleared ${q.length-filtered.length} empty queued items`)
-            try { await idbSet('mutation_queue', filtered); } catch{}
+            console.log(`[sync] V159 cleared ${q.length-filtered.length} invalid queued ops`);
+            try { await idbSet('mutation_queue', filtered as any); } catch{}
             try { localStorage.setItem('couple_v1_queue_count', String(filtered.length)); } catch{}
           }
           if (filtered.length>0) {
-            mutationQueueRef.current = filtered as any;
+            mutationQueueRef.current = filtered;
             queueHydratedRef.current = true;
             setSyncStatus(s=> s.kind==='saved' ? { kind:'offline-queued', queueCount: filtered.length, lastSavedAt: s.lastSavedAt } : s);
           } else {
@@ -545,7 +562,7 @@ export function useV1AppShellState() {
   }, []);
 
   const persistQueue = async ()=>{
-    try { await idbSet('mutation_queue', mutationQueueRef.current); } catch{}
+    try { await idbSet('mutation_queue', mutationQueueRef.current as any); } catch{}
     try { localStorage.setItem('couple_v1_queue_count', String(mutationQueueRef.current.length)); } catch{}
   };
 
@@ -554,27 +571,13 @@ export function useV1AppShellState() {
       offlineFailCountRef.current = 0;
       return;
     }
-    const before = mutationQueueRef.current.length
-    const nonEmpty = mutationQueueRef.current.filter((m:any)=>{
-      try {
-        const p = (m as any).payload||{}
-        const tot = (Array.isArray(p.chores)?p.chores.length:0)+(Array.isArray(p.calendar)?p.calendar.length:0)+(Array.isArray(p.shopping)?p.shopping.length:0)+(Array.isArray(p.notes)?p.notes.length:0)
-        return tot>0
-      } catch { return true }
-    })
-    if (nonEmpty.length !== before) {
-      console.log(`[sync] V22 drainQueue dropped ${before-nonEmpty.length} empty`)
-      mutationQueueRef.current = nonEmpty as any
-      await persistQueue()
-      if (mutationQueueRef.current.length===0) {
-        try {
-          const last = localStorage.getItem('couple_v1_last_confirmed_at') || localStorage.getItem('couple_v1_last_sync')
-          if (last) setSyncStatus({ kind:'saved', lastSavedAt: last } as any)
-          else setSyncStatus(s=> s.kind==='saving' ? s : ({ kind:'saved', lastSavedAt: s.lastSavedAt } as any))
-        } catch { setSyncStatus(s=> s as any) }
-        return
-      }
+    // filter invalid
+    const valid = mutationQueueRef.current.filter((m:any)=> m && m.id && m.kind && m.op && m.mutationId);
+    if (valid.length !== mutationQueueRef.current.length) {
+      mutationQueueRef.current = valid;
+      await persistQueue();
     }
+    if (mutationQueueRef.current.length===0) return;
     const online = await reallyOnline();
     if (!online) {
       offlineFailCountRef.current++;
@@ -586,138 +589,103 @@ export function useV1AppShellState() {
       return;
     }
     if (!hasSupabaseConfig() || !getSupabase()) return;
-    const next = [...mutationQueueRef.current];
-    for (const m of next) {
-      try {
-        setSyncStatus({ kind:'saving' });
-        const ok = await remoteSave({ ...(m.payload||{}), mutationId: m.mutationId, expectedRevision: m.revision }) as any;
-        if (ok) {
-          mutationQueueRef.current = mutationQueueRef.current.filter(x=> x.mutationId!==m.mutationId);
-          await persistQueue();
-          offlineFailCountRef.current = 0;
-          const confirmedAtRaw = typeof ok === 'string' ? ok : localStorage.getItem('couple_v1_last_confirmed_at');
-          if (!confirmedAtRaw) {
-            console.warn('[sync] no server confirmation, not marking Saved');
-            // Do not display Saved if no server confirmation
-            setSyncStatus({ kind:'saving', queueCount: mutationQueueRef.current.length } as any);
-            break;
-          }
-          setSyncStatus({ kind:'saved', lastSavedAt: confirmedAtRaw, queueCount: mutationQueueRef.current.length });
-        } else {
-          m.retries++;
-          offlineFailCountRef.current++;
-          try {
-            const sb = getSupabase();
-            if (sb) {
-              const { data: fresh } = await sb.from(TABLE).select('revision').eq('id', ROW_ID).maybeSingle();
-              if (fresh && typeof (fresh as any).revision === 'number') {
-                try { localStorage.setItem('couple_v1_revision', String((fresh as any).revision)); } catch {}
-                m.revision = (fresh as any).revision;
-                await persistQueue();
-              }
-            }
-          } catch {}
-          if (m.retries>=3) {
-            if (offlineFailCountRef.current >= 3) {
-              setSyncStatus({ kind:'failed', error:'sync failed — will retry', queueCount: mutationQueueRef.current.length });
-            } else {
-              setSyncStatus({ kind:'saving' } as any);
-            }
-            break;
-          }
-        }
-      } catch (e:any) {
-        m.retries++;
-        offlineFailCountRef.current++;
+    try {
+      const { remoteSaveOperations } = await import("../lib/remoteSync");
+      const opsCopy = [...mutationQueueRef.current];
+      const ok = await remoteSaveOperations(opsCopy);
+      if (ok) {
+        mutationQueueRef.current = [];
         await persistQueue();
+        offlineFailCountRef.current = 0;
+        const last = localStorage.getItem('couple_v1_last_confirmed_at') || localStorage.getItem('couple_v1_last_sync');
+        if (last) setSyncStatus({ kind:'saved', lastSavedAt: last, queueCount: 0 } as any);
+        else setSyncStatus({ kind:'saved', lastSavedAt: new Date().toISOString(), queueCount: 0 } as any);
+      } else {
+        offlineFailCountRef.current++;
         if (offlineFailCountRef.current >= 3) {
-          setSyncStatus({ kind:'failed', error: String(e?.message||e).slice(0,30), queueCount: mutationQueueRef.current.length });
+          setSyncStatus({ kind:'offline-queued', queueCount: mutationQueueRef.current.length, lastSavedAt: (syncStatus as any)?.lastSavedAt } as any);
         } else {
           setSyncStatus({ kind:'saving' } as any);
         }
-        break;
       }
+    } catch (e:any) {
+      offlineFailCountRef.current++;
+      try { await persistQueue(); } catch {}
+      setSyncStatus({ kind:'offline-queued', queueCount: mutationQueueRef.current.length } as any);
     }
-    await persistQueue();
   };
 
   const enqueueMutation = async (payload:any)=>{
+    // V159: legacy giant payload — convert to op-log entries using new OfflineQueue API if possible
     try {
       const totalCheck = (Array.isArray((payload as any).chores) ? (payload as any).chores.length : 0)
         + (Array.isArray((payload as any).calendar) ? (payload as any).calendar.length : 0)
         + (Array.isArray((payload as any).shopping) ? (payload as any).shopping.length : 0)
         + (Array.isArray((payload as any).notes) ? (payload as any).notes.length : 0)
       if (totalCheck === 0) {
-        console.log('[sync] V22 skip enqueue total 0 – not queuing empty')
+        console.log('[sync] V159 skip enqueue total 0 – not queuing empty')
         return true
       }
     } catch {}
-    const provided = (payload as any)?.meta?.lastMutationId || (payload as any)?.lastMutationId
-    const mutationId = provided || ((typeof crypto!=='undefined' && (crypto as any).randomUUID) ? (crypto as any).randomUUID() : `mut_${Date.now()}_${Math.random().toString(36).slice(2,7)}`)
-    try { if ((payload as any).meta) (payload as any).meta.lastMutationId = mutationId; else (payload as any).meta = { lastMutationId: mutationId } } catch {}
-    let rev = 0;
-    try { rev = Number(localStorage.getItem('couple_v1_revision')||'0') } catch{}
-    const item: QueuedMutation = { mutationId, revision: rev, payload, createdAt: new Date().toISOString(), retries:0 };
-    try {
-      const last = localStorage.getItem('couple_v1_last_mutation');
-      if (last && mutationId===last) {
-        lastLocalMutationIdRef.current = mutationId
-        return true;
-      }
-    } catch{}
-    mutationQueueRef.current.push(item);
-    await persistQueue();
-    const onlineNow = await reallyOnline();
-    if (!onlineNow) {
-      offlineFailCountRef.current++;
-      if (offlineFailCountRef.current >= 3) {
-        setSyncStatus({ kind:'offline-queued', queueCount: mutationQueueRef.current.length });
-      } else {
-        setSyncStatus({ kind:'saving' } as any);
-      }
+    let hid: string | null = null;
+    try { hid = getEffectiveRowId(); } catch {}
+    if (!hid) {
+      console.warn('[sync] enqueue blocked — no hid')
       return false;
     }
     try {
-      setSyncStatus({ kind:'saving' });
-      const ok = await remoteSave({ ...payload, mutationId, expectedRevision: rev }) as any;
+      const { enqueueOp } = await import("../data/offlineQueue");
+      // determine which arrays changed vs naive: enqueue all items in payload as updates
+      const kinds: Array<{kind: any, arr: any[]}> = [
+        { kind: 'chore', arr: payload.chores },
+        { kind: 'calendar', arr: payload.calendar },
+        { kind: 'shopping', arr: payload.shopping },
+        { kind: 'note', arr: payload.notes },
+      ];
+      for (const { kind, arr } of kinds) {
+        if (!Array.isArray(arr)) continue;
+        for (const it of arr) {
+          if (!it || !it.id) continue;
+          const opKind = (it as any).deletedAt || (it as any).deleted_at ? 'delete' : 'update';
+          await enqueueOp(kind, opKind as any, String(it.id), hid, it);
+        }
+      }
+      const q = await (await import("../data/offlineQueue")).getQueue();
+      mutationQueueRef.current = q as any;
+      await persistQueue();
+    } catch (e) {
+      console.warn('[sync] enqueue fallback error', e)
+      // fallback: push raw op entry minimally
+      const mutationId = (typeof crypto!=='undefined' && (crypto as any).randomUUID) ? (crypto as any).randomUUID() : `mut_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+      const fb: any = { mutationId, revision: 0, payload, createdAt: new Date().toISOString(), retries:0, id: mutationId, kind:'note', op:'update', household_id: hid };
+      mutationQueueRef.current.push(fb);
+      await persistQueue();
+    }
+    const onlineNow = await reallyOnline();
+    if (!onlineNow) {
+      offlineFailCountRef.current++;
+      setSyncStatus({ kind:'offline-queued', queueCount: mutationQueueRef.current.length } as any);
+      return false;
+    }
+    try {
+      setSyncStatus({ kind:'saving' } as any);
+      const { remoteSaveOperations } = await import("../lib/remoteSync");
+      const ok = await remoteSaveOperations(mutationQueueRef.current as any);
       if (ok) {
-        mutationQueueRef.current = mutationQueueRef.current.filter(x=> x.mutationId!==mutationId);
+        mutationQueueRef.current = [];
         await persistQueue();
         offlineFailCountRef.current = 0;
-        const confirmedAtEnqRaw = typeof ok === 'string' ? ok : localStorage.getItem('couple_v1_last_confirmed_at');
-        if (!confirmedAtEnqRaw) {
-          setSyncStatus({ kind:'saving' } as any);
-          return false;
-        }
-        setSyncStatus({ kind:'saved', lastSavedAt: confirmedAtEnqRaw });
+        const ca = localStorage.getItem('couple_v1_last_confirmed_at') || new Date().toISOString();
+        setSyncStatus({ kind:'saved', lastSavedAt: ca } as any);
         return true;
       } else {
-        try {
-          const sb = getSupabase();
-          if (sb) {
-            const { data: fresh } = await sb.from(TABLE).select('revision').eq('id', ROW_ID).maybeSingle();
-            if (fresh && typeof (fresh as any).revision === 'number') {
-              try { localStorage.setItem('couple_v1_revision', String((fresh as any).revision)); } catch {}
-              item.revision = (fresh as any).revision;
-              await persistQueue();
-            }
-          }
-        } catch {}
         offlineFailCountRef.current++;
-        if (offlineFailCountRef.current >= 3) {
-          setSyncStatus({ kind:'failed', error:'conflict or offline', queueCount: mutationQueueRef.current.length });
-        } else {
-          setSyncStatus({ kind:'saving' } as any);
-        }
+        setSyncStatus({ kind:'offline-queued', queueCount: mutationQueueRef.current.length } as any);
         return false;
       }
     } catch (e:any) {
       offlineFailCountRef.current++;
-      if (offlineFailCountRef.current >= 3) {
-        setSyncStatus({ kind:'failed', error: String(e?.message||e).slice(0,24), queueCount: mutationQueueRef.current.length });
-      } else {
-        setSyncStatus({ kind:'saving' } as any);
-      }
+      setSyncStatus({ kind:'offline-queued', queueCount: mutationQueueRef.current.length } as any);
       return false;
     }
   };
@@ -1116,101 +1084,49 @@ export function useAppState() {
   // For pure composition we re-expose the effectful sync: actual syncFromRemote logic is in original file 5400-6366.
   // To keep zero-logic-change and compilable, we delegate to a dedicated hook with identical apply logic extracted elsewhere; here we keep reference to raw setters.
 
-  // ---- V156 hotfix: robust shared-space sync ----
-  // If user lost hid (shows –) we recovered it via getEffectiveRowId fallback to ash-ciaran-2026.
-  // Now ensure remote data is merged into local even when local is non-empty.
+  // ---- V159 server-wins replace (no mergeById) ----
   useEffect(()=>{
     if (!app.currentUser) return;
     let cancelled=false;
-    const doLoad = async ()=>{
+    (async()=>{
       try {
         const data = await remoteLoad();
         if (cancelled || !data) return;
-        // Don't overwrite local if remote empty but local has data (prevents wipe)
+        const totalRemote = (data.chores?.length||0)+(data.calendar?.length||0)+(data.shopping?.length||0)+(data.notes?.length||0);
+        const totalLocal = (v1.choresRaw?.length||0)+(v1.calendarRaw?.length||0)+(v1.shoppingRaw?.length||0)+(v1.notesRaw?.length||0);
+        if (totalRemote===0 && totalLocal>0) return;
+        if (!v1.applyingRemoteRef.current) v1.applyingRemoteRef.current = true;
         try {
-          const totalRemote = (data.chores?.length||0)+(data.calendar?.length||0)+(data.shopping?.length||0)+(data.notes?.length||0);
-          if (totalRemote===0) return;
-          // Merge helper — same as remoteSync mergeById (latest wins)
-          const { mergeById } = await import("../lib/remoteSync");
-          if (Array.isArray(data.calendar) && data.calendar.length>0) {
-            try {
-              const local = v1.calendarRaw as any[];
-              const merged = mergeById(local||[], data.calendar as any);
-              if (merged.length !== local.length || JSON.stringify(merged)!==JSON.stringify(local)) {
-                if (!v1.applyingRemoteRef.current) {
-                  v1.applyingRemoteRef.current = true;
-                  try { v1.setCalendarRaw(merged as any); } finally { setTimeout(()=>{ v1.applyingRemoteRef.current=false }, 200); }
-                }
-              }
-            } catch {}
-          }
-          if (Array.isArray(data.notes) && data.notes.length>0) {
-            try {
-              const local = v1.notesRaw as any[];
-              const { mergeById: m2 } = await import("../lib/remoteSync");
-              const merged = m2(local||[], data.notes as any);
-              if (merged.length !== local.length) {
-                if (!v1.applyingRemoteRef.current) {
-                  v1.applyingRemoteRef.current = true;
-                  try { v1.setNotesRaw(merged as any); } finally { setTimeout(()=>{ v1.applyingRemoteRef.current=false }, 200); }
-                }
-              }
-            } catch {}
-          }
-          if (Array.isArray(data.chores) && data.chores.length>0) {
-            try {
-              const local = v1.choresRaw as any[];
-              const { mergeById: m3 } = await import("../lib/remoteSync");
-              const merged = m3(local||[], data.chores as any);
-              if (merged.length>0) v1.setChoresRaw(merged as any);
-            } catch {}
-          }
-          if (Array.isArray(data.shopping) && data.shopping.length>0) {
-            try {
-              const local = v1.shoppingRaw as any[];
-              const { mergeById: m4 } = await import("../lib/remoteSync");
-              const merged = m4(local||[], data.shopping as any);
-              v1.setShoppingRaw(merged as any);
-            } catch {}
-          }
-        } catch {}
+          if (Array.isArray(data.calendar)) v1.setCalendarRaw(data.calendar as any);
+          if (Array.isArray(data.notes)) v1.setNotesRaw(data.notes as any);
+          if (Array.isArray(data.chores)) v1.setChoresRaw(data.chores as any);
+          if (Array.isArray(data.shopping)) v1.setShoppingRaw(data.shopping as any);
+        } finally {
+          setTimeout(()=>{ v1.applyingRemoteRef.current=false }, 200);
+        }
       } catch {}
-    };
-    doLoad();
+    })();
+    return ()=>{ cancelled=true; };
+  }, [app.currentUser]);
+
+  useEffect(()=>{
+    if (!app.currentUser) return;
     let unsub: ()=>void = ()=>{};
     try {
       unsub = subscribeRemote((rd:any)=>{
-        if (cancelled) return;
         try {
-          if (rd.updated_at) {
-            try { localStorage.setItem('couple_v1_last_sync', rd.updated_at); } catch {}
-          }
-          // Apply remote push immediately (realtime)
-          const doApply = async ()=>{
-            const { mergeById } = await import("../lib/remoteSync");
-            if (Array.isArray(rd.calendar)) {
-              const merged = mergeById(v1.calendarRaw||[], rd.calendar);
-              v1.setCalendarRaw(merged as any);
-            }
-            if (Array.isArray(rd.notes)) {
-              const merged = mergeById(v1.notesRaw||[], rd.notes);
-              v1.setNotesRaw(merged as any);
-            }
-            if (Array.isArray(rd.chores)) {
-              const merged = mergeById(v1.choresRaw||[], rd.chores);
-              v1.setChoresRaw(merged as any);
-            }
-            if (Array.isArray(rd.shopping)) {
-              const merged = mergeById(v1.shoppingRaw||[], rd.shopping);
-              v1.setShoppingRaw(merged as any);
-            }
-          };
-          doApply();
+          if (rd.updated_at) { try { localStorage.setItem('couple_v1_last_sync', rd.updated_at); } catch {} }
+          if (!v1.applyingRemoteRef.current) v1.applyingRemoteRef.current = true;
+          if (Array.isArray(rd.calendar)) v1.setCalendarRaw(rd.calendar as any);
+          if (Array.isArray(rd.notes)) v1.setNotesRaw(rd.notes as any);
+          if (Array.isArray(rd.chores)) v1.setChoresRaw(rd.chores as any);
+          if (Array.isArray(rd.shopping)) v1.setShoppingRaw(rd.shopping as any);
+          setTimeout(()=>{ v1.applyingRemoteRef.current=false }, 200);
         } catch {}
       });
     } catch {}
-    return ()=>{ cancelled=true; try{ unsub(); }catch{} };
-  }, [app.currentUser, v1.choresRaw?.length, v1.calendarRaw?.length]); // re-run when user logs in
+    return ()=>{ try{ unsub(); }catch{} };
+  }, [app.currentUser]); // realtime server-wins
 
   // Return combined
   return {

@@ -3,7 +3,8 @@ import type { Theme, PersonKey } from "../../types";
 import { ThemeSettings } from "./ThemeSettings";
 import { HouseholdSettings } from "./HouseholdSettings";
 import { BiometricsSettings } from "../auth/BiometricsSettings";
-import { getEffectiveRowId, getEffectiveTable, hasSupabaseConfig } from "../../lib/supabase";
+import { getEffectiveRowId, getEffectiveTable, hasSupabaseConfig, clearAllLocalData } from "../../lib/supabase";
+import { clearAllIDB } from "../../lib/idb";
 import { remoteLoad } from "../../lib/remoteSync";
 
 type Props = {
@@ -423,6 +424,27 @@ export function SettingsScreen(props: any = {}) {
               </button>
             </div>
 
+            <div className="flex gap-2">
+              <button
+                onClick={async()=>{
+                  if(!confirm("Wipe this phone's cached copy and reload fresh from server? Your server data stays safe.")) return;
+                  try{
+                    await clearAllLocalData();
+                    try{ await clearAllIDB(); }catch{}
+                    // keep household_id so we reload same house after wipe
+                    const hid = effId && effId!=="–" ? effId : (localStorage.getItem("couple_v1_household_id")||"");
+                    if(hid && hid.length>=3){
+                      try{ localStorage.setItem("couple_v1_household_id", hid); }catch{}
+                    }
+                    location.reload();
+                  }catch(e:any){ alert(String(e?.message||e)); }
+                }}
+                className="h-[44px] flex-1 rounded-full bg-[#121214] text-white text-[12px] font-semibold active:scale-[0.98]"
+              >
+                Wipe this phone & reload from server
+              </button>
+            </div>
+            <div className="text-[10px] text-[var(--muted)]">Server is source of truth — deletes really go away. If you see different lists, this button fixes that.</div>
             <div className="text-[10px] text-[var(--muted)]">Each code is isolated. No giant JSON row.</div>
           </div>
         </Card>

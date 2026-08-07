@@ -5,6 +5,16 @@ export const ROW_ID_LEGACY = "ash-ciaran-2026" as const // kept for migration on
 export const ROW_ID = ROW_ID_LEGACY // deprecated alias
 export const TOKEN = ROW_ID_LEGACY
 
+export const TABLES = {
+  HOUSEHOLDS: 'households',
+  INVITES: 'household_invites',
+  PINS: 'household_pins',
+  CAL: 'calendar_events',
+  CHORES: 'chores',
+  SHOP: 'shopping_items',
+  NOTES: 'notes_memo',
+} as const
+
 // Scalable: household id is dynamic, stored in localStorage
 // Never fallback to hard-coded id for new users — return null to force onboarding / recovery
 
@@ -78,6 +88,138 @@ export function getEffectiveTable(): string {
 
 export function clearEffectiveRowId() {
   try { localStorage.removeItem("couple_v1_household_id"); localStorage.removeItem("couple_v1_household_code") } catch {}
+}
+
+export function getEffectiveHouseholdCode(): string | null {
+  try { return localStorage.getItem("couple_v1_household_code") } catch { return null }
+}
+
+export async function clearAllLocalData(): Promise<void> {
+  try {
+    // Clear all couple_v1_* except supabase config (url/anon must survive wipe)
+    const keep = new Set([
+      "couple_v1_supabase_url",
+      "couple_v1_supabase_anon",
+      "couple_v1_supabase_anon_key",
+    ])
+    try {
+      const del: string[] = []
+      for (let i=0;i<localStorage.length;i++) {
+        const k = localStorage.key(i)
+        if (!k) continue
+        if (k.startsWith("couple_v1_") && !keep.has(k)) del.push(k)
+      }
+      for (const k of del) try { localStorage.removeItem(k) } catch {}
+      // also clear fallback idb_ prefix keys
+      const idbDel: string[] = []
+      for (let i=0;i<localStorage.length;i++) {
+        const k = localStorage.key(i)
+        if (k && k.startsWith("idb_")) idbDel.push(k)
+      }
+      for (const k of idbDel) try { localStorage.removeItem(k) } catch {}
+    } catch {}
+    try {
+      const mod = await import("./idb")
+      if ((mod as any).clearAllIDB) await (mod as any).clearAllIDB().catch(()=>{})
+      // explicit note_photos clean for old fallback
+      try {
+        const db = await (mod as any).openIdb?.()
+        if (db) {
+          try { await (mod as any).idbDel?.('note_photos') } catch {}
+        }
+      } catch {}
+    } catch {
+      try { indexedDB.deleteDatabase("couple_v1_idb") } catch {}
+      try { indexedDB.deleteDatabase("note_photos") } catch {}
+    }
+  } catch {
+    // must never throw in critical wipe path
+  }
+}
+
+export function clearLocalCacheOutsideLogin(): void {
+  // sync wrapper for legacy call sites — fire and forget new async clear
+  try { void clearAllLocalData() } catch {}
+  try {
+    const keysToRemove = [
+      "couple_v1_household_id",
+      "couple_v1_household_code",
+      "couple_v1_chores",
+      "couple_v1_calendar_v2",
+      "couple_v1_shopping_v2",
+      "couple_v1_notes_memo",
+      "couple_v1_revision",
+      "couple_v1_last_sync",
+      "couple_v1_last_confirmed_at",
+      "couple_v1_queue_count",
+      "couple_v1_last_mutation",
+      "couple_v1_had_remote",
+      "couple_v1_last_push_err",
+      "couple_v1_household_name",
+      "couple_v1_household_persons",
+      "couple_v1_currentUser",
+      "couple_v1_last_local_write",
+      "couple_v1_build",
+      "couple_v1_theme",
+      "couple_v1_force_resync",
+    ];
+    for (const k of keysToRemove) {
+      try { localStorage.removeItem(k); } catch {}
+    }
+    // per-hid keys
+    try {
+      const toDelete: string[] = [];
+      for (let i=0; i<localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        if (
+          k.startsWith("couple_v1_household_persons_") ||
+          k.startsWith("couple_v1_household_pins_") ||
+          k.startsWith("couple_v1_household_name") ||
+          k.startsWith("couple_v1_persons_")
+        ) toDelete.push(k);
+      }
+      for (const k of toDelete) try { localStorage.removeItem(k); } catch {}
+    } catch {}
+    // attempt IDB clear async (fire-and-forget, safe)
+    try {
+      // dynamic import to avoid circular deps
+      import("./idb").then(m => {
+        if (m && (m as any).clearAllIDB) (m as any).clearAllIDB().catch(()=>{});
+      }).catch(()=>{});
+    } catch {}
+    // also clear idb_ prefix LS fallbacks
+    try {
+      const idbRemove: string[] = [];
+      for (let i=0;i<localStorage.length;i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("idb_")) idbRemove.push(k);
+      }
+      for (const k of idbRemove) try { localStorage.removeItem(k); } catch {}
+    } catch {}
+  } catch {
+    // must never throw outside login
+  }
+}
+
+export async function handleWipeQueryParam(): Promise<boolean> {
+  try {
+    if (typeof window === 'undefined' || typeof location === 'undefined') return false
+    const sp = new URLSearchParams(location.search)
+    const wipe = sp.get("wipe")
+    if (wipe === "1" || wipe === "" || sp.has("wipe")) {
+      await clearAllLocalData().catch(()=>{})
+      sp.delete("wipe")
+      try {
+        const base = location.pathname
+        const qs = sp.toString()
+        const next = qs ? `${base}?${qs}${location.hash || ""}` : `${base}${location.hash || ""}`
+        history.replaceState(null, "", next)
+      } catch {}
+      return true
+    }
+  } catch {}
+  return false
 }
 
 type Env = { url?: string; anon?: string }

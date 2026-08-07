@@ -1,7 +1,7 @@
 {
-  "build": "v157-sync-rescue-shopping-trips",
-  "code": 157,
-  "changelog": "sync rescue when hid lost (fallback scan + legacy ash-ciaran-2026), merge remote calendar/notes into local, realtime subscribe merge, shopping trips grouped",
+  "build": "v158-force-recover-boarding",
+  "code": 158,
+  "changelog": "allow ?recover / ?force_onboard=1 to force onboarding even when hid exists, to fix split-brain households like Cyprus trip / baby Gia note",
   "mandatory": false,
-  "builtAt": "2026-08-07T20:32:00Z"
+  "builtAt": "2026-08-07T20:45:50Z"
 }

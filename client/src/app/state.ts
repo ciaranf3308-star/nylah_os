@@ -380,14 +380,17 @@ export function hasAnyLegacyData(): boolean {
 export function shouldShowOnboarding(): boolean {
   try {
     try{ if(localStorage.getItem("couple_v1_force_onboard")==="1") return true; }catch{}
+    try {
+      const sp = new URLSearchParams(location.search);
+      if (sp.get("force_onboard")==="1" || sp.get("recover")) return true;
+      if (sp.has("onboard")) {
+        if (sp.get("onboard")==="0") return false;
+        if (sp.get("onboard")==="1") return true;
+      }
+    } catch {}
     const hid = getStoredHouseholdId();
     if (hid && hid.length>=3) return false;
     if (hasAnyLegacyData()) return false;
-    try {
-      const sp = new URLSearchParams(location.search);
-      if (sp.get("onboard")==="0") return false;
-      if (sp.get("onboard")==="1") return true;
-    } catch {}
     return true;
   } catch { return true; }
 }

@@ -168,32 +168,55 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
 
   const doJoinLookup = async () => {
     setError("");
-    const code = joinCode.trim().toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6);
-    if (code.length<4) { setError("Enter the 6-letter code"); return; }
+    const rawInput = joinCode.trim();
+    const isFullHid = rawInput.includes("-") && rawInput.length >= 6;
+    const codeClean = rawInput.toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,32);
+    if (!isFullHid && codeClean.replace(/[^A-Z0-9]/g,"").length < 4) { setError("Enter the 6-letter code or household ID"); return; }
     setJoining(true);
     try {
-      const hid = `nylah-${code.toLowerCase()}`;
+      // allow full hid like ash-ciaran-2026 or nylah-abc123
+      let hidCandidates: string[] = [];
+      let code = "";
+      if (isFullHid) {
+        const hid = rawInput.toLowerCase().trim();
+        hidCandidates = [hid];
+        code = hid.includes("nylah-") ? hid.split("nylah-")[1]?.slice(0,6).toUpperCase() || "" : hid.slice(0,6).toUpperCase();
+      } else {
+        code = rawInput.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6);
+        const hid = `nylah-${code.toLowerCase()}`;
+        hidCandidates = [hid, code.toLowerCase()];
+      }
       const sb = getSupabase();
       if (!sb) { setError("No connection — check internet"); setJoining(false); return; }
       let data: any = null;
       // 1. Prefer household_invites table if present (spec)
-      try {
-        const resInvite = await (sb as any).from("household_invites").select("*").eq("code", code).maybeSingle();
-        if (resInvite && resInvite.data) {
-          // if invite table maps to household id, use it
-          const mappedHid = resInvite.data.household_id || resInvite.data.householdId || hid;
-          const resHouse = await (sb as any).from(SB_TABLE).select('*').eq('id', mappedHid).maybeSingle();
-          if (resHouse && resHouse.data) data = resHouse.data;
-          else data = { id: mappedHid, meta: resInvite.data.meta || { persons: resInvite.data.persons } };
-        }
-      } catch {}
-      // 2. Fallback original couple_data lookup by hid
+      if (!isFullHid) {
+        try {
+          const resInvite = await (sb as any).from("household_invites").select("*").eq("code", code).maybeSingle();
+          if (resInvite && resInvite.data) {
+            const mappedHid = resInvite.data.household_id || resInvite.data.householdId || hidCandidates[0];
+            const resHouse = await (sb as any).from(SB_TABLE).select('*').eq('id', mappedHid).maybeSingle();
+            if (resHouse && resHouse.data) data = resHouse.data;
+            else data = { id: mappedHid, meta: resInvite.data.meta || { persons: resInvite.data.persons } };
+          }
+        } catch {}
+      }
+      // 2. Fallback original couple_data lookup by hid(s)
       if (!data) {
-        const res1 = await (sb as any).from(SB_TABLE).select('*').eq('id', hid).maybeSingle();
-        data = res1.data;
+        for (const hid of hidCandidates) {
+          try {
+            const res1 = await (sb as any).from(SB_TABLE).select('*').eq('id', hid).maybeSingle();
+            if (res1?.data) { data = res1.data; break; }
+          } catch {}
+        }
+        // legacy primary fallback — always try ash-ciaran-2026 if nothing found and user typed short code that might be legacy
         if (!data) {
-          const res2 = await (sb as any).from(SB_TABLE).select('*').eq('id', code.toLowerCase()).maybeSingle();
-          if (res2.data) data = res2.data;
+          try {
+            const resP = await (sb as any).from(SB_TABLE).select('*').eq('id', 'ash-ciaran-2026').maybeSingle();
+            // only auto-use if code is empty-ish and we are in recover mode? Don't auto — just keep data null
+            // but allow explicit ash-ciaran-2026 typed as full hid already handled above
+            if (false && resP?.data) data = resP.data;
+          } catch {}
         }
       }
       if (!data) {
@@ -206,7 +229,7 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
       const persons = meta?.persons || [{key:"aisling", name:"Partner 1"}, {key:"ciaran", name:"Partner 2"}];
       setJoinPersons(persons);
       setInviteCode(code);
-      setHouseholdId((data as any).id || hid);
+      setHouseholdId((data as any).id || hidCandidates[0] || "");
       setJoining(false);
       setStep("join_pick");
     } catch (e:any) {
@@ -249,7 +272,24 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
             <div className="mt-1 text-[13px] text-[#6B5242] text-center leading-[1.4]">Beirt — Irish for two. A private space for two. Shared calendar, chores, shopping, notes. No ads. Just you two.</div>
             <div className="mt-5 w-full space-y-2.5">
               <button onClick={()=> setStep("create_names")} className="w-full h-[52px] rounded-full bg-[#0A0A0A] text-white text-[14px] font-semibold active:scale-[0.98] shadow-sm">Create our space</button>
-              <button onClick={startJoin} className="w-full h-[48px] rounded-full bg-white border border-[var(--border)] text-[#2D2118] text-[13px] font-medium active:scale-[0.98]">I have a code</button>
+              <button onClick={startJoin} className="w-full h-[48px] rounded-full bg-white border border-[var(--border)] text-[#2D2118] text-[13px] font-medium active:scale-[0.98]">I have a code / recover</button>
+              <button onClick={async()=>{
+                // Quick recover primary household — if ash-ciaran-2026 exists, jump to PIN
+                try{
+                  setError(""); setJoining(true as any);
+                  const sb = getSupabase();
+                  if (sb) {
+                    const { data } = await (sb as any).from(SB_TABLE).select('*').eq('id','ash-ciaran-2026').maybeSingle();
+                    if (data) {
+                      const meta = (data as any).meta;
+                      const persons = meta?.persons || [{key:"aisling", name:"Aisling"}, {key:"ciaran", name:"Ciaran"}];
+                      setJoinMeta(meta); setJoinPersons(persons); setInviteCode(""); setHouseholdId("ash-ciaran-2026");
+                      setJoining(false as any); setStep("join_pick"); return;
+                    }
+                  }
+                } catch {}
+                setJoining(false as any); setStep("join_code");
+              }} className="w-full h-[40px] rounded-full bg-[var(--chip-bg)] border border-transparent text-[#6B5242] text-[12px] font-medium active:scale-[0.98]">Recover Ash & Ciaran space</button>
             </div>
             <div className="mt-4 text-[11px] text-[#8B7357] text-center">For friends beta — invite only. Your data stays in your own household.</div>
             {hasAnyLegacyData() && <button onClick={()=> onComplete(getStoredHouseholdId()||"ash-ciaran-2026")} className="mt-2 text-[11px] underline text-[#6B5242]">I’m Aisling & Ciaran — keep our space</button>}
@@ -329,13 +369,17 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
           <>
             <div className="w-full text-left">
               <button onClick={()=> setStep("welcome")} className="text-[11px] text-[#8B7357]">← Back</button>
-              <div className="mt-2 font-display text-[20px] font-semibold text-[#0A0A0A]">Enter your invite code</div>
-              <div className="mt-1 text-[12px] text-[#6B5242]">Your partner should have sent you a 6-letter code like ABC123.</div>
+              <div className="mt-2 font-display text-[20px] font-semibold text-[#0A0A0A]">Enter your invite code or household ID</div>
+              <div className="mt-1 text-[12px] text-[#6B5242]">Your partner should have sent you a 6-letter code like ABC123. For Aisling & Ciaran, type <span className="font-mono bg-[var(--chip-bg)] px-1 rounded">ash-ciaran-2026</span></div>
             </div>
-            <input value={joinCode} onChange={e=> setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6))} placeholder="ABC123" className="mt-4 w-full rounded-[16px] border bg-white px-4 py-4 text-center font-mono text-[20px] tracking-[0.22em] outline-none" style={{borderColor:"var(--border)"}} autoFocus />
+            <input value={joinCode} onChange={e=> setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,32))} placeholder="ABC123 or ash-ciaran-2026" className="mt-4 w-full rounded-[16px] border bg-white px-4 py-4 text-center font-mono text-[14px] tracking-[0.12em] outline-none" style={{borderColor:"var(--border)"}} autoFocus />
             {error && <div className="mt-2 text-[11px] text-[#991B1B] w-full text-center">{error}</div>}
-            <button onClick={doJoinLookup} disabled={joining} className="mt-4 w-full h-[48px] rounded-full bg-[#0A0A0A] text-white text-[14px] font-semibold disabled:opacity-60 active:scale-[0.98]">{joining?"Looking up…":"Join our space"}</button>
-            <div className="mt-2 text-[10px] text-[#8B7357] text-center">Codes are single-household private. If it’s expired, ask your partner to go to Settings → Share invite code and send a new one.</div>
+            <button onClick={doJoinLookup} disabled={joining} className="mt-4 w-full h-[48px] rounded-full bg-[#0A0A0A] text-white text-[14px] font-semibold disabled:opacity-60 active:scale-[0.98]">{joining?"Looking up…":"Recover / Join"}</button>
+            <div className="mt-3 w-full rounded-[14px] bg-[var(--chip-bg)] px-3 py-2.5 text-left">
+              <div className="text-[11px] font-semibold text-[#2D2118]">Gap you hit — why onboarding showed</div>
+              <div className="text-[10.5px] text-[#6B5242] leading-[1.35] mt-0.5">Your phone cleared local storage (PWA update or new browser). Beirt stores household ID locally to keep you private — no central login. Now you can recover by entering your household ID here. PINs are still verified server-side (4463/1958).</div>
+            </div>
+            <div className="mt-2 text-[10px] text-[#8B7357] text-center">Codes are single-household private. If it’s expired, ask your partner to go to Settings → Share invite code.</div>
           </>
         )}
         {step==="join_pick" && (

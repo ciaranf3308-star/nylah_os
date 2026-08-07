@@ -106,60 +106,15 @@ export function App() {
   const safeSetTab = typeof setTab === 'function' ? setTab : (()=>{}) as any;
   const safePhoneInnerRef = phoneInnerRef || { current: null } as any;
 
-  // — theme → CSS vars + data-theme — verbatim from AppMonolith V117 fix invisible text
+  // — theme owns styling via CSS — JS only flips data-theme attribute
   React.useEffect(() => {
     try {
       const legacyMap: Record<string,string> = { peach:'beige', butter:'beige', lavender:'beige', terracotta:'beige', mint:'beige', paper:'beige', cream:'beige', midnight:'ink' };
       const rawId = (theme as any)?.id || themeId || 'beige';
       const mappedId = legacyMap[rawId] || rawId;
-      const effectiveTheme = (THEMES.find(t=> t.id===mappedId) || THEMES[0]) as any;
-      const isInk = effectiveTheme.id === 'ink';
+      const isInk = mappedId === 'ink';
       const r = document.documentElement;
-      r.style.setProperty('--bg', effectiveTheme.bg);
-      r.style.setProperty('--phone-bg', (effectiveTheme as any).phoneBg || effectiveTheme.bg);
-      r.style.setProperty('--surface', effectiveTheme.cardBg || 'var(--card-bg)');
-      r.style.setProperty('--surface-muted', effectiveTheme.bg || 'var(--chip-bg)');
-      r.style.setProperty('--text-primary', effectiveTheme.text);
-      r.style.setProperty('--text', effectiveTheme.text);
-      r.style.setProperty('--text-secondary', isInk ? '#A8A5A0' : '#5A5655');
-      r.style.setProperty('--border', effectiveTheme.cardBd);
-      r.style.setProperty('--card-bd', effectiveTheme.cardBd);
-      r.style.setProperty('--card-bg', effectiveTheme.cardBg);
-      r.style.setProperty('--accent', effectiveTheme.accent);
-      r.style.setProperty('--accent-strong', (effectiveTheme as any).accentStrong || effectiveTheme.accent);
-      r.style.setProperty('--nav-bg', (effectiveTheme as any).navBg || effectiveTheme.bg);
-      r.style.setProperty('--nav-active-bg', (effectiveTheme as any).navActiveBg || '#0A0A0A');
-      r.style.setProperty('--nav-active-text', (effectiveTheme as any).navActiveText || 'var(--card-bg)');
-      r.style.setProperty('--topbar-bg', (effectiveTheme as any).topBarBg || effectiveTheme.bg);
-      r.style.setProperty('--wash-top', (effectiveTheme as any).washTop || effectiveTheme.accent);
-      r.style.setProperty('--wash-mid', (effectiveTheme as any).washMid || effectiveTheme.bg);
-      r.style.setProperty('--chip-bg', (effectiveTheme as any).chipBg || 'var(--bg)');
-      r.style.setProperty('--shadow-soft', isInk ? '0 8px 32px rgba(0,0,0,0.35)' : '0 8px 24px rgba(0,0,0,0.06)');
-      r.style.setProperty('--shadow-raised', isInk ? '0 18px 44px rgba(0,0,0,0.42)' : '0 12px 28px rgba(0,0,0,0.08)');
-      r.style.setProperty('--muted', isInk ? '#A8A5A0' : '#5A5655');
-      if (isInk) {
-        r.setAttribute('data-theme','ink');
-        r.style.setProperty('--bg', '#121214');
-        r.style.setProperty('--phone-bg', 'linear-gradient(180deg,#232326 0%,#1E1E20 28%,#161618 58%,#121214 100%)');
-        r.style.setProperty('--card-bg', '#232326');
-        r.style.setProperty('--card-bd', 'rgba(255,255,255,0.08)');
-        r.style.setProperty('--border', 'rgba(255,255,255,0.08)');
-        r.style.setProperty('--text', '#F5F3F0');
-        r.style.setProperty('--text-primary', '#F5F3F0');
-        r.style.setProperty('--text-secondary', '#A8A5A0');
-        r.style.setProperty('--chip-bg', '#2C2C30');
-        r.style.setProperty('--wash-top', '#2E2E32');
-        r.style.setProperty('--wash-mid', '#242428');
-        r.style.setProperty('--nav-bg', 'rgba(22,22,24,0.92)');
-        r.style.setProperty('--nav-active-bg', '#FF6B26');
-        r.style.setProperty('--nav-active-text', '#121214');
-        r.style.setProperty('--topbar-bg', '#1E1E20');
-        r.style.setProperty('--accent', '#FF6B26');
-        r.style.setProperty('--accent-strong', '#FF8A4D');
-        r.style.setProperty('--muted', '#A8A5A0');
-      } else {
-        r.setAttribute('data-theme','beige');
-      }
+      r.setAttribute('data-theme', isInk ? 'ink' : 'beige');
       if (rawId !== mappedId) {
         try { localStorage.setItem('couple_v1_theme', JSON.stringify(mappedId)); } catch {}
         try { setThemeId(mappedId); } catch {}

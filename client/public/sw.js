@@ -1,5 +1,5 @@
 // Nylah OS SW v123 hotfix - absolute path fix + ErrorBoundary
-const CACHE_NAME = "nylah-os-v124-dark-fix";
+const CACHE_NAME = "nylah-os-v125-clean-css";
 const URLS = ["./","./index.html","./manifest.webmanifest"];
 self.addEventListener("install", e=>{
   e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(URLS.map(u=>new Request(u,{cache:"reload"}))).catch(()=>{})));

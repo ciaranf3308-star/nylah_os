@@ -13,3 +13,4 @@ client/dist/
 .supabase/
 app.db
 your_files/
+.gh-pages-worktree/

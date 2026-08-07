@@ -13,275 +13,457 @@ type Props = {
   currentUser?: PersonKey;
 };
 
-export function SettingsScreen(props: any = {}){
+const SPRING = "cubic-bezier(0.34,1.56,0.64,1)";
+const EASE = "cubic-bezier(0.22,1,0.36,1)";
+
+function Card({
+  open,
+  onToggle,
+  eyebrow,
+  title,
+  meta,
+  accent,
+  children,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  eyebrow: string;
+  title: string;
+  meta: string;
+  accent?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div
+      className="group w-full rounded-[26px] border bg-[var(--card-bg)] overflow-hidden"
+      style={{
+        borderColor: "var(--border)",
+        boxShadow: open ? "0 10px 30px rgba(18,18,20,0.06)" : "0 4px 16px rgba(18,18,20,0.03)",
+        transform: "translateZ(0)",
+        transition: `box-shadow 260ms ${EASE}, border-color 200ms ${EASE}`,
+      }}
+    >
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between gap-3 px-5 py-[14px] min-h-[64px] text-left active:scale-[0.988] transition"
+        style={{ transitionTimingFunction: SPRING, transitionDuration: "180ms" }}
+      >
+        <div className="flex items-center gap-3.5 min-w-0">
+          <span
+            className="grid h-9 w-9 place-items-center rounded-full border text-[13px] shrink-0"
+            style={{
+              background: accent || "var(--chip-bg)",
+              borderColor: "var(--border)",
+              color: "var(--text)",
+            }}
+          >
+            {eyebrow === "appearance" ? "○" : eyebrow === "house" ? "⌂" : eyebrow === "people" ? "◐" : eyebrow === "sync" ? "↗" : "—"}
+          </span>
+          <div className="min-w-0">
+            <div className="flex items-baseline gap-2">
+              <div
+                className="text-[15.5px] font-semibold tracking-[-0.01em] leading-none"
+                style={{ fontFamily: "Fraunces, serif", color: "var(--text)" }}
+              >
+                {title}
+              </div>
+            </div>
+            <div className="mt-1 text-[11px] leading-[1.25] tracking-[0.02em] text-[var(--muted)] truncate max-w-[220px]">{meta}</div>
+          </div>
+        </div>
+        <span
+          className="grid h-7 w-7 place-items-center rounded-full border bg-[var(--chip-bg)] text-[10px] shrink-0"
+          style={{
+            borderColor: "var(--border)",
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+            transition: `transform 260ms ${EASE}, background 200ms`,
+          }}
+        >
+          ▾
+        </span>
+      </button>
+
+      <div
+        className="grid"
+        style={{
+          gridTemplateRows: open ? "1fr" : "0fr",
+          transition: `grid-template-rows 320ms ${EASE}`,
+        }}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div
+            className="px-4 sm:px-5 pb-5 pt-1"
+            style={{
+              borderTop: open ? "1px solid var(--border)" : "1px solid transparent",
+              background: "color-mix(in srgb, var(--card-bg) 92%, var(--wash-top))",
+            }}
+          >
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function SettingsScreen(props: any = {}) {
   const { theme, setTheme, onConfetti, choresRaw, calendarRaw, shoppingRaw, notesRaw, setChoresRaw, setCalendarRaw, setShoppingRaw, setNotesRaw, currentUser } = (props as Props) || ({} as any);
   const safeTheme = (theme as any) || { name: "Beige", id: "beige" } as any;
-  const safeSetTheme = typeof setTheme === 'function' ? setTheme : (()=>{}) as any;
-  const safeOnConfetti = typeof onConfetti === 'function' ? onConfetti : (()=>{}) as any;
-  const safeCurrentUser = (currentUser || "aisling") as any;
+  const safeSetTheme = typeof setTheme === "function" ? setTheme : (() => {}) as any;
+  const safeOnConfetti = typeof onConfetti === "function" ? onConfetti : (() => {}) as any;
+  const safeCurrentUser = (currentUser || "person_1") as any;
   const safeChores = Array.isArray(choresRaw) ? choresRaw : [];
   const safeCalendar = Array.isArray(calendarRaw) ? calendarRaw : [];
   const safeShopping = Array.isArray(shoppingRaw) ? shoppingRaw : [];
   const safeNotes = Array.isArray(notesRaw) ? notesRaw : [];
-  const safeSetChoresRaw = typeof setChoresRaw === 'function' ? setChoresRaw : (()=>{}) as any;
-  const safeSetCalendarRaw = typeof setCalendarRaw === 'function' ? setCalendarRaw : (()=>{}) as any;
-  const safeSetShoppingRaw = typeof setShoppingRaw === 'function' ? setShoppingRaw : (()=>{}) as any;
-  const safeSetNotesRaw = typeof setNotesRaw === 'function' ? setNotesRaw : (()=>{}) as any;
 
-  const [openGroups,setOpenGroups]=useState<Record<string,boolean>>(()=>({appearance:true, household:false, notifications:false, data:true, advanced:false}));
-  const toggle=(k:string)=> setOpenGroups(p=>({...p,[k]:!p[k]}));
+  const safeSetChoresRaw = typeof setChoresRaw === "function" ? setChoresRaw : (() => {}) as any;
+  const safeSetCalendarRaw = typeof setCalendarRaw === "function" ? setCalendarRaw : (() => {}) as any;
+  const safeSetShoppingRaw = typeof setShoppingRaw === "function" ? setShoppingRaw : (() => {}) as any;
+  const safeSetNotesRaw = typeof setNotesRaw === "function" ? setNotesRaw : (() => {}) as any;
+
+  // grouped dropdowns — single Settings page
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => ({
+    appearance: true,
+    household: true,
+    people: false,
+    sync: true,
+    advanced: false,
+  }));
+  const toggle = (k: string) => setOpenGroups((p) => ({ ...p, [k]: !p[k] }));
+
   const displayTheme = safeTheme;
 
-  // --- Debug state for Data & sync ---
-  const [lsHouseId,setLsHouseId]=useState<string>("–");
-  const [lsHouseCode,setLsHouseCode]=useState<string>("–");
-  const [inviteCode,setInviteCode]=useState<string>("–");
-  const [rev,setRev]=useState<string>("–");
-  const [lastSync,setLastSync]=useState<string>("–");
-  const [lastConfirmed,setLastConfirmed]=useState<string>("–");
-  const [lastMut,setLastMut]=useState<string>("–");
-  const [hadRemote,setHadRemote]=useState<string>("–");
-  const [pushErr,setPushErr]=useState<string>("–");
-  const [queueLen,setQueueLen]=useState<number>(0);
-  const [online,setOnline]=useState<boolean>(true);
-  const [anonPresent,setAnonPresent]=useState<string>("unknown");
-  const [build,setBuild]=useState<string>("v121-settings-debug");
-  const [effId,setEffId]=useState<string>(()=>{ try{return localStorage.getItem("couple_v1_household_id")||"–"}catch{return "–"} });
-  const [isPulling,setIsPulling]=useState(false);
-  const [pullMsg,setPullMsg]=useState<string|null>(null);
-  const [remoteCounts,setRemoteCounts]=useState<{c:number;cal:number;s:number;n:number}|null>(null);
+  // --- diagnostic state kept but boutique-hidden ---
+  const [lsHouseId, setLsHouseId] = useState<string>("–");
+  const [lsHouseCode, setLsHouseCode] = useState<string>("–");
+  const [inviteCode, setInviteCode] = useState<string>("–");
+  const [rev, setRev] = useState<string>("–");
+  const [lastSync, setLastSync] = useState<string>("–");
+  const [lastConfirmed, setLastConfirmed] = useState<string>("–");
+  const [lastMut, setLastMut] = useState<string>("–");
+  const [hadRemote, setHadRemote] = useState<string>("–");
+  const [pushErr, setPushErr] = useState<string>("–");
+  const [queueLen, setQueueLen] = useState<number>(0);
+  const [online, setOnline] = useState<boolean>(true);
+  const [anonPresent, setAnonPresent] = useState<string>("unknown");
+  const [build, setBuild] = useState<string>("v146-boutique");
+  const [effId, setEffId] = useState<string>(() => {
+    try {
+      return localStorage.getItem("couple_v1_household_id") || "–";
+    } catch {
+      return "–";
+    }
+  });
+  const [isPulling, setIsPulling] = useState(false);
+  const [pullMsg, setPullMsg] = useState<string | null>(null);
+  const [remoteCounts, setRemoteCounts] = useState<{ c: number; cal: number; s: number; n: number } | null>(null);
+  const [householdName, setHouseholdName] = useState<string>("Our house");
+  const [copied, setCopied] = useState<string | null>(null);
 
-  useEffect(()=>{
-    try{ setLsHouseId(localStorage.getItem("couple_v1_household_id")||"–"); }catch{}
-    try{ setLsHouseCode(localStorage.getItem("couple_v1_household_code")||"–"); }catch{}
-    try{ setInviteCode(localStorage.getItem("couple_v1_household_code")||localStorage.getItem("couple_v1_household_invite")||localStorage.getItem("couple_v1_household_invite_code")||"–"); }catch{}
-    try{ setRev(localStorage.getItem("couple_v1_revision")||localStorage.getItem("couple_v1_rev")||"–"); }catch{}
-    try{ setLastSync(localStorage.getItem("couple_v1_last_sync")||"–"); }catch{}
-    try{ setLastConfirmed(localStorage.getItem("couple_v1_last_confirmed_at")||"–"); }catch{}
-    try{ setLastMut(localStorage.getItem("couple_v1_last_mutation")||"–"); }catch{}
-    try{ setHadRemote(localStorage.getItem("couple_v1_had_remote")||"–"); }catch{}
-    try{ setPushErr(localStorage.getItem("couple_v1_last_push_err")||"–"); }catch{}
-    try{ const raw=localStorage.getItem("couple_v1_offline_queue"); if(raw){const q=JSON.parse(raw); if(Array.isArray(q)) setQueueLen(q.length);} }catch{}
-    try{ const raw2=localStorage.getItem("couple_v1_queue_count"); if(raw2) { const n=Number(raw2); if(!isNaN(n)&&n>queueLen) setQueueLen(n); } }catch{}
-    try{ setOnline(typeof navigator!=='undefined' ? navigator.onLine!==false : true); }catch{}
-    try{
-      // anon present check without exposing full key
-      let found=false; let tail="????";
-      const w:any = typeof window!=='undefined' ? (window as any) : null;
+  useEffect(() => {
+    try { setLsHouseId(localStorage.getItem("couple_v1_household_id") || "–"); } catch {}
+    try { setLsHouseCode(localStorage.getItem("couple_v1_household_code") || "–"); } catch {}
+    try { setInviteCode(localStorage.getItem("couple_v1_household_code") || localStorage.getItem("couple_v1_household_invite") || localStorage.getItem("couple_v1_household_invite_code") || "–"); } catch {}
+    try { setRev(localStorage.getItem("couple_v1_revision") || localStorage.getItem("couple_v1_rev") || "0"); } catch {}
+    try { setLastSync(localStorage.getItem("couple_v1_last_sync") || "–"); } catch {}
+    try { setLastConfirmed(localStorage.getItem("couple_v1_last_confirmed_at") || "–"); } catch {}
+    try { setLastMut(localStorage.getItem("couple_v1_last_mutation") || "–"); } catch {}
+    try { setHadRemote(localStorage.getItem("couple_v1_had_remote") || "–"); } catch {}
+    try { setPushErr(localStorage.getItem("couple_v1_last_push_err") || "–"); } catch {}
+    try { const raw = localStorage.getItem("couple_v1_offline_queue"); if (raw) { const q = JSON.parse(raw); if (Array.isArray(q)) setQueueLen(q.length); } } catch {}
+    try { const raw2 = localStorage.getItem("couple_v1_queue_count"); if (raw2) { const n = Number(raw2); if (!isNaN(n) && n > queueLen) setQueueLen(n); } } catch {}
+    try { setOnline(typeof navigator !== "undefined" ? navigator.onLine !== false : true); } catch {}
+    try {
+      let found = false; let tail = "????";
+      const w: any = typeof window !== "undefined" ? (window as any) : null;
       const cand = w?.__SUPABASE_ANON__ || w?.__SUPABASE_ANON_KEY__;
-      if (cand) { found=true; tail=String(cand).slice(-4); }
+      if (cand) { found = true; tail = String(cand).slice(-4); }
       else {
         // @ts-ignore
         const envK = (import.meta as any)?.env?.VITE_SUPABASE_ANON_KEY;
-        if (envK) { found=true; tail=String(envK).slice(-4); }
-        else if (hasSupabaseConfig()) { found=true; tail="hardcode"; }
+        if (envK) { found = true; tail = String(envK).slice(-4); }
+        else if (hasSupabaseConfig()) { found = true; tail = "hard"; }
       }
-      setAnonPresent(found ? `eyJ…${tail}` : "no ✗");
-    }catch{ setAnonPresent("error"); }
-    try{ setEffId(getEffectiveRowId()); }catch{}
-    try{
-      const v = (localStorage.getItem("couple_v1_build") || (window as any).__NYLAH_VERSION__ || "v121-settings-debug");
-      setBuild(String(v).slice(0,24));
-    }catch{}
-    // online listener
-    const onOnline=()=> setOnline(true); const onOffline=()=> setOnline(false);
-    try{ window.addEventListener('online', onOnline); window.addEventListener('offline', onOffline); }catch{}
-    return ()=>{ try{ window.removeEventListener('online', onOnline); window.removeEventListener('offline', onOffline); }catch{} };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[]);
+      setAnonPresent(found ? `eyJ…${tail}` : "no");
+    } catch { setAnonPresent("err"); }
+    try { setEffId(getEffectiveRowId() as any); } catch {}
+    try {
+      const v = (localStorage.getItem("couple_v1_build") || (window as any).__NYLAH_VERSION__ || "v146-boutique");
+      setBuild(String(v).slice(0, 24));
+    } catch {}
+    try { setHouseholdName(localStorage.getItem("couple_v1_household_name") || "Our house"); } catch {}
+    const onOnline = () => setOnline(true); const onOffline = () => setOnline(false);
+    try { window.addEventListener('online', onOnline); window.addEventListener('offline', onOffline); } catch {}
+    return () => { try { window.removeEventListener('online', onOnline); window.removeEventListener('offline', onOffline); } catch {} };
+  }, []);
 
-  async function doForcePull(){
-    if(isPulling) return;
+  async function doForcePull() {
+    if (isPulling) return;
     setIsPulling(true); setPullMsg("pulling…");
-    try{
-      const data = await remoteLoad();
-      if(!data){ setPullMsg("no remote — offline or empty row"); setTimeout(()=>setPullMsg(null),3000); return; }
-      // Merge into setters — use safe setters that call useLocalState which will trigger saves
-      try{
-        if(Array.isArray(data.chores) && data.chores.length>0) safeSetChoresRaw(data.chores);
-        if(Array.isArray(data.calendar) && data.calendar.length>0) safeSetCalendarRaw(data.calendar);
-        if(Array.isArray(data.shopping) && data.shopping.length>0) safeSetShoppingRaw(data.shopping);
-        if(Array.isArray(data.notes) && data.notes.length>0) safeSetNotesRaw(data.notes);
-        setRemoteCounts({c:data.chores?.length||0, cal:data.calendar?.length||0, s:data.shopping?.length||0, n:data.notes?.length||0});
-      }catch(e:any){ setPullMsg("merge err "+(e?.message||e)); }
-      setPullMsg(`pulled c:${data.chores?.length||0} cal:${data.calendar?.length||0} s:${data.shopping?.length||0} n:${data.notes?.length||0} • ${new Date().toLocaleTimeString()}`);
-      try{ localStorage.setItem("couple_v1_last_sync", data.updated_at||new Date().toISOString()); }catch{}
-      setTimeout(()=> setPullMsg(null),4000);
-    }catch(e:any){ setPullMsg("pull ex "+String(e?.message||e).slice(0,80)); setTimeout(()=> setPullMsg(null),4000); }
-    finally{ setIsPulling(false); }
+    try {
+      const data: any = await remoteLoad();
+      if (!data) { setPullMsg("no remote — offline or empty"); setTimeout(() => setPullMsg(null), 3000); return; }
+      try {
+        if (Array.isArray(data.chores) && data.chores.length > 0) safeSetChoresRaw(data.chores);
+        if (Array.isArray(data.calendar) && data.calendar.length > 0) safeSetCalendarRaw(data.calendar);
+        if (Array.isArray(data.shopping) && data.shopping.length > 0) safeSetShoppingRaw(data.shopping);
+        if (Array.isArray(data.notes) && data.notes.length > 0) safeSetNotesRaw(data.notes);
+        setRemoteCounts({ c: data.chores?.length || 0, cal: data.calendar?.length || 0, s: data.shopping?.length || 0, n: data.notes?.length || 0 });
+      } catch (e: any) { setPullMsg("merge " + (e?.message || e)); }
+      setPullMsg(`pulled • ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} • c:${data.chores?.length||0} cal:${data.calendar?.length||0}`);
+      try { localStorage.setItem("couple_v1_last_sync", data.updated_at || new Date().toISOString()); } catch {}
+      setTimeout(() => setPullMsg(null), 4000);
+    } catch (e: any) { setPullMsg(String(e?.message || e).slice(0, 80)); setTimeout(() => setPullMsg(null), 4000); }
+    finally { setIsPulling(false); }
   }
 
-  function doFixHouse(){
-    try{
-      // scalable: do not hard-code house fix — show recover UI instead
-      alert("Use Settings → Recover to change household. Hard-coded fix removed for scalability."); return; //
-      localStorage.setItem("couple_v1_household_id","REMOVED");
-      localStorage.removeItem("couple_v1_household_code");
-      try{ localStorage.setItem("couple_v1_household_migrated_from", effId); }catch{}
-      try{ localStorage.setItem("couple_v1_household_fixed_at", new Date().toISOString()); }catch{}
-      alert("House fix removed — use Recover flow");
-      location.reload();
-    }catch(e:any){ alert("fix err "+String(e?.message||e)); }
-  }
-
-  function doSwitchDebug(target:string){
-    try{
-      if(!confirm(`Switch household to ${target}? This is for debugging empty houses.`)) return;
+  function doSwitchDebug(target: string) {
+    try {
+      if (!confirm(`Switch to ${target}?`)) return;
       localStorage.setItem("couple_v1_household_id", target);
-      alert(`switched to ${target} — reloading`);
       location.reload();
-    }catch{}
+    } catch {}
   }
 
-  function doExportLocal(){
-    try{
-      const dump = {
-        house: effId,
-        lsHouseId,
-        lsCode: lsHouseCode,
-        inviteCode,
-        currentUser: safeCurrentUser,
-        counts: { c: safeChores.length, cal: safeCalendar.length, s: safeShopping.length, n: safeNotes.length },
-        rev, lastSync, lastConfirmed, lastMut, hadRemote, lastPushErr: pushErr?.slice(0,200),
-        queueLen,
-        online,
-        anonPresent,
-        build,
-        table: getEffectiveTable(),
-        ts: new Date().toISOString(),
-        // minimal payload samples for debugging (ids only)
-        sampleIds: {
-          chores: safeChores.slice(0,3).map((x:any)=>x?.id||x?.title).filter(Boolean),
-          cal: safeCalendar.slice(0,3).map((x:any)=>x?.id||x?.title).filter(Boolean),
-        }
-      };
-      const blob = new Blob([JSON.stringify(dump,null,2)], {type:"application/json"});
+  function doExportLocal() {
+    try {
+      const dump = { house: effId, currentUser: safeCurrentUser, counts: { c: safeChores.length, cal: safeCalendar.length, s: safeShopping.length, n: safeNotes.length }, rev, lastSync, lastConfirmed, build, ts: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(dump, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href=url; a.download=`nylah-debug-${effId}-${Date.now()}.json`; a.click();
-      URL.revokeObjectURL(url);
-    }catch(e:any){ alert("export err "+String(e?.message||e)); }
+      const a = document.createElement("a"); a.href = url; a.download = `beirt-${effId}-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url);
+    } catch (e: any) { alert("export " + String(e?.message || e)); }
   }
 
-  const debugJson = useMemo(()=>{
-    const j:any = {
-      build,
-      effHouse: effId,
-      lsHouseId,
-      lsCode: lsHouseCode,
-      inviteCode,
-      currentUser: safeCurrentUser,
-      table: (()=>{ try{return getEffectiveTable()}catch{return "couple_data"}})(),
+  const debugJson = useMemo(() => {
+    const j: any = {
+      build, effHouse: effId, lsHouseId, lsCode: lsHouseCode, inviteCode, currentUser: safeCurrentUser,
+      table: (()=>{ try{return getEffectiveTable()}catch{return "households"}})(),
       countsLocal: { c: safeChores.length, cal: safeCalendar.length, s: safeShopping.length, n: safeNotes.length },
-      countsRemote: remoteCounts||"not pulled yet",
-      rev,
-      lastSync,
-      lastConfirmed,
-      lastMutation: lastMut?.slice(0,16),
-      hadRemote,
-      lastPushErr: pushErr?.slice(0,160),
-      queueLen,
-      online: online ? "online ✓" : "offline ✗",
-      anon: anonPresent,
-      tz: "Europe/Dublin",
-      ua: typeof navigator!=='undefined' ? navigator.userAgent.slice(0,64) : "–",
-      href: typeof location!=='undefined' ? location.href.slice(0,80) : "–",
+      countsRemote: remoteCounts||"not pulled",
+      rev, lastSync, lastConfirmed, lastMutation: String(lastMut).slice(0,16),
+      hadRemote, lastPushErr: String(pushErr).slice(0,120), queueLen,
+      online: online?"online":"offline", anon: anonPresent, tz: "Europe/Dublin",
       ts: new Date().toISOString(),
     };
-    try{ j.migratedFrom = localStorage.getItem("couple_v1_household_migrated_from")||"–"; }catch{}
     return JSON.stringify(j,null,2);
   }, [build, effId, lsHouseId, lsHouseCode, inviteCode, safeCurrentUser, safeChores.length, safeCalendar.length, safeShopping.length, safeNotes.length, rev, lastSync, lastConfirmed, lastMut, hadRemote, pushErr, queueLen, online, anonPresent, remoteCounts]);
 
-  const showEmptyWarning = useMemo(()=>{
-    const localEmpty = (safeChores.length+safeCalendar.length+safeShopping.length+safeNotes.length)===0;
-    const effIsTest = effId==="nylah-98jylh" || effId==="nylah-fbkf2m" || (effId && typeof effId.startsWith==="function" && effId.startsWith("nylah-"));
-    if(localEmpty && effIsTest) return `You're on ${effId} which is empty — create or recover a household`;
-    if(localEmpty) return "Local is empty — try Force Pull from server";
-    if(effIsTest) return `You are on ${effId}`;
+  const showEmptyWarning = useMemo(() => {
+    const localEmpty = (safeChores.length + safeCalendar.length + safeShopping.length + safeNotes.length) === 0;
+    const effIsTest = effId === "nylah-98jylh" || effId === "nylah-fbkf2m" || (effId && typeof effId.startsWith === "function" && effId.startsWith("nylah-"));
+    if (localEmpty && effIsTest) return `You're on ${effId} · start here`;
+    if (localEmpty) return "Local empty — pull from server";
     return null;
   }, [safeChores.length, safeCalendar.length, safeShopping.length, safeNotes.length, effId]);
 
-  async function doCopyDebug(){
-    try{ await navigator.clipboard.writeText(debugJson); setPullMsg("debug copied ✓"); setTimeout(()=>setPullMsg(null),2000);}catch{ try{ const ta=document.createElement("textarea"); ta.value=debugJson; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); setPullMsg("debug copied ✓"); setTimeout(()=>setPullMsg(null),2000);}catch{}}
-  }
-  async function doCopyHouse(){
-    try{ await navigator.clipboard.writeText(effId); setPullMsg("house id copied"); setTimeout(()=>setPullMsg(null),1500);}catch{}
+  async function doCopy(text: string, key: string) {
+    try { await navigator.clipboard.writeText(text); } catch {
+      try { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); } catch {}
+    }
+    setCopied(key); setTimeout(() => setCopied(null), 1300);
   }
 
+  // trusted saved time Europe/Dublin
+  const savedLabel = useMemo(() => {
+    if (lastSync === "–" || !lastSync) return "not yet";
+    try {
+      const d = new Date(lastSync);
+      return d.toLocaleString("en-GB", { timeZone: "Europe/Dublin", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" });
+    } catch { return "–"; }
+  }, [lastSync]);
+
   return (
-    <div className="space-y-3 py-2">
-      {/* Group 1 Appearance — warm pastel + charcoal Hume */}
-      <div className="rounded-[16px] border bg-[var(--card-bg)] overflow-hidden" style={{borderColor:"var(--border)"}}>
-        <button onClick={()=>toggle('appearance')} className="w-full flex items-center justify-between min-h-[52px] px-4 text-left"><div className="flex items-center gap-2"><span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--chip-bg)] text-[12px]">🎨</span><div><div className="text-[14px] font-medium">Appearance</div><div className="text-[11px] text-[var(--muted)]">{displayTheme?.name||"Beige"} • charcoal orange Hume</div></div></div><span className="text-[12px]">{openGroups.appearance?"▲":"▼"}</span></button>
-        {openGroups.appearance && <div className="px-4 pb-3 pt-1 space-y-3 border-t" style={{borderColor:"var(--border)"}}><ThemeSettings theme={displayTheme} setTheme={safeSetTheme} onConfetti={safeOnConfetti}/></div>}
-      </div>
-      {/* Group 2 Household */}
-      <div className="rounded-[16px] border bg-[var(--card-bg)] overflow-hidden" style={{borderColor:"var(--border)"}}>
-        <button onClick={()=>toggle('household')} className="w-full flex items-center justify-between min-h-[52px] px-4"><div className="flex items-center gap-2"><span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--chip-bg)] text-[12px]">🏠</span><div className="text-left"><div className="text-[14px] font-medium">Household</div><div className="text-[11px] text-[var(--muted)]">ID {effId} • TZ {"Europe/Dublin"}</div></div></div><span className="text-[12px]">{openGroups.household?"▲":"▼"}</span></button>
-        {openGroups.household && <div className="px-4 pb-3 pt-2 border-t" style={{borderColor:"var(--border)"}}><HouseholdSettings currentUser={safeCurrentUser} />
-          <div className="mt-3 text-[11px] text-[var(--muted)] space-y-1">
-            <div>eff: <code className="px-1 rounded bg-[var(--chip-bg)]">{effId}</code> <button onClick={doCopyHouse} className="ml-1 rounded-full border px-2 py-0.5 text-[10px]">copy</button></div>
-            <div>LS id: <code className="px-1 rounded bg-[var(--chip-bg)]">{lsHouseId}</code> code: <code className="px-1 rounded bg-[var(--chip-bg)]">{lsHouseCode}</code></div>
-            <div>invite: <code className="px-1 rounded bg-[var(--chip-bg)]">{inviteCode}</code> user: {safeCurrentUser}</div>
+    <div className="w-full min-h-[100vh] bg-[var(--wash-top)] text-[var(--text)]">
+      {/* boutique masthead — full-bleed 390→100vw, no side margins */}
+      <div className="w-full px-5 pt-7 pb-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="text-[10.5px] uppercase tracking-[0.16em] font-semibold text-[var(--muted)]" style={{ fontFamily: "Inter, ui-sans-system" }}>Settings</div>
+            <h1 className="mt-1 text-[34px] leading-[0.92] tracking-[-0.02em] font-[700]" style={{ fontFamily: "Fraunces, serif" }}>
+              {householdName}
+            </h1>
+            <div className="mt-2 inline-flex items-center gap-2 rounded-full border bg-[var(--card-bg)] px-3 py-1 text-[11px]" style={{ borderColor: "var(--border)" }}>
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: online ? "#16A34A" : "#F59E0B" }} />
+              <span className="text-[var(--muted)]">{online ? "online" : "offline"} • {savedLabel} saved</span>
+              {queueLen > 0 && <span className="rounded-full bg-[#FF6B26] px-1.5 py-0.5 text-[10px] text-white">{queueLen}</span>}
+            </div>
           </div>
-        </div>}
+          <div className="shrink-0 grid h-10 w-10 place-items-center rounded-full border bg-[var(--chip-bg)] text-[11px] font-mono" style={{ borderColor: "var(--border)" }}>
+            {String(build).slice(0,3)}
+          </div>
+        </div>
       </div>
-      {/* Group 3 People & Biometrics */}
-      <div className="rounded-[16px] border bg-[var(--card-bg)] overflow-hidden" style={{borderColor:"var(--border)"}}>
-        <button onClick={()=>toggle('notifications')} className="w-full flex items-center justify-between min-h-[52px] px-4 text-left"><div className="flex items-center gap-2"><span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--chip-bg)] text-[12px]">👤</span><div><div className="text-[14px] font-medium">People & unlock</div><div className="text-[11px] text-[var(--muted)]">Face ID • {safeCurrentUser} • 44px spring</div></div></div><span className="text-[12px]">{openGroups.notifications?"▲":"▼"}</span></button>
-        {openGroups.notifications && <div className="px-4 pb-3 pt-2 border-t space-y-3" style={{borderColor:"var(--border)"}}><BiometricsSettings currentUser={safeCurrentUser} /></div>}
-      </div>
-      {/* Group 4 Data & sync — v121 enlarged */}
-      <div className="rounded-[16px] border bg-[var(--card-bg)] overflow-hidden shadow-[0_4px_18px_rgba(0,0,0,0.04)]" style={{borderColor:"var(--border)"}}>
-        <button onClick={()=>toggle('data')} className="w-full flex items-center justify-between min-h-[52px] px-4"><div className="flex items-center gap-2"><span className="grid h-8 w-8 place-items-center rounded-full bg-[#FEF3C7] text-[12px]">📊</span><div className="text-left"><div className="text-[14px] font-medium">Data & sync — debug</div><div className="text-[11px] text-[var(--muted)]">c:{safeChores?.length||0} cal:{safeCalendar?.length||0} s:{safeShopping?.length||0} n:{safeNotes?.length||0} • rev {String(rev).slice(0,6)} • {online?"online":"offline"} • {queueLen?`${queueLen} queued`:"saved"}</div></div></div><span className="text-[12px]">{openGroups.data?"▲":"▼"}</span></button>
-        {openGroups.data && (
-          <div className="px-4 pb-3 pt-3 border-t space-y-3" style={{borderColor:"var(--border)"}}>
-            {showEmptyWarning && (
-              <div className="rounded-[10px] border bg-[#FEF3C7] border-[#FDE68A] px-3 py-2 text-[11px] text-[#92400E] leading-[1.4]">
-                ⚠️ {showEmptyWarning}
+
+      {/* cards — 100vw edge-to-edge with 16px side gutters on mobile, single spring accordion */}
+      <div className="w-full px-3 sm:px-4 pb-[120px] space-y-3">
+        {/* Appearance */}
+        <Card
+          open={!!openGroups.appearance}
+          onToggle={() => toggle("appearance")}
+          eyebrow="appearance"
+          title="Appearance"
+          meta={`${displayTheme?.name||"Beige"} · warm pastel • charcoal Hume`}
+          accent="color-mix(in srgb, #F7EFE8 70%, #FF6B26)"
+        >
+          <div className="pt-3">
+            <div className="rounded-[18px] border bg-[var(--card-bg)] p-3" style={{ borderColor: "var(--border)" }}>
+              <ThemeSettings theme={displayTheme} setTheme={safeSetTheme} onConfetti={safeOnConfetti} />
+            </div>
+            <div className="mt-2 text-[10.5px] text-[var(--muted)]">Mellow light, polished dark. Both use the same tokens — no hard white.</div>
+          </div>
+        </Card>
+
+        {/* Household */}
+        <Card
+          open={!!openGroups.household}
+          onToggle={() => toggle("household")}
+          eyebrow="house"
+          title="Your house"
+          meta={`${effId.slice(0,16)} • invite ${inviteCode.slice(0,6)} • Europe/Dublin`}
+        >
+          <div className="pt-2 space-y-3">
+            {/* invite heroic */}
+            <div className="rounded-[18px] border bg-[var(--chip-bg)] p-3.5" style={{ borderColor: "var(--border)" }}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.14em] font-semibold text-[var(--muted)]">Invite code</div>
+                  <div className="mt-1 font-mono text-[18px] font-[700] tracking-[0.08em]" style={{ letterSpacing: "0.08em" }}>
+                    {(inviteCode !== "–" ? inviteCode : lsHouseCode || "—").toString().toUpperCase()}
+                  </div>
+                  <div className="mt-1 text-[11px] text-[var(--muted)]">private · just you two · any phone can join</div>
+                </div>
+                <button
+                  onClick={() => doCopy((inviteCode !== "–" ? inviteCode : lsHouseCode) || effId, "invite")}
+                  className="shrink-0 h-[40px] min-h-[40px] rounded-full border bg-[var(--card-bg)] px-3.5 text-[11px] font-semibold active:scale-[0.98]"
+                  style={{ borderColor: "var(--border)", transitionTimingFunction: SPRING }}
+                >
+                  {copied === "invite" ? "copied ✓" : "copy"}
+                </button>
               </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  onClick={() => {
+                    const code = (inviteCode !== "–" ? inviteCode : lsHouseCode) || "";
+                    if (!code) return;
+                    const link = `${location.origin}${location.pathname}?code=${code.toUpperCase()}`;
+                    doCopy(link, "link");
+                  }}
+                  className="h-[36px] rounded-full border bg-[var(--card-bg)] px-3 text-[11px]"
+                  style={{ borderColor: "var(--border)" }}
+                >
+                  {copied === "link" ? "link copied" : "share link"}
+                </button>
+                <span className="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] text-[var(--muted)]" style={{ borderColor: "var(--border)" }}>
+                  Europe/Dublin
+                </span>
+              </div>
+            </div>
+
+            <HouseholdSettings currentUser={safeCurrentUser} />
+
+            <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
+              <button
+                onClick={() => doCopy(effId, "house")}
+                className="h-[40px] rounded-full border bg-[var(--card-bg)] px-3 text-left truncate"
+                style={{ borderColor: "var(--border)" }}
+              >
+                <span className="text-[var(--muted)]">house · </span>
+                <span className="font-mono">{effId.slice(0,14)}</span>
+                {copied === "house" && <span className="ml-2 text-[10px] text-[#16A34A]">copied</span>}
+              </button>
+              <div className="h-[40px] rounded-full border bg-[var(--chip-bg)] px-3 grid place-items-center text-[11px] text-[var(--muted)]" style={{ borderColor: "var(--border)" }}>
+                {safeChores.length + safeCalendar.length + safeShopping.length + safeNotes.length} local items
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* People & unlock */}
+        <Card open={!!openGroups.people} onToggle={() => toggle("people")} eyebrow="people" title="People & unlock" meta={`Face ID · ${safeCurrentUser} · 44px spring`}>
+          <div className="pt-2">
+            <BiometricsSettings currentUser={safeCurrentUser} />
+            <div className="mt-3 rounded-[14px] border bg-[var(--chip-bg)] px-3 py-2.5 text-[11px] text-[var(--muted)]" style={{ borderColor: "var(--border)" }}>
+              PIN stays local UI — server checks via RPC. No anon rw.
+            </div>
+          </div>
+        </Card>
+
+        {/* Data & sync — boutique not dashboard */}
+        <Card
+          open={!!openGroups.sync}
+          onToggle={() => toggle("sync")}
+          eyebrow="sync"
+          title="Data & sync"
+          meta={`c:${safeChores.length} cal:${safeCalendar.length} s:${safeShopping.length} n:${safeNotes.length} • ${online?"online":"offline"} • ${queueLen?"queued":"saved"}`}
+        >
+          <div className="pt-2 space-y-3">
+            {showEmptyWarning && (
+              <div className="rounded-[14px] border bg-[#FEF3C7] border-[#FDE68A] px-3 py-2.5 text-[11.5px] text-[#92400E] leading-[1.35]">⚠︎ {showEmptyWarning}</div>
             )}
-            {pullMsg && <div className="rounded-[8px] bg-[var(--chip-bg)] border px-2.5 py-1.5 text-[11px] text-[var(--muted)]">{pullMsg}</div>}
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
-              <div className="rounded-[10px] border bg-[var(--card-bg)] px-2.5 py-2" style={{borderColor:"var(--border)"}}><div className="text-[10px] uppercase tracking-wide text-[var(--muted)]">effective house</div><div className="font-mono text-[11px] truncate">{effId}</div><div className="text-[10px] text-[var(--muted)] mt-0.5">LS id {lsHouseId.slice(0,12)} code {lsHouseCode.slice(0,8)}</div></div>
-              <div className="rounded-[10px] border bg-[var(--card-bg)] px-2.5 py-2" style={{borderColor:"var(--border)"}}><div className="text-[10px] uppercase tracking-wide text-[var(--muted)]">online • supabase</div><div className="text-[11px]">{online?"online ✓":"offline ✗"} • {anonPresent} • {hasSupabaseConfig()? "cfg ✓":"cfg ✗"}</div><div className="text-[10px] text-[var(--muted)]">build {build} • tz Europe/Dublin</div></div>
-              <div className="rounded-[10px] border bg-[var(--card-bg)] px-2.5 py-2" style={{borderColor:"var(--border)"}}><div className="text-[10px] uppercase tracking-wide text-[var(--muted)]">local counts</div><div className="text-[11px] font-mono">c:{safeChores.length} cal:{safeCalendar.length} s:{safeShopping.length} n:{safeNotes.length}</div><div className="text-[10px] text-[var(--muted)]">queue {queueLen} • rev {String(rev).slice(0,12)}</div></div>
-              <div className="rounded-[10px] border bg-[var(--card-bg)] px-2.5 py-2" style={{borderColor:"var(--border)"}}><div className="text-[10px] uppercase tracking-wide text-[var(--muted)]">server timestamps</div><div className="text-[10px]">saved {lastSync==="–"?"–": new Date(lastSync).toLocaleString()} </div><div className="text-[10px]">confirmed {lastConfirmed==="–"?"–": new Date(lastConfirmed).toLocaleString().slice(0,18)}</div></div>
-            </div>
-            <div className="rounded-[10px] border bg-[var(--chip-bg)] px-2.5 py-2 text-[10px] font-mono leading-[1.35]" style={{borderColor:"var(--border)"}}>
-              <div>mut {String(lastMut).slice(0,18)} hadRemote {String(hadRemote).slice(0,6)} invite {String(inviteCode).slice(0,10)}</div>
-              <div className="truncate">err {String(pushErr).slice(0,120)}</div>
-              {remoteCounts && <div className="mt-1 text-[10px]">remote pulled c:{remoteCounts.c} cal:{remoteCounts.cal} s:{remoteCounts.s} n:{remoteCounts.n}</div>}
-            </div>
+
+            {pullMsg && <div className="rounded-full border bg-[var(--card-bg)] px-3 py-2 text-[11px] text-[var(--muted)]" style={{ borderColor: "var(--border)" }}>{pullMsg}</div>}
+
             <div className="grid grid-cols-2 gap-2">
-              <button onClick={doForcePull} disabled={isPulling} className="h-[44px] min-h-[44px] rounded-full border bg-[#0A0A0A] text-white text-[12px] font-semibold active:scale-[0.98] disabled:opacity-60" style={{transitionTimingFunction:"cubic-bezier(0.34,1.56,0.64,1)"}}>{isPulling?"Pulling…":"Force Pull from server"}</button>
-              <button onClick={doFixHouse} className="h-[44px] min-h-[44px] rounded-full border bg-[var(--card-bg)] text-[12px] font-semibold" style={{borderColor:"var(--border)"}}>Fix House → ash-ciaran</button>
-              <button onClick={doExportLocal} className="h-[40px] rounded-full border bg-[var(--chip-bg)] text-[11px]">Export Debug JSON</button>
-              <button onClick={doCopyDebug} className="h-[40px] rounded-full border bg-[var(--card-bg)] text-[11px]">Copy Debug</button>
+              <div className="rounded-[16px] border bg-[var(--card-bg)] px-3 py-3" style={{ borderColor: "var(--border)" }}>
+                <div className="text-[10px] uppercase tracking-wide text-[var(--muted)]">saved (Dublin)</div>
+                <div className="mt-1 text-[12.5px] font-medium">{savedLabel}</div>
+                <div className="mt-1 text-[10px] text-[var(--muted)]">confirmed {lastConfirmed==="–"?"—":new Date(lastConfirmed).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}</div>
+              </div>
+              <div className="rounded-[16px] border bg-[var(--card-bg)] px-3 py-3" style={{ borderColor: "var(--border)" }}>
+                <div className="text-[10px] uppercase tracking-wide text-[var(--muted)]">connection</div>
+                <div className="mt-1 flex items-center gap-2 text-[12px]"><span className="h-2 w-2 rounded-full" style={{ background: online?"#16A34A":"#F59E0B"}} />{online?"online ✓":"offline ✗"} · {anonPresent}</div>
+                <div className="mt-1 text-[10px] text-[var(--muted)]">build {String(build).slice(0,12)} · rev {String(rev).slice(0,8)}</div>
+              </div>
             </div>
-            <div className="space-y-1">
-              <div className="text-[10px] uppercase tracking-wide text-[var(--muted)] font-semibold">debug JSON — paste to support</div>
-              <pre className="max-h-[160px] overflow-auto rounded-[10px] border bg-[var(--chip-bg)] p-2.5 text-[10px] font-mono leading-[1.35] text-[var(--text)]" style={{borderColor:"var(--border)", whiteSpace:"pre-wrap", wordBreak:"break-word"}}>{debugJson}</pre>
+
+            <div className="rounded-[16px] border bg-[var(--chip-bg)] px-3 py-2.5 text-[10.5px] font-mono leading-[1.35]" style={{ borderColor: "var(--border)" }}>
+              <div className="flex flex-wrap gap-x-3"><span>local c:{safeChores.length} cal:{safeCalendar.length} s:{safeShopping.length} n:{safeNotes.length}</span><span>queue {queueLen}</span></div>
+              {remoteCounts && <div className="mt-1">remote c:{remoteCounts.c} cal:{remoteCounts.cal} s:{remoteCounts.s} n:{remoteCounts.n}</div>}
+              <div className="mt-1 truncate text-[var(--muted)]">err {String(pushErr).slice(0,120) || "—"}</div>
             </div>
-            {/* Inline DataTruth style summary — keep compact */}
-            <div className="text-[10px] text-[var(--muted)]">100vw 390→100vw QA 44px spring cubic-bezier(0.34,1.56,0.64,1) • Fraunces 26/17 Inter 16 • charcoal #121214 card #232326 chip #2C2C30 nav #FF6B26</div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={doForcePull}
+                disabled={isPulling}
+                className="h-[44px] rounded-full bg-[#121214] text-white text-[12.5px] font-semibold active:scale-[0.98] disabled:opacity-60"
+                style={{ transitionTimingFunction: SPRING }}
+              >
+                {isPulling ? "Pulling…" : "Force pull"}
+              </button>
+              <button onClick={doExportLocal} className="h-[44px] rounded-full border bg-[var(--card-bg)] text-[12px] font-medium" style={{ borderColor: "var(--border)" }}>
+                Export debug
+              </button>
+            </div>
+
+            <div className="text-[10px] text-[var(--muted)]">Each code is isolated. No giant JSON row.</div>
           </div>
-        )}
-      </div>
-      {/* Group 5 Advanced */}
-      <div className="rounded-[16px] border bg-[var(--card-bg)] overflow-hidden" style={{borderColor:"var(--border)"}}>
-        <button onClick={()=>toggle('advanced')} className="w-full flex items-center justify-between min-h-[52px] px-4"><div className="flex items-center gap-2"><span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--chip-bg)] text-[12px]">🛠️</span><div className="text-left"><div className="text-[14px] font-medium">Advanced</div><div className="text-[11px] text-[var(--muted)]">debug, fix, clear SW, purge IDB, v121 auto-migrate</div></div></div><span className="text-[12px]">{openGroups.advanced?"▲":"▼"}</span></button>
-        {openGroups.advanced && <div className="px-4 pb-3 pt-2 border-t space-y-2">
-          <div className="text-[11px] text-[var(--muted)]">Build {build} • eff {effId} • SW nylah-os-v121-settings-debug pending</div>
-          <div className="grid grid-cols-2 gap-2">
-            <button onClick={()=>{ try{ if('serviceWorker' in navigator){ navigator.serviceWorker.getRegistrations().then(rs=>{ rs.forEach(r=> r.unregister()); alert("SW clear attempted "+rs.length);}); } else alert("no SW"); }catch(e:any){ alert("sw err "+String(e?.message||e)); } }} className="w-full h-[44px] rounded-full border bg-[var(--card-bg)] text-[11px]">Clear SW — v121</button>
-            <button onClick={async()=>{ try{ const dbs=await (indexedDB as any).databases?.(); if(Array.isArray(dbs)){ for(const db of dbs){ if(db.name) indexedDB.deleteDatabase(db.name); } alert("IDB purged "+dbs.length);} else { const req=indexedDB.deleteDatabase("couple_v1_idb"); req.onsuccess=()=> alert("IDB purged"); } }catch(e:any){ alert("idb err "+String(e?.message||e)); } }} className="w-full h-[44px] rounded-full border bg-[#FEF2F2] text-[#B91C1C] text-[11px]">Purge IDB</button>
-            <button onClick={()=>{ localStorage.setItem("couple_v1_force_resync", String(Date.now())); alert("force resync flag set — reload app"); location.reload(); }} className="w-full h-[40px] rounded-full border bg-[var(--chip-bg)] text-[11px]">Flag Force Resync</button>
-            <button onClick={()=>{ if(confirm("Switch to nylah-98jylh empty test house for debugging?")) doSwitchDebug("nylah-98jylh"); }} className="w-full h-[40px] rounded-full border bg-[#FFFbeb] text-[11px]">Debug → nylah-98jylh</button>
-            <button onClick={()=> doSwitchDebug("nylah-fbkf2m")} className="w-full h-[40px] rounded-full border bg-[#FFFbeb] text-[11px]">Debug → nylah-fbkf2m</button>
-            <button onClick={()=>{ try{ localStorage.clear(); sessionStorage.clear(); alert("local cleared — reload"); location.reload(); }catch{}}} className="w-full h-[40px] rounded-full border bg-[#0A0A0A] text-white text-[11px]">Nuke Local — keep remote</button>
+        </Card>
+
+        {/* Advanced */}
+        <Card open={!!openGroups.advanced} onToggle={() => toggle("advanced")} eyebrow="advanced" title="Advanced" meta={`${build} • Europe/Dublin`}>
+          <div className="pt-2 space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={()=>{ try{ if('serviceWorker' in navigator){ navigator.serviceWorker.getRegistrations().then(rs=>{ rs.forEach(r=> r.unregister()); alert("SW clear "+rs.length);}); } else alert("no SW"); }catch(e:any){ alert(String(e?.message||e)); } }} className="h-[44px] rounded-full border bg-[var(--card-bg)] text-[11px]">Clear SW</button>
+              <button onClick={async()=>{ try{ const dbs=await (indexedDB as any).databases?.(); if(Array.isArray(dbs)){ for(const db of dbs){ if(db.name) indexedDB.deleteDatabase(db.name); } alert("IDB purged "+dbs.length);} else { const req=indexedDB.deleteDatabase("couple_v1_idb"); (req as any).onsuccess=()=> alert("IDB purged"); } }catch(e:any){ alert(String(e?.message||e)); } }} className="h-[44px] rounded-full border bg-[#FEF2F2] text-[#B91C1C] text-[11px]">Purge IDB</button>
+              <button onClick={()=>{ localStorage.setItem("couple_v1_force_resync", String(Date.now())); alert("force resync set — reload"); location.reload(); }} className="h-[40px] rounded-full border bg-[var(--chip-bg)] text-[11px]">Flag resync</button>
+              <button onClick={()=>{ try{ localStorage.clear(); sessionStorage.clear(); alert("local cleared"); location.reload(); }catch{}}} className="h-[40px] rounded-full bg-[#121214] text-white text-[11px]">Nuke local</button>
+              <button onClick={()=> doSwitchDebug("nylah-98jylh")} className="h-[40px] rounded-full border bg-[#FFFbeb] text-[11px]">→ nylah-98jylh</button>
+              <button onClick={()=> doSwitchDebug("nylah-fbkf2m")} className="h-[40px] rounded-full border bg-[#FFFbeb] text-[11px]">→ nylah-fbkf2m</button>
+            </div>
+
+            <div className="rounded-[16px] border bg-[var(--card-bg)] p-3" style={{ borderColor: "var(--border)" }}>
+              <div className="flex items-center justify-between">
+                <div className="text-[11px] font-semibold">Debug JSON</div>
+                <button onClick={async()=>{ try{ await navigator.clipboard.writeText(debugJson); setPullMsg("copied ✓"); setTimeout(()=>setPullMsg(null),1800);}catch{}}} className="h-[32px] rounded-full border bg-[var(--chip-bg)] px-3 text-[11px]">copy</button>
+              </div>
+              <pre className="mt-2 max-h-[180px] overflow-auto rounded-[12px] border bg-[var(--chip-bg)] p-2.5 text-[10px] font-mono leading-[1.35]" style={{ borderColor: "var(--border)", whiteSpace:"pre-wrap", wordBreak:"break-word"}}>{debugJson}</pre>
+            </div>
+
+            <div className="text-[10px] text-[var(--muted)]">Scalable households — each code isolated. No hard-coded main house. v121 auto-migrate removed.</div>
           </div>
-          <div className="text-[10px] text-[var(--muted)]">Scalable households — each code is isolated. No hard-coded main house.</div>
-        </div>}
+        </Card>
       </div>
     </div>
   );

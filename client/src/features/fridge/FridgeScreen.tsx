@@ -152,8 +152,8 @@ function FridgePage(props: FridgeProps | any) {
   const hasToday = todayCalsForHasToday.length > 0 || todayChoresMineForHasToday.length > 0 || !!shoppingSummaryForHasToday;
 
   return (
-    <div className="w-full space-y-6">
-      <style>{`@keyframes fridge-peach-pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(184,166,255,0.36),0 0 0 8px rgba(255,107,38,0.28)}50%{transform:scale(1.08);box-shadow:0 0 0 2px rgba(255,176,135,0.10),0 0 0 10px rgba(255,176,135,0.16)}} @keyframes countdown-pop{0%{transform:scale(0.92)}50%{transform:scale(1.04)}100%{transform:scale(1)}}`}</style>
+    <div className="w-full space-y-5">
+      <style>{`@keyframes fridge-peach-pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,107,38,0.22)}50%{transform:scale(1.06);box-shadow:0 0 0 3px rgba(255,107,38,0.12)}} @keyframes countdown-pop{0%{transform:scale(0.96)}50%{transform:scale(1.02)}100%{transform:scale(1)}}`}</style>
       {confetti > 0 && (
         <div className="pointer-events-none absolute right-4 top-2 flex gap-1">
           <span className="h-1 w-1 rounded-full bg-[#E07A5F] animate-bounce [animation-delay:0ms]" />
@@ -162,25 +162,26 @@ function FridgePage(props: FridgeProps | any) {
         </div>
       )}
 
-      <div className="nylah-hero-v101 nylah-arena rounded-[28px] px-6 pt-6 pb-5 relative overflow-hidden">
+      <div className="nylah-hero-v101 nylah-grain rounded-[28px] px-6 pt-6 pb-5 relative overflow-hidden" style={{ fontSmooth: 'always' } as any}>
         <div className="relative flex items-start justify-between gap-3">
-          <div className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ fontFamily: "var(--font-ui)", color: "var(--muted)" }}>{dateLabel}</div>
-          <div className="shrink-0 opacity-80">{syncMinimal}</div>
+          <div className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ fontFamily: "var(--font-ui)", color: "var(--muted)", textRendering: 'optimizeLegibility' }}>{dateLabel}</div>
+          <div className="shrink-0 opacity-90">{syncMinimal}</div>
         </div>
         <div className="relative mt-5">
-          <div className="nylah-script-hero text-[40px]" style={{ fontFamily: "var(--font-display)", color: "var(--text)", opacity: 0.92 }}>{greeting.toLowerCase()}</div>
-          <h1 className="nylah-display-hero text-[46px] -mt-1" style={{ fontFamily: "var(--font-display)", color: "var(--text)" }}>
+          <div className="nylah-script-hero text-[40px] font-semibold" style={{ fontFamily: "var(--font-display)", color: "var(--text)", opacity: 1, fontWeight: 600, textRendering: 'optimizeLegibility', WebkitFontSmoothing: 'antialiased' }}>{greeting.toLowerCase()}</div>
+          <h1 className="nylah-display-hero text-[46px] -mt-1" style={{ fontFamily: "var(--font-display)", color: "var(--text)", lineHeight: 0.92, letterSpacing: '-0.02em', fontWeight: 600 }}>
             {((PERSONS as any)[currentUser]?.name || currentUser || "You")}
             <span className="ml-2 inline-flex items-baseline gap-2 align-baseline">
-              <span className="text-[20px] font-light" style={{ fontFamily: "var(--font-ui)", fontWeight: 300, color: "var(--muted)" }}>with</span>
-              <span className="nylah-script-hero text-[34px] font-script-hero" style={{ fontFamily: "var(--font-script)", color: "var(--accent-warm)" }}>{(PERSONS as any)[partner]?.name || partner}</span>
+              <span className="text-[20px] font-light" style={{ fontFamily: "var(--font-ui)", fontWeight: 400, color: "var(--muted)", letterSpacing: '-0.01em' }}>with</span>
+              <span className="nylah-script-hero text-[34px]" style={{ fontFamily: "var(--font-script)", color: "var(--accent-warm)", fontWeight: 500, textShadow: '0 1px 0 rgba(255,255,255,0.4)' } as any}>{(PERSONS as any)[partner]?.name || partner}</span>
             </span>
           </h1>
-          <div className="mt-2 flex items-center gap-2 text-[11px] tracking-[0.12em] uppercase" style={{ fontFamily: "var(--font-ui)", color: "var(--muted)" }}>
+          <div className="mt-2 flex items-center gap-2 text-[11px] tracking-[0.12em] uppercase" style={{ fontFamily: "var(--font-ui)", color: "var(--muted)", fontWeight: 500 }}>
             <span className="h-px w-8" style={{ background: "var(--border)" }} /> Aisling ♥ Ciaran • private OS
           </div>
         </div>
-        <div className="absolute -right-10 -bottom-10 w-[180px] h-[180px] rounded-full blur-[38px] opacity-[0.18] pointer-events-none" style={{ background: "radial-gradient(100% 100% at 50% 50%, var(--accent) 0%, transparent 70%)" }} />
+        {/* single subtle glow - cut extra blobs */}
+        <div className="absolute -right-12 -bottom-12 w-[160px] h-[160px] rounded-full blur-[36px] opacity-[0.12] pointer-events-none" style={{ background: "var(--accent)" }} />
       </div>
 
       <NeedsYou currentUser={currentUser} calendar={activeCalendar as any} chores={activeChores as any} nowMs={nowMs} setTab={setTab as any} />

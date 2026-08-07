@@ -1,5 +1,5 @@
-// Nylah OS SW v121 settings debug + auto-migrate
-const CACHE_NAME = "nylah-os-v121-settings-debug";
+// Nylah OS SW v122 theme facelift
+const CACHE_NAME = "nylah-os-v122-theme-facelift";
 const URLS = ["./","./index.html","./manifest.webmanifest"];
 self.addEventListener("install", e=>{
   e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(URLS.map(u=>new Request(u,{cache:"reload"}))).catch(()=>{})));

@@ -60,18 +60,18 @@ export default function Countdowns({ calendar, nowMs, todayDateStr, setTab }: Pr
           const big = Math.abs(days)<=7;
           const isStar = Math.abs(days)<=3;
           return (
-            <button key={ev.id} onClick={()=> setTab("calendar")} className="text-left rounded-[22px] border px-4 py-4 min-h-[112px] relative overflow-hidden transition hover:shadow-[0_6px_16px_rgba(0,0,0,0.08)]" style={{borderColor: overdue?'rgba(239,68,68,0.28)':'var(--border)', background: overdue?'linear-gradient(180deg, #FFF7F7 0%, var(--card-bg) 100%)': 'var(--card-bg)', boxShadow:'0 8px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.86)'}}>
-              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full blur-[14px] pointer-events-none" style={{background:'radial-gradient(100% 100% at 50% 50%, var(--accent) 0%, transparent 70%)', opacity: isStar?0.22:0.12}} aria-hidden="true" />
-              {isStar && <span className="absolute right-3 top-3 text-[12px] opacity-80" style={{color:'var(--accent)', textShadow:'0 0 8px rgba(255,107,38,0.42)'}}>✦</span>}
+            <button key={ev.id} onClick={()=> setTab("calendar")} className="text-left rounded-[22px] border px-4 py-4 min-h-[112px] relative overflow-hidden transition hover:shadow-[0_6px_16px_rgba(0,0,0,0.08)]" style={{borderColor: overdue?'rgba(239,68,68,0.28)':'var(--border)', background: overdue?'linear-gradient(180deg, color-mix(in srgb, #FEF2F2 58%, var(--card-bg)) 0%, var(--card-bg) 100%)': 'var(--card-bg)', boxShadow:'0 8px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.06)'}}>
+              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full blur-[14px] pointer-events-none" style={{background:'radial-gradient(100% 100% at 50% 50%, var(--accent) 0%, transparent 70%)', opacity: isStar?0.18:0.08}} aria-hidden="true" />
+              {isStar && <span className="absolute right-3 top-3 text-[12px] opacity-80" style={{color:'var(--accent)'}}>✦</span>}
               <div className="flex items-start justify-between relative">
-                <span className={"text-[11px] rounded-full border px-2.5 py-0.5 font-semibold "+(overdue?"bg-[#FEF2F2] text-[#991B1B] border-[#FECACA]":"")} style={overdue?{}:{background:'var(--chip-bg)', color:'var(--muted)', borderColor:'var(--border)'}}>{overdue?"OVERDUE":days===0?"TODAY":days===1?"TOMORROW":`${Math.abs(days)}d ${days<0?"ago":"left"}`}</span>
+                <span className={"text-[11px] rounded-full border px-2.5 py-1 font-semibold min-h-[22px] grid place-items-center "+(overdue?"bg-[#FEF2F2] text-[#991B1B] border-[#FECACA]":"")} style={overdue?{}:{background:'var(--chip-bg)', color:'var(--text-secondary)', borderColor:'var(--border)'}}>{overdue?"OVERDUE":days===0?"TODAY":days===1?"TOMORROW":`${Math.abs(days)}d ${days<0?"ago":"left"}`}</span>
                 <span className="h-[7px] w-[7px] rounded-full" style={{background:'var(--accent)', boxShadow: isStar?'0 0 0 5px rgba(255,107,38,0.22), 0 0 12px rgba(255,107,38,0.36)':'0 0 0 4px rgba(255,107,38,0.16)', animation: big?'fridge-peach-pulse 1.8s infinite':undefined}} />
               </div>
-              <div className="mt-2.5 flex items-baseline gap-1.5 relative" style={{animation: big?'countdown-pop 0.5s ease':undefined}}>
-                <span className="font-light tracking-[-0.02em]" style={{fontFamily:'Fraunces, serif', fontWeight:300, fontSize: big?'36px':'26px', lineHeight:1, color: overdue?'#991B1B':'var(--text)'}}>{Math.abs(days)}</span>
+              <div className="mt-2.5 flex items-baseline gap-1.5 relative" style={{animation: big?'countdown-pop 0.45s cubic-bezier(0.34,1.56,0.64,1)':undefined}}>
+                <span className="tracking-[-0.02em]" style={{fontFamily:'Fraunces, serif', fontWeight:700, fontSize: big?'48px':'28px', lineHeight:0.9, color: overdue?'#991B1B':'var(--text)', textRendering:'optimizeLegibility'}}>{Math.abs(days)}</span>
                 <span className="text-[11px] font-medium" style={{fontFamily:'var(--font-ui)', color:'var(--muted)'}}>{Math.abs(days)===1?"day":"days"}</span>
               </div>
-              <div className="mt-1.5 text-[13px] font-medium line-clamp-2 leading-[1.35]" style={{color:'var(--text)'}}>{ev.title}</div>
+              <div className="mt-1.5 text-[13px] font-medium line-clamp-2 leading-[1.35]" style={{color:'var(--text)', letterSpacing:'-0.01em'}}>{ev.title}</div>
               <div className="mt-1 text-[11px] truncate" style={{color:'var(--muted)'}}>{fmtDay(ev.dueAt)}</div>
             </button>
           )

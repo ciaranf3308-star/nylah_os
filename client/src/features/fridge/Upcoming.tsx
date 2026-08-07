@@ -148,11 +148,11 @@ export default function Upcoming({ currentUser, calendar, chores, shopping, nowM
             <span className="font-display text-[20px] font-semibold tracking-tight text-[var(--text)]">Today</span>
             <span className="text-[11px] text-[var(--muted)]">{todayCals.length + todayChoresMine.length + (shoppingDueList.length>0?1:0)} items • Tap to open</span>
           </div>
-          <div className="rounded-[22px] border bg-[var(--card-bg)] overflow-hidden" style={{ borderColor:"var(--border)", boxShadow:"0 8px 28px rgba(0,0,0,.08), 0 1px 0 rgba(255,255,255,0.8) inset" }}>
+          <div className="rounded-[22px] border bg-[var(--card-bg)] overflow-hidden" style={{ borderColor:"var(--border)", boxShadow:"0 8px 28px rgba(0,0,0,.06), 0 1px 0 rgba(255,255,255,0.06) inset" }}>
             {(todayCals as any[]).map((ev:any, i:number)=>(
-              <button key={ev.id} onClick={()=> setTab("calendar")} className="w-full text-left flex items-stretch gap-0 min-h-[60px] hover:bg-[var(--chip-bg)]/50 transition" style={{ borderTop: i===0? undefined : "1px solid #F0DDD0" }}>
-                <span className="w-[56px] shrink-0 grid place-items-center border-r" style={{ borderColor:'#F0DDD0' }}>
-                  <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--wash-mid)] text-[11px] font-bold text-[#8B5E3C] shadow-sm"><IconClock/></span>
+              <button key={ev.id} onClick={()=> setTab("calendar")} className="w-full text-left flex items-stretch gap-0 min-h-[56px] hover:bg-[var(--chip-bg)]/50 transition" style={{ borderTop: i===0? undefined : "1px solid var(--border)" }}>
+                <span className="w-[56px] shrink-0 grid place-items-center border-r" style={{ borderColor:'var(--border)' }}>
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--chip-bg)] text-[11px] font-bold text-[#8B5E3C] border shadow-sm" style={{borderColor:'var(--border)'}}><IconClock/></span>
                 </span>
                 <span className="flex-1 flex items-center justify-between gap-3 px-4 py-3.5">
                   <span className="min-w-0"><span className="block text-[11px] tabular-nums text-[var(--muted)] flex items-center gap-1">{fmtTime(ev.dueAt)} <span className="h-1 w-1 rounded-full bg-[var(--accent)] animate-pulse" /></span><span className="block text-[15px] font-medium truncate text-[var(--text)]">{ev.title}</span></span>
@@ -161,21 +161,21 @@ export default function Upcoming({ currentUser, calendar, chores, shopping, nowM
               </button>
             ))}
             {(todayChoresMine as any[]).map((ch:any, i:number)=>(
-              <button key={ch.id} onClick={()=> setTab("chores")} className="w-full text-left flex items-stretch gap-0 min-h-[60px] hover:bg-[var(--chip-bg)]/50 transition" style={{ borderTop: (todayCals.length>0 || i>0) ? "1px solid #F0DDD0" : undefined }}>
-                <span className="w-[56px] shrink-0 grid place-items-center border-r" style={{ borderColor:'#F0DDD0' }}>
+              <button key={ch.id} onClick={()=> setTab("chores")} className="w-full text-left flex items-stretch gap-0 min-h-[56px] hover:bg-[var(--chip-bg)]/50 transition" style={{ borderTop: (todayCals.length>0 || i>0) ? "1px solid var(--border)" : undefined }}>
+                <span className="w-[56px] shrink-0 grid place-items-center border-r" style={{ borderColor:'var(--border)' }}>
                   <span className="grid h-9 w-9 place-items-center rounded-full bg-[#EEE8FF] text-[11px] font-bold text-[#6B5CA8] shadow-sm">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 5.4H19l-4.4 3.2 1.7 5.4L12 13.2 7.7 16l1.7-5.4L5 7.4h5.2z"/></svg>
                   </span>
                 </span>
                 <span className="flex-1 flex items-center justify-between gap-3 px-4 py-3.5">
-                  <span className="min-w-0"><span className="block text-[11px] flex items-center gap-1.5 text-[var(--muted)]">{timingLabel(ch as any)} {timingLabel(ch as any).includes("OVERDUE") && <span className="inline-flex rounded-full bg-[#FEF2F2] border border-[#FECACA] px-1.5 py-0.5 text-[10px] font-bold text-[#991B1B]">Due</span>}</span><span className="block text-[15px] font-medium truncate">{ch.title}</span></span>
+                  <span className="min-w-0"><span className="block text-[11px] flex items-center gap-1.5 text-[var(--muted)]">{timingLabel(ch as any)} {timingLabel(ch as any).includes("OVERDUE") && <span className="inline-flex rounded-full bg-[#FEF2F2] border border-[#FECACA] px-1.5 py-0.5 text-[10px] font-bold text-[#991B1B]">Due</span>}</span><span className="block text-[15px] font-medium truncate text-[var(--text)]">{ch.title}</span></span>
                   <span className="text-[11px] font-semibold text-[#8B5E3C]">{ch.basePoints} pts</span>
                 </span>
               </button>
             ))}
             {shoppingDueList.length>0 && (
-              <button onClick={()=> setTab("shopping")} className="w-full text-left flex items-stretch gap-0 min-h-[60px] hover:bg-[var(--chip-bg)]/50 transition" style={{ borderTop: (todayCals.length>0 || todayChoresMine.length>0) ? "1px solid #F0DDD0" : undefined }}>
-                <span className="w-[56px] shrink-0 grid place-items-center border-r" style={{ borderColor:'#F0DDD0' }}>
+              <button onClick={()=> setTab("shopping")} className="w-full text-left flex items-stretch gap-0 min-h-[56px] hover:bg-[var(--chip-bg)]/50 transition" style={{ borderTop: (todayCals.length>0 || todayChoresMine.length>0) ? "1px solid var(--border)" : undefined }}>
+                <span className="w-[56px] shrink-0 grid place-items-center border-r" style={{ borderColor:'var(--border)' }}>
                   <span className="grid h-9 w-9 place-items-center rounded-full bg-[#0A0A0A] text-white text-[11px] shadow-sm">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6"><path d="M6 8h12l-1 11H7L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
                   </span>
@@ -196,7 +196,7 @@ export default function Upcoming({ currentUser, calendar, chores, shopping, nowM
             <span className="font-display text-[20px] font-semibold tracking-tight text-[var(--text)]">Upcoming • {upcoming.length}</span>
             <button onClick={()=> setTab("calendar")} className="text-[11px] text-[var(--muted)] underline min-h-[44px]">View all →</button>
           </div>
-          <div className="rounded-[22px] border bg-[var(--card-bg)] overflow-hidden" style={{ borderColor:"var(--border)", boxShadow:"0 8px 24px rgba(0,0,0,.07)" }}>
+          <div className="rounded-[22px] border bg-[var(--card-bg)] overflow-hidden" style={{ borderColor:"var(--border)", boxShadow:"0 8px 24px rgba(0,0,0,.06)" }}>
             {(upcoming as any[]).map((ev:any, idx:number)=>{
               const diff = dueDiff(ev.dueAt);
               const isSoon = (()=>{ try{ const due = ev.dueAt ? new Date(ev.dueAt).getTime() : ev.start ? new Date(ev.start).getTime() : null; if(!due) return false; const diff2=due-Date.now(); return diff2>=0 && diff2<=24*3600000; }catch{return false} })();

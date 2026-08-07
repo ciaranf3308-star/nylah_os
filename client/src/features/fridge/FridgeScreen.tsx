@@ -23,7 +23,6 @@ type FridgeProps = {
 };
 
 function FridgePage(props: FridgeProps | any) {
-  // v120 defensive guards — prevents undefined .filter / .name crashes when App renders without props
   const raw = props || {};
   const currentUser = (raw.currentUser || "aisling") as PersonKey;
   const chores = Array.isArray(raw.chores) ? raw.chores : [];
@@ -40,9 +39,9 @@ function FridgePage(props: FridgeProps | any) {
   const weekdayLong = new Intl.DateTimeFormat("en-GB", { weekday: "long", timeZone: HOUSEHOLD_TZ }).format(nowDate);
   const dayNumStr = new Intl.DateTimeFormat("en-GB", { day: "numeric", timeZone: HOUSEHOLD_TZ }).format(nowDate);
   const monthLong = new Intl.DateTimeFormat("en-GB", { month: "long", timeZone: HOUSEHOLD_TZ }).format(nowDate);
-  const dateLabel = `${weekdayLong}, ${dayNumStr} ${monthLong}`;
+  const dateLabel = `${weekdayLong}, ${dayNumStr} ${monthLong}`.toUpperCase();
   const hourDublin = Number(new Intl.DateTimeFormat("en-GB", { hour: "numeric", hour12: false, timeZone: HOUSEHOLD_TZ }).format(nowDate));
-  const greeting = hourDublin < 12 ? "Good morning" : hourDublin < 18 ? "Good afternoon" : "Good evening";
+  const greeting = hourDublin < 12 ? "good morning" : hourDublin < 18 ? "good afternoon" : "good evening";
   const partner: PersonKey = currentUser === "aisling" ? "ciaran" : "aisling";
 
   const activeChores = useMemo(() => (chores as any[]).filter((c) => !(c as any).deletedAt), [chores]);
@@ -55,8 +54,8 @@ function FridgePage(props: FridgeProps | any) {
   const syncMinimal = (() => {
     if (!syncStatus) return null;
     const k = (syncStatus as any)?.kind;
-    if (k === "saving") return <span className="inline-flex items-center gap-1.5 text-[11px] text-[var(--muted)]"><span className="h-1.5 w-1.5 rounded-full bg-[#F59E0B] animate-pulse" />Saving</span>;
-    if (k === "offline-queued") return <span className="inline-flex items-center gap-1.5 text-[11px] text-[#9CA3AF]"><span className="h-1.5 w-1.5 rounded-full bg-[#9CA3AF]" />Queued</span>;
+    if (k === "saving") return <span className="inline-flex items-center gap-1.5 text-[11px] text-[#7A726C]"><span className="h-1.5 w-1.5 rounded-full bg-[#F59E0B] animate-pulse" />Saving</span>;
+    if (k === "offline-queued") return <span className="inline-flex items-center gap-1.5 text-[11px] text-[#9A9190]"><span className="h-1.5 w-1.5 rounded-full bg-[#A8A29E]" />Queued</span>;
     if (k === "failed") return <span className="inline-flex items-center gap-1.5 text-[11px] text-[#B91C1C]"><span className="h-1.5 w-1.5 rounded-full bg-[#EF4444]" />Offline</span>;
     const savedAt = (syncStatus as any)?.lastSavedAt;
     const savedLabel = (() => {
@@ -65,7 +64,7 @@ function FridgePage(props: FridgeProps | any) {
         return new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: HOUSEHOLD_TZ }).format(new Date(savedAt));
       } catch { return null; }
     })();
-    return <span className="inline-flex items-center gap-1.5 text-[11px] text-[var(--muted)]" title={savedAt ? `Server confirmed ${savedAt}` : undefined}><span className="h-1.5 w-1.5 rounded-full bg-[#8DA08E]" />{savedLabel ? `Saved • ${savedLabel}` : "Saved"}</span>;
+    return <span className="inline-flex items-center gap-1.5 text-[11px] text-[#8A837D]" title={savedAt ? `Server confirmed ${savedAt}` : undefined}><span className="h-1.5 w-1.5 rounded-full bg-[#8DA08E]" />{savedLabel ? `Saved • ${savedLabel}` : "Saved"}</span>;
   })();
 
   const [confetti, setConfetti] = useState<number>(0);
@@ -151,9 +150,13 @@ function FridgePage(props: FridgeProps | any) {
 
   const hasToday = todayCalsForHasToday.length > 0 || todayChoresMineForHasToday.length > 0 || !!shoppingSummaryForHasToday;
 
+  // boutique pastel hero – matches reference left
+  const currentName = (PERSONS as any)[currentUser]?.name || currentUser || "You";
+  const partnerName = (PERSONS as any)[partner]?.name || partner;
+
   return (
     <div className="w-full space-y-5">
-      <style>{`@keyframes fridge-peach-pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,107,38,0.22)}50%{transform:scale(1.06);box-shadow:0 0 0 3px rgba(255,107,38,0.12)}} @keyframes countdown-pop{0%{transform:scale(0.96)}50%{transform:scale(1.02)}100%{transform:scale(1)}}`}</style>
+      <style>{`@keyframes hero-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}`}</style>
       {confetti > 0 && (
         <div className="pointer-events-none absolute right-4 top-2 flex gap-1">
           <span className="h-1 w-1 rounded-full bg-[#E07A5F] animate-bounce [animation-delay:0ms]" />
@@ -162,42 +165,63 @@ function FridgePage(props: FridgeProps | any) {
         </div>
       )}
 
-      <div className="nylah-hero-v101 nylah-grain rounded-[28px] px-6 pt-6 pb-5 relative overflow-hidden" style={{ fontSmooth: 'always' } as any}>
-        {/* botanical blobs behind - absolute organic shapes matching target */}
-        <div className="absolute right-[-22px] top-[-18px] w-[180px] h-[180px] rounded-full pointer-events-none" style={{ background: "radial-gradient(80% 80% at 30% 30%, #F6D1BF 0%, #F3D8C6 42%, transparent 72%)", opacity: 0.9 }} aria-hidden="true"/>
-        <div className="absolute right-[44px] top-[42px] w-[96px] h-[96px] rounded-[32px] rotate-[-12deg] pointer-events-none" style={{ background: "#C6D9CE", opacity: 0.88 }} aria-hidden="true"/>
-        <div className="absolute right-[-8px] top-[66px] w-[72px] h-[72px] rounded-[22px] rotate-[8deg] pointer-events-none" style={{ background: "#E9C6BB", opacity: 0.9 }} aria-hidden="true"/>
-        {/* plant pot + mugs hero - boutique right-side illustration */}
-        <div className="absolute right-[-14px] bottom-[-8px] w-[208px] h-[238px] pointer-events-none select-none overflow-hidden" aria-hidden="true" style={{ filter: (theme as any)?.id === 'ink' ? "brightness(0.88) contrast(1.05)" : undefined }}>
-          <img
-            src={(theme as any)?.id === 'ink' ? "./fridge-hero-dark.png" : "./fridge-hero-light.png"}
-            alt=""
-            className="h-full w-full object-cover object-[center_top]"
-            loading="eager"
-            style={{}}
-          />
-        </div>
-        {/* soft palm shadow mimicking target */}
-        <div className="absolute left-[28%] top-[12px] w-[220px] h-[140px] pointer-events-none opacity-[0.18]" style={{ background: "radial-gradient(70% 70% at 30% 30%, #9AB0A0 0%, transparent 70%)", filter:"blur(14px)" }} aria-hidden="true"/>
-        <div className="relative flex items-start justify-between gap-3">
-          <div className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ fontFamily: "var(--font-ui)", color: "var(--muted)", textRendering: 'optimizeLegibility' }}>{dateLabel}</div>
-          <div className="shrink-0 opacity-90">{syncMinimal}</div>
-        </div>
-        <div className="relative mt-5">
-          <div className="nylah-script-hero text-[40px] font-semibold" style={{ fontFamily: "var(--font-display)", color: "var(--text)", opacity: 1, fontWeight: 600, textRendering: 'optimizeLegibility', WebkitFontSmoothing: 'antialiased' }}>{greeting.toLowerCase()}</div>
-          <h1 className="nylah-display-hero text-[46px] -mt-1" style={{ fontFamily: "var(--font-display)", color: "var(--text)", lineHeight: 0.92, letterSpacing: '-0.02em', fontWeight: 600 }}>
-            {((PERSONS as any)[currentUser]?.name || currentUser || "You")}
-            <span className="ml-2 inline-flex items-baseline gap-2 align-baseline">
-              <span className="text-[20px] font-light" style={{ fontFamily: "var(--font-ui)", fontWeight: 400, color: "var(--muted)", letterSpacing: '-0.01em' }}>with</span>
-              <span className="nylah-script-hero text-[34px]" style={{ fontFamily: "var(--font-script)", color: "var(--accent-warm)", fontWeight: 500, textShadow: '0 1px 0 rgba(255,255,255,0.4)' } as any}>{(PERSONS as any)[partner]?.name || partner}</span>
-            </span>
-          </h1>
-          <div className="mt-2 flex items-center gap-2 text-[11px] tracking-[0.12em] uppercase" style={{ fontFamily: "var(--font-ui)", color: "var(--muted)", fontWeight: 500 }}>
-            <span className="h-px w-8" style={{ background: "var(--border)" }} /> {(PERSONS as any)[currentUser]?.name || (typeof currentUser==='string' ? currentUser : 'You')} ♥ {(PERSONS as any)[partner]?.name || partner} • Beirt
+      {/* ——— polished fridge hero exact to reference ——— */}
+      <div className="relative overflow-hidden rounded-[28px] px-7 pt-5 pb-7" style={{ background: "linear-gradient(180deg, #FDF1E7 0%, #FBE8D8 100%)", minHeight: 184 }}>
+        {/* subtle blobs behind */}
+        <div className="pointer-events-none absolute -right-6 top-[-18px] h-[128px] w-[128px] rounded-[36px] blur-[0px]" style={{ background: "#F2C5AE", opacity: 0.62, borderRadius: "42% 58% 44% 56% / 38% 42% 58% 62%" }} />
+        <div className="pointer-events-none absolute right-[22px] top-[14px] h-[92px] w-[92px]" style={{ background: "#C7D9CE", opacity: 0.76, borderRadius: "58% 42% 66% 34% / 40% 48% 52% 60%" }} />
+        <div className="pointer-events-none absolute right-[72px] top-[44px] h-[68px] w-[68px]" style={{ background: "#E8B89F", opacity: 0.58, borderRadius: "60% 40% 50% 50% / 55% 60% 40% 45%" }} />
+        {/* leaf shadow */}
+        <div className="pointer-events-none absolute left-[46%] top-[8px] h-[56px] w-[84px] opacity-[0.12]" style={{ background: "radial-gradient(ellipse at center, #5B5A3F 0%, transparent 70%)", transform: "rotate(-14deg)" }} />
+
+        {/* real mugs + vase + plant – your transparent PNG */}
+        <img
+          src="./fridge-mugs-transparent.png"
+          alt=""
+          className="pointer-events-none absolute right-[-10px] top-[8px] select-none"
+          style={{ width: 176, height: "auto", objectFit: "contain", filter: "drop-shadow(0 10px 18px rgba(108,71,48,0.18)) drop-shadow(0 2px 4px rgba(0,0,0,0.12))", transform: "rotate(-0.3deg)" }}
+          loading="eager"
+          decoding="async"
+        />
+
+        <div className="relative z-[1]">
+          <div className="flex items-start justify-between">
+            <div className="text-[11px] font-semibold tracking-[0.16em] uppercase" style={{ fontFamily: "Inter, ui-sans-system, sans-serif", color: "#8B7E77" }}>{dateLabel}</div>
+          </div>
+
+          <div className="mt-5 max-w-[58%]">
+            <div className="leading-[0.92]" style={{ fontFamily: "Fraunces, serif", letterSpacing: "-0.02em" }}>
+              <div className="text-[36px] font-[750] text-[#191310]" style={{ lineHeight: 0.95, letterSpacing: "-0.02em" }}>{greeting}</div>
+              <div className="mt-0.5 flex flex-wrap items-baseline gap-2">
+                <span className="text-[46px] font-[800] tracking-[-0.03em] text-[#15110E]" style={{ fontFamily: "Fraunces, serif", lineHeight: 0.92 }}>{currentName}</span>
+                <span className="text-[17px] font-[400] text-[#8B7F79] mr-0.5" style={{ fontFamily: "Inter, sans-serif" }}>with</span>
+                <span className="text-[30px] font-[550] italic text-[#C17455] tracking-[-0.01em]" style={{ fontFamily: "\"Pinyon Script\", \"Snell Roundhand\", cursive" }}>{partnerName}</span>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              <span className="h-px w-7 bg-[#D9CFC7]" />
+              <span className="text-[11px] font-semibold tracking-[0.14em] uppercase text-[#857A74]">{currentName.toUpperCase()} ♥ {partnerName.toUpperCase()} • BEIRT</span>
+            </div>
           </div>
         </div>
-        {/* single subtle glow - cut extra blobs - now behind hero illustration */}
-        <div className="absolute -right-12 -bottom-12 w-[160px] h-[160px] rounded-full blur-[28px] opacity-[0.10] pointer-events-none" style={{ background: "var(--accent)" }} />
+
+        {/* tiny bottom-right Saving dot placeholder like reference */}
+        <div className="absolute bottom-3 right-4 z-[2]">{syncMinimal}</div>
+      </div>
+
+      {/* ---- Dark mode alternate hero (shown only when prefers-dark or app dark class) ---- */}
+      <div className="hidden dark:block relative overflow-hidden rounded-[28px] px-7 pt-5 pb-7 -mt-[188px]" style={{ background: "#131618", minHeight: 184 }}>
+        <div className="pointer-events-none absolute -right-6 top-[-18px] h-[128px] w-[128px] rounded-[36px]" style={{ background: "#8A674F", opacity: 0.72, borderRadius: "42% 58% 44% 56% / 38% 42% 58% 62%" }} />
+        <div className="pointer-events-none absolute right-[22px] top-[14px] h-[92px] w-[92px]" style={{ background: "#8CA697", opacity: 0.62, borderRadius: "58% 42% 66% 34% / 40% 48% 52% 60%" }} />
+        <img src="./fridge-mugs-transparent.png" alt="" className="pointer-events-none absolute right-[-10px] top-[8px]" style={{ width: 176, filter: "brightness(0.86) contrast(1.07)" }} />
+        <div className="relative z-[1]">
+          <div className="text-[11px] font-semibold tracking-[0.16em] uppercase text-[#8A8580]">{dateLabel}</div>
+          <div className="mt-5 max-w-[58%]">
+            <div className="text-[36px] font-[750] text-[#F5F0EC]" style={{ fontFamily:"Fraunces, serif" }}>{greeting}</div>
+            <div className="flex flex-wrap items-baseline gap-2"><span className="text-[46px] font-[800] text-[#FFFEFB]" style={{ fontFamily:"Fraunces, serif" }}>{currentName}</span><span className="text-[17px] text-[#B8AFA7]">with</span><span className="text-[30px] italic text-[#D07A41]" style={{ fontFamily:"Pinyon Script, cursive" }}>{partnerName}</span></div>
+            <div className="mt-3 flex items-center gap-2"><span className="h-px w-7 bg-[#3A3530]" /><span className="text-[11px] tracking-[0.14em] uppercase text-[#A89E97]">{currentName.toUpperCase()} ♥ {partnerName.toUpperCase()} • BEIRT</span></div>
+          </div>
+        </div>
       </div>
 
       <NeedsYou currentUser={currentUser} calendar={activeCalendar as any} chores={activeChores as any} nowMs={nowMs} setTab={setTab as any} />

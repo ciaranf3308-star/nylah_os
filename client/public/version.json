@@ -1,8 +1,8 @@
 {
-  "build": "v166-beirt-event-kinds-fridge-hero",
-  "code": 166,
-  "version": "166.0.0",
-  "changelog": "event kinds 10 types with boutique svg bubbles, fridge hero light/dark plant pot & mugs, upcoming icon bubbles infer from title, pinned watermark, calendar type selector chips, dark mode tokens",
+  "build": "v167-beirt-fridge-polish-match-ref",
+  "code": 167,
+  "version": "167.0.0",
+  "changelog": "polished fridge hero to match ref: real mugs transparent + organic blobs, Fraunces big lowercase good evening Ciaran with Aisling script, unified peach bubble + paper plane travel, pinned white card 5d left huge 52px",
   "mandatory": false,
-  "builtAt": "2026-08-07T22:12:00Z"
+  "builtAt": "2026-08-07T22:30:00Z"
 }

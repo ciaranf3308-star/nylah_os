@@ -1,1 +1,1 @@
-{"build":"v139-beirt-dark-deck","code":139,"changelog":"fix deck white-on-white dark mode — ChoreDeck now uses var(--card-bg)/--border/--chip-bg/--muted not #FFFEFB/#FFF8F1 hardcoded, icon circle chip-bg, effort chip var, track var, buttons ghost theme-aware, radial uses chip-bg, skeletons var, Add sheet effort/freq/icon cards var"}
+{"build":"v140-beirt-blackscreen-fix","code":140,"changelog":"fix black screen — restore supabase-env.js injection before module, re-run vite build without SDK wrapper miss"}

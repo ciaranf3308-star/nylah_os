@@ -16,11 +16,12 @@ function generateInviteCode(): string {
 type OnboardingProps = { onComplete: (hid:string)=>void };
 
 export function OnboardingFlow({ onComplete }: OnboardingProps) {
-  const [step, setStep] = useState<"welcome"|"create_names"|"create_pins"|"creating"|"share"|"join_code"|"join_pick"|"join_pin"|"joining">("welcome");
+  const [step, setStep] = useState<"welcome"|"create_names"|"create_email"|"create_pins"|"creating"|"share"|"join_code"|"join_pick"|"join_pin"|"joining"|"recover_email">("welcome");
   const [youName, setYouName] = useState("");
   const [partnerName, setPartnerName] = useState("");
   const [youPin, setYouPin] = useState("");
   const [partnerPin, setPartnerPin] = useState("");
+  const [recoveryEmail, setRecoveryEmail] = useState("");
   const [inviteCode, setInviteCode] = useState<string>("");
   const [householdId, setHouseholdId] = useState<string>("");
   const [error, setError] = useState("");
@@ -46,11 +47,19 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
   }, []);
 
   const canContinueNames = youName.trim().length>=1 && partnerName.trim().length>=1;
+  const isValidEmail = (s:string)=> /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
+  const canContinueEmail = isValidEmail(recoveryEmail);
   const canContinuePins = /^\d{4}$/.test(youPin) && /^\d{4}$/.test(partnerPin) && youPin!==partnerPin;
 
   const startCreate = () => {
     setError("");
     if (!canContinueNames) { setError("Add both names"); return; }
+    setStep("create_email");
+  };
+
+  const startPins = () => {
+    setError("");
+    if (!canContinueEmail) { setError("Add a recovery email — you can use your own"); return; }
     setStep("create_pins");
   };
 
@@ -89,6 +98,15 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
           try { await sb.from("households").upsert({ id: hid, code, name: `${youName.trim()} & ${partnerName.trim()}`, tz: "Europe/Dublin", meta: { persons } }, { onConflict: "id" } as any); } catch {}
           try { await sb.from("household_invites").upsert({ code, household_id: hid } as any, { onConflict: "code" } as any); } catch {}
         }
+        // recovery email — one per household, private, no anon read
+        try {
+          const emailClean = recoveryEmail.trim().toLowerCase();
+          if (emailClean) {
+            try { await (sb as any).rpc("set_household_recovery_email", { hid, email: emailClean }); } catch {}
+            // fallback direct update if RPC not yet deployed (service_role still allows)
+            try { await (sb as any).from("households").update({ recovery_email: emailClean } as any).eq("id", hid); } catch {}
+          }
+        } catch {}
         // PINs — server-only hashed via pgcrypto, never readable by client
         try { await (sb as any).rpc("upsert_household_pin", { hid, pin: youPin, person_key: "person_1" }); } catch(e:any){ console.warn("[onboard] pin1 err", e?.message); }
         try { await (sb as any).rpc("upsert_household_pin", { hid, pin: partnerPin, person_key: "person_2" }); } catch(e:any){ console.warn("[onboard] pin2 err", e?.message); }
@@ -99,6 +117,7 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
           householdId: hid,
           inviteCode: code,
           persons,
+          recoveryEmail: recoveryEmail.trim().toLowerCase(),
           createdAt: new Date().toISOString(),
           onboardedAt: new Date().toISOString(),
           tz: "Europe/Dublin",
@@ -162,13 +181,25 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
       if (!sb) { setError("No connection — check internet"); setJoining(false); return; }
 
       let data: any = null;
-      // 1) Try RPC lookup_household_by_code if deployed (more secure)
+      // 1) Try RPC lookup_household_by_code if deployed (more secure) — tries p_code then code for compatibility
       try {
-        const { data: rpcData } = await (sb as any).rpc("lookup_household_by_code", { code });
+        let rpcData: any = null;
+        try {
+          const r1 = await (sb as any).rpc("lookup_household_by_code", { p_code: code });
+          rpcData = r1.data;
+        } catch {}
+        if (!rpcData) {
+          const r2 = await (sb as any).rpc("lookup_household_by_code", { code });
+          rpcData = r2.data;
+        }
         if (rpcData) {
-          const hid = rpcData.id || rpcData.household_id || hidCandidates[0];
-          const persons = rpcData.persons || rpcData.meta?.persons || [{key:"person_1", name:"Partner 1"},{key:"person_2", name:"Partner 2"}];
-          data = { id: hid, meta: { householdName: rpcData.name || rpcData.household_name || "You & Partner", persons, inviteCode: code } };
+          // PostgREST may return array or single
+          const row = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+          if (row) {
+            const hid = row.id || row.household_id || hidCandidates[0];
+            const persons = row.persons || row.meta?.persons || [{key:"person_1", name:"Partner 1"},{key:"person_2", name:"Partner 2"}];
+            data = { id: hid, meta: { householdName: row.name || row.household_name || "You & Partner", persons, inviteCode: code } };
+          }
         }
       } catch {}
 
@@ -292,6 +323,37 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
     }
   };
 
+  const doRecoverByEmail = async () => {
+    setError(""); setJoining(true);
+    const email = recoveryEmail.trim().toLowerCase();
+    if (!isValidEmail(email)) { setError("Enter your recovery email"); setJoining(false); return; }
+    const sb = getSupabase();
+    if (!sb) { setError("No connection"); setJoining(false); return; }
+    try {
+      let found:any = null;
+      try {
+        const r1 = await (sb as any).rpc("lookup_household_by_email", { p_email: email });
+        if (r1.data && r1.data.length) found = Array.isArray(r1.data) ? r1.data[0] : r1.data;
+        else if (r1.data && !Array.isArray(r1.data)) found = r1.data;
+      } catch {}
+      if (!found) {
+        try {
+          const r2 = await (sb as any).rpc("lookup_household_by_email", { email });
+          if (r2.data) found = Array.isArray(r2.data) ? r2.data[0] : r2.data;
+        } catch {}
+      }
+      if (!found) { setError("No house found for that email — check spelling or use your code"); setJoining(false); return; }
+      const hid = found.id; const code = found.code_ret || found.code || "";
+      setHouseholdId(hid); setInviteCode(code); setJoinMeta({ householdName: found.name || found.household_name, persons: found.persons });
+      setJoinPersons(found.persons || [{key:"person_1",name:"Partner 1"},{key:"person_2",name:"Partner 2"}]);
+      setJoining(false);
+      setStep("join_pick");
+    } catch (e:any) {
+      setJoining(false);
+      setError("Recovery failed: "+String(e?.message||e).slice(0,80));
+    }
+  };
+
   return (
     <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[var(--bg)] px-6 overflow-auto" style={{ background: "linear-gradient(180deg,var(--chip-bg) 0%,var(--card-bg) 60%,var(--wash-top) 100%)" }}>
       <div className="w-full max-w-[360px] rounded-[28px] border bg-[var(--card-bg)] shadow-[0_18px_50px_rgba(0,0,0,0.10)] px-6 py-7 flex flex-col items-center" style={{ borderColor:"var(--border)" }}>
@@ -328,10 +390,25 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
             <button disabled={!canContinueNames} onClick={startCreate} className={"mt-5 w-full h-[48px] rounded-full text-[14px] font-semibold active:scale-[0.98] "+(canContinueNames?"bg-[#0A0A0A] text-white shadow-sm":"bg-[var(--chip-bg)] text-[#8B7357]")}>Continue</button>
           </>
         )}
-        {step==="create_pins" && (
+        {step==="create_email" && (
           <>
             <div className="w-full text-left">
               <button onClick={()=> setStep("create_names")} className="text-[11px] text-[#8B7357]">← Back</button>
+              <div className="mt-2 font-display text-[20px] font-semibold text-[#0A0A0A]">Recovery email</div>
+              <div className="mt-1 text-[12px] text-[#6B5242]">One per household. If you lose your code and your partner can't share it, we can find your house with this. Private — never listed.</div>
+            </div>
+            <div className="mt-4 w-full space-y-3">
+              <input value={recoveryEmail} onChange={e=> setRecoveryEmail(e.target.value)} placeholder="you@email.com" type="email" className="mt-1 w-full rounded-[14px] border bg-white px-3 py-3 text-[14px] outline-none" style={{borderColor:"var(--border)"}} autoFocus />
+              <div className="text-[10px] text-[#8B7357]">Used only for “forgot code” — no spam, no public listing. Stored server-side with same RLS that blocks anon listing.</div>
+            </div>
+            {error && <div className="mt-3 text-[11px] text-[#991B1B] w-full">{error}</div>}
+            <button disabled={!canContinueEmail} onClick={startPins} className={"mt-5 w-full h-[48px] rounded-full text-[14px] font-semibold active:scale-[0.98] "+(canContinueEmail?"bg-[#0A0A0A] text-white shadow-sm":"bg-[var(--chip-bg)] text-[#8B7357]")}>Continue</button>
+          </>
+        )}
+        {step==="create_pins" && (
+          <>
+            <div className="w-full text-left">
+              <button onClick={()=> setStep("create_email")} className="text-[11px] text-[#8B7357]">← Back</button>
               <div className="mt-2 font-display text-[20px] font-semibold text-[#0A0A0A]">Set your 4-digit PINs</div>
               <div className="mt-1 text-[12px] text-[#6B5242]">Hashed server-side with bcrypt. Never stored plain on device. Different PINs required.</div>
             </div>
@@ -387,10 +464,24 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
             <input value={joinCode} onChange={e=> setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,32))} placeholder="ABC123 or nylah-abc123" className="mt-4 w-full rounded-[16px] border bg-white px-4 py-4 text-center font-mono text-[14px] tracking-[0.12em] outline-none" style={{borderColor:"var(--border)"}} autoFocus />
             {error && <div className="mt-2 text-[11px] text-[#991B1B] w-full text-center">{error}</div>}
             <button onClick={doJoinLookup} disabled={joining} className="mt-4 w-full h-[48px] rounded-full bg-[#0A0A0A] text-white text-[14px] font-semibold disabled:opacity-60 active:scale-[0.98]">{joining?"Looking up…":"Find household"}</button>
+            <button onClick={()=> { setRecoveryEmail(""); setError(""); setStep("recover_email"); }} className="mt-3 text-[11px] text-[#8B7357] underline">Don't have the code? Recover with email</button>
             <div className="mt-3 w-full rounded-[14px] bg-[var(--chip-bg)] px-3 py-2.5 text-left">
               <div className="text-[11px] font-semibold text-[#2D2118]">Why PIN again?</div>
               <div className="text-[10.5px] text-[#6B5242] leading-[1.35] mt-0.5">Your PIN is hashed bcrypt on Supabase. Joining checks server-side — fail-closed if wrong. No local PIN storage.</div>
             </div>
+          </>
+        )}
+        {step==="recover_email" && (
+          <>
+            <div className="w-full text-left">
+              <button onClick={()=> setStep("join_code")} className="text-[11px] text-[#8B7357]">← Back</button>
+              <div className="mt-2 font-display text-[20px] font-semibold text-[#0A0A0A]">Recover with email</div>
+              <div className="mt-1 text-[12px] text-[#6B5242]">Enter the recovery email you used when you created your house. One per household — private, no listing.</div>
+            </div>
+            <input value={recoveryEmail} onChange={e=> setRecoveryEmail(e.target.value)} placeholder="you@email.com" type="email" className="mt-4 w-full rounded-[14px] border bg-white px-3 py-3 text-[14px] outline-none" style={{borderColor:"var(--border)"}} autoFocus />
+            {error && <div className="mt-2 text-[11px] text-[#991B1B] w-full text-center">{error}</div>}
+            <button onClick={doRecoverByEmail} disabled={joining} className="mt-4 w-full h-[48px] rounded-full bg-[#0A0A0A] text-white text-[14px] font-semibold disabled:opacity-60 active:scale-[0.98]">{joining?"Finding…":"Find my house"}</button>
+            <div className="mt-2 text-[10px] text-[#8B7357] text-center">We look up your house by email server-side (security definer RPC). Then you still need your PIN.</div>
           </>
         )}
         {step==="join_pick" && (

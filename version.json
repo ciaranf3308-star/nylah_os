@@ -1,8 +1,1 @@
-{
-  "build": "v171-fridge-widget-qa",
-  "code": 171,
-  "version": "171.0.0",
-  "changelog": "hero circles cleaned no shadow, mugs 520x664 true crop, upcoming icon kinds fixed brunch->friends sage / united->sports peach / galgorm->family tan, countdown single full-width 54px, A-dot only aisling",
-  "mandatory": false,
-  "builtAt": "2026-08-07T22:35:00Z"
-}
+{"build":"v175-offline-optimistic-delete-persist","code":175,"version":"175.0.0","changelog":"remove hard offline block, attempt upsert/delete even when probe says offline - fixes United revert on reload","mandatory":false,"builtAt":"2026-08-08T00:55:00Z"}

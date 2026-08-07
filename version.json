@@ -1,1 +1,9 @@
-{"build":"v129-beirt-logo-black","builtAt":"2026-08-07T14:30:00.000Z","changelog":"Beirt black bg beige mint centered logo","code":129,"mandatory":true,"timestamp":"2026-08-07T14:30:00.000Z","version":"129.0.0"}
+{
+  "build": "v130-onboarding-fresh-fix",
+  "builtAt": "2026-08-07T14:35:00.000Z",
+  "changelog": "Fix fresh browser onboarding \u2014 build marker no longer skips Create our space",
+  "code": 130,
+  "mandatory": true,
+  "timestamp": "2026-08-07T14:35:00.000Z",
+  "version": "130.0.0"
+}

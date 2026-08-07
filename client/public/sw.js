@@ -1,5 +1,5 @@
 // Beirt SW v123 hotfix - absolute path fix + ErrorBoundary
-const CACHE_NAME = "beirt-v127-dynamic-names";
+const CACHE_NAME = "beirt-v128-logo";
 const URLS = ["./","./index.html","./manifest.webmanifest"];
 self.addEventListener("install", e=>{
   e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(URLS.map(u=>new Request(u,{cache:"reload"}))).catch(()=>{})));

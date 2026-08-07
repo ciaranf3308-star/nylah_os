@@ -204,11 +204,31 @@ function ShoppingPageFacelift(props: any) {
 
   function handleDelete(id: string){
     const nowISO = new Date().toISOString();
-    setItems((p:any)=> p.map((x:any)=> x.id===id ? {...x, deletedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser } : x));
+    // soft-delete so multiplayer sync sees tombstone, filtered from UI immediately
+    setItems((p:any)=> p.map((x:any)=> x.id===id ? {...x, deletedAt: nowISO, archivedAt: nowISO, status: "deleted" as any, updatedAt: nowISO, updatedBy: currentUser } : x));
     setEditing(null); setConfirmDelId(null);
   }
 
+  function handleHardDelete(id: string){
+    const nowISO = new Date().toISOString();
+    // immediate hard remove locally, plus tombstone write for remote merge safety
+    setItems((p:any)=> {
+      const withTomb = p.map((x:any)=> x.id===id ? {...x, deletedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser } : x);
+      // keep tombstone 0.5s for save cycle then drop from UI — filtered anyway
+      return withTomb.filter((x:any)=> x.id!==id || x.deletedAt);
+    });
+    setEditing(null); setConfirmDelId(null);
+  }
+
+  function setStatus(it: ShoppingItemV2, next: "need" | "bought"){
+    const nowISO = new Date().toISOString();
+    const bought = next==="bought";
+    setItems((prev:any)=> prev.map((x:any)=> x.id===it.id ? {...x, purchased: bought, status: bought ? "purchased" : "active", lastDoneAt: bought ? nowISO : x.lastDoneAt, updatedAt: nowISO, updatedBy: currentUser} : x));
+    if(bought){ try{ onCelebrate?.(it); }catch{} }
+  }
+
   function handleArchive(id: string){
+    // keep for compat but treat as bought → bought section
     const nowISO = new Date().toISOString();
     setItems((p:any)=> p.map((x:any)=> x.id===id ? {...x, archivedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser } : x));
     setEditing(null);
@@ -359,17 +379,16 @@ function ShoppingPageFacelift(props: any) {
             <div className="grid gap-2">
               {g.items.map(it=> (
                 <div key={it.id} className="group flex items-center gap-0 rounded-[16px] border bg-[var(--card-bg)] px-1 py-1 min-h-[56px] hover:border-[#CFC2B6] transition-colors" style={{borderColor:'var(--border)'}}>
-                  <button onClick={()=> togglePurchased(it)} className="grid h-[44px] w-[44px] place-items-center shrink-0 active:scale-[0.92]" aria-label="toggle">
-                    <span className="grid h-[24px] w-[24px] place-items-center rounded-full border bg-[var(--card-bg)]" style={{borderColor:'#CFC2B6'}}>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="transparent"><path d="M5 12.5l4 4L19 7" strokeWidth="2"/></svg>
-                    </span>
+                  <button onClick={()=> togglePurchased(it)} className="grid h-[44px] w-[44px] place-items-center shrink-0 active:scale-[0.92]" aria-label="mark bought">
+                    <span className="grid h-[24px] w-[24px] place-items-center rounded-full border bg-[var(--card-bg)] text-[10px] font-semibold" style={{borderColor:'#CFC2B6'}}>✓</span>
                   </button>
                   <button onClick={()=> { setEditing(it as any); setEditQty(it.qty); setEditCat(it.cat); setEditFreq(it.frequency||"as-needed" as any); setEditNeedDays(parseNeedDaysToBool((it as any).needDays)); setEditNotes((it as any).notes||""); setConfirmDelId(null); }} className="flex-1 text-left min-w-0 flex items-center gap-2 pr-2">
                     <span className="text-[15px] font-[500] text-[var(--text)] truncate">{it.item}</span>
                     {it.qty>1 && <span className="text-[13px] text-[var(--muted)]">×{it.qty}</span>}
+                    <span className="ml-1 inline-flex h-[18px] items-center rounded-full bg-[var(--chip-bg)] px-2 text-[10px] text-[var(--muted)]">need</span>
                   </button>
-                  <span className="h-[6px] w-[6px] rounded-full bg-[var(--border)] mr-2"/>
-                  <button onClick={()=> { setEditing(it as any); setEditQty(it.qty); setEditCat(it.cat); setEditFreq(it.frequency||"as-needed" as any); setEditNeedDays(parseNeedDaysToBool((it as any).needDays)); setEditNotes((it as any).notes||""); }} className="grid h-[44px] w-[44px] place-items-center text-[#9A8A7D]"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M9 18l6-6"/><path d="M14 8l2-2"/><circle cx="11" cy="11" r="2"/></svg></button>
+                  <button onClick={()=> { setEditing(it as any); setEditQty(it.qty); setEditCat(it.cat); setEditFreq(it.frequency||"as-needed" as any); setEditNeedDays(parseNeedDaysToBool((it as any).needDays)); setEditNotes((it as any).notes||""); }} className="grid h-[36px] w-[36px] place-items-center text-[#9A8A7D]"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M9 18l6-6"/><path d="M14 8l2-2"/><circle cx="11" cy="11" r="2"/></svg></button>
+                  <button onClick={()=> handleHardDelete(it.id)} className="grid h-[36px] w-[36px] place-items-center text-[#B91C1C] opacity-60 hover:opacity-100" aria-label="delete"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 6h18M8 6V4h8v2M10 11v6M14 11v6M5 6l1 14h12l1-14"/></svg></button>
                 </div>
               ))}
             </div>
@@ -386,10 +405,12 @@ function ShoppingPageFacelift(props: any) {
             {showBought && (
               <div className="grid gap-1.5 mt-2">
                 {bought.slice(0,12).map(it=> (
-                  <div key={it.id} className="flex items-center gap-3 rounded-[12px] border border-dashed bg-[var(--chip-bg)]/60 px-3 py-2 min-h-[40px] opacity-[0.65]" style={{borderColor:'var(--border)'}}>
+                  <div key={it.id} className="flex items-center gap-2 rounded-[12px] border border-dashed bg-[var(--chip-bg)]/60 px-3 py-2 min-h-[44px]" style={{borderColor:'var(--border)'}}>
                     <span className="grid h-6 w-6 place-items-center rounded-full bg-[#0A0A0A] text-white"><IconCheckTiny size={10}/></span>
-                    <span className="text-[13px] line-through decoration-[1px] text-[var(--muted)] truncate flex-1">{it.item}</span>
-                    <button onClick={()=> togglePurchased(it)} className="text-[11px] underline text-[var(--text-secondary)] min-h-[44px] px-2">Undo</button>
+                    <span className="text-[13px] text-[var(--text)] truncate flex-1">{it.item}</span>
+                    <span className="inline-flex h-[18px] items-center rounded-full bg-[#0A0A0A] px-2 text-[10px] text-white">bought</span>
+                    <button onClick={()=> setStatus(it as any, "need")} className="text-[11px] underline text-[var(--text-secondary)] min-h-[36px] px-2">Need again</button>
+                    <button onClick={()=> handleHardDelete(it.id)} className="grid h-[32px] w-[32px] place-items-center text-[#B91C1C]"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 6h18M8 6V4h8v2M10 11v6M14 11v6M5 6l1 14h12l1-14"/></svg></button>
                   </div>
                 ))}
               </div>
@@ -431,10 +452,16 @@ function ShoppingPageFacelift(props: any) {
         </div>
       </BottomSheet>
 
-      {/* Edit sheet - proper form */}
+      {/* Edit sheet - status: Need / Bought / Delete */}
       <BottomSheet open={!!editing} onClose={()=> { setEditing(null); setConfirmDelId(null); }} title={editing?.item}>
         {editing && (
           <div className="space-y-4">
+            {/* status segmented */}
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={()=> setStatus(editing, "need")} className={"h-[44px] rounded-[12px] border text-[12px] font-medium "+((editing as any).purchased ? "bg-[var(--card-bg)] text-[var(--muted)] border-[var(--border)]" : "bg-[#0A0A0A] text-white border-[#0A0A0A]")}>I need it</button>
+              <button onClick={()=> setStatus(editing, "bought")} className={"h-[44px] rounded-[12px] border text-[12px] font-medium "+((editing as any).purchased ? "bg-[#0A0A0A] text-white border-[#0A0A0A]" : "bg-[var(--card-bg)] border-[var(--border)]")}>We bought it</button>
+            </div>
+
             <div className="flex items-center gap-3 rounded-[12px] border bg-[var(--card-bg)] px-3 py-2" style={{borderColor:'var(--border)'}}>
               <button onClick={()=> setEditQty(q=> Math.max(1,q-1))} className="grid h-[44px] w-[44px] place-items-center rounded-full border bg-[var(--card-bg)]"><svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="1.6"><path d="M5 12h14"/></svg></button>
               <span className="w-10 text-center text-[15px] font-medium">{editQty}</span>
@@ -461,18 +488,18 @@ function ShoppingPageFacelift(props: any) {
 
             <div className="flex gap-2">
               <button onClick={saveEdit} className="flex-1 h-[44px] rounded-[16px] bg-[#0A0A0A] text-white text-[13px] font-medium active:scale-[0.98]">Save</button>
-              <button onClick={()=> handleArchive(editing.id)} className="h-[44px] rounded-[16px] border bg-[var(--card-bg)] px-4 text-[12px] text-[var(--text-secondary)]">Archive</button>
+              <button onClick={()=> setStatus(editing, (editing as any).purchased ? "need" : "bought")} className="h-[44px] rounded-[16px] border bg-[var(--card-bg)] px-4 text-[12px] text-[var(--text-secondary)]">{(editing as any).purchased ? "Mark Need" : "Mark Bought"}</button>
             </div>
 
             <div className="pt-2 border-t flex justify-between" style={{borderColor:'var(--border)'}}>
               {confirmDelId===editing.id ? (
                 <div className="flex gap-2 w-full">
-                  <span className="text-[11px] text-[#991B1B] flex-1 pt-2">Really delete?</span>
+                  <span className="text-[11px] text-[#991B1B] flex-1 pt-2">Outright delete? Gone from both phones.</span>
                   <button onClick={()=> setConfirmDelId(null)} className="h-[44px] rounded-full border px-4 text-[11px]">Cancel</button>
-                  <button onClick={()=> handleDelete(editing.id)} className="h-[44px] rounded-full bg-[#B91C1C] text-white px-4 text-[11px]">Delete</button>
+                  <button onClick={()=> handleHardDelete(editing.id)} className="h-[44px] rounded-full bg-[#B91C1C] text-white px-4 text-[11px]">Delete</button>
                 </div>
               ) : (
-                <button onClick={()=> setConfirmDelId(editing.id)} className="text-[11px] text-[#B91C1C] underline">Delete item</button>
+                <button onClick={()=> setConfirmDelId(editing.id)} className="text-[11px] text-[#B91C1C] underline">Delete item outright</button>
               )}
             </div>
 

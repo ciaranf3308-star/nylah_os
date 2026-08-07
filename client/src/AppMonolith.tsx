@@ -1297,10 +1297,11 @@ function getStoredHouseholdId(): string | null {
 }
 function hasAnyLegacyData(): boolean {
   try {
+    const meaningful = ["couple_v1_household_id","couple_v1_household_persons","couple_v1_currentUser","couple_v1_household_code","couple_v1_household_name","couple_v1_household_persons_","couple_v1_household_pins"];
     for (let i=0;i<localStorage.length;i++) {
       const k = localStorage.key(i);
       if (!k) continue;
-      if (k.startsWith("couple_v1_")) return true;
+      if (meaningful.some(p=>k.startsWith(p))) return true;
     }
   } catch {}
   return false;

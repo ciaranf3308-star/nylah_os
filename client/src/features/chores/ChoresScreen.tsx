@@ -546,7 +546,7 @@ export default function ChoresScreen(props: any) {
                 {(()=>{ const p=addPain; if(p<=2) return "Whisper"; if(p<=4) return "Light"; if(p<=6) return "Medium"; if(p<=8) return "Hefty"; return "Brutal"; })()} — {addPain*10} pts
               </span>
             </div>
-            <div className="mt-3 flex items-center justify-between gap-[6px]">
+            <div className="mt-3 grid grid-cols-10 gap-1 sm:gap-1.5">
               {[1,2,3,4,5,6,7,8,9,10].map(n=>{
                 const active = n<=addPain;
                 const frac = n/10;
@@ -558,15 +558,14 @@ export default function ChoresScreen(props: any) {
                     key={n}
                     onClick={()=> setAddPain(n)}
                     aria-label={`Pain ${n}`}
-                    className="grid h-8 w-8 place-items-center rounded-full border transition-all active:scale-[0.92]"
+                    className="grid aspect-square w-full max-w-[36px] place-items-center rounded-full border transition-all active:scale-[0.92] justify-self-center"
                     style={{
                       borderColor: active ? "#E0CEB8" : "#E8DDCF",
                       background: active ? fill : "#FFFEFB",
                       boxShadow: active ? "0 1px 0 rgba(0,0,0,0.04)" : "none",
-                      minHeight:32, minWidth:32
                     }}
                   >
-                    <span className="h-[8px] w-[8px] rounded-full" style={{ background: active ? (n===addPain ? "#121214" : fill) : "#E8DDCF" }} />
+                    <span className="h-[9px] w-[9px] rounded-full" style={{ background: active ? (n===addPain ? "#121214" : fill) : "#E8DDCF" }} />
                   </button>
                 );
               })}

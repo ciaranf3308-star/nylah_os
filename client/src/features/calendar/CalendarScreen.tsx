@@ -443,30 +443,32 @@ function CalendarPageV2(props: any) {
     })();
     const sub = [loc, subStatus].filter(Boolean).join(" · ");
     return (
-      <button
-        onClick={()=> setActiveEvent(ev)}
-        className="w-full text-left flex items-stretch gap-0 rounded-[18px] border bg-[var(--card-bg)] overflow-hidden active:scale-[0.98] transition min-h-[64px] relative"
-        style={{ borderColor:"var(--border)", boxShadow:"0 8px 24px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.86)", paddingLeft:3 }}
-      >
-        <span className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-[18px]" style={{ background: leftRuleColor }} aria-hidden="true" />
-        <span className="flex flex-1 items-center gap-3 px-3.5 py-3 min-w-0 ml-[3px]">
-          <span className="flex flex-col items-center gap-1.5 shrink-0">
-            {/* time mono 12px Inter Tight */}
-            <span className="tabular-nums text-[12px] font-medium tracking-[0.02em] rounded-full px-2 py-0.5 border" style={{fontFamily:'Inter Tight, var(--font-ui)', color:'var(--muted)', background:'var(--chip-bg)', border:'1px solid var(--border)'}}>{timeMono}</span>
-            <span style={{background:leftRuleColor, boxShadow: isSoon?`0 0 0 4px ${leftRuleColor}22, 0 0 10px ${leftRuleColor}55`:'none'}} className={`h-[7px] w-[7px] rounded-full ${isSoon?"nylah-dot nylah-dot--urgent":""}`} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="flex items-center gap-1.5">
-              <span className="block text-[14px] font-semibold tracking-tight truncate" style={{color:'var(--text)', fontFamily:'var(--font-ui)'}}>{ev.title}</span>
+      <div className="w-full flex items-stretch gap-1.5">
+        <button
+          onClick={()=> setActiveEvent(ev)}
+          className="flex-1 text-left flex items-stretch gap-0 rounded-[18px] border bg-[var(--card-bg)] overflow-hidden active:scale-[0.98] transition min-h-[64px] relative"
+          style={{ borderColor:"var(--border)", boxShadow:"0 8px 24px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.86)", paddingLeft:3 }}
+        >
+          <span className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-[18px]" style={{ background: leftRuleColor }} aria-hidden="true" />
+          <span className="flex flex-1 items-center gap-3 px-3.5 py-3 min-w-0 ml-[3px]">
+            <span className="flex flex-col items-center gap-1.5 shrink-0">
+              <span className="tabular-nums text-[12px] font-medium tracking-[0.02em] rounded-full px-2 py-0.5 border" style={{fontFamily:'Inter Tight, var(--font-ui)', color:'var(--muted)', background:'var(--chip-bg)', border:'1px solid var(--border)'}}>{timeMono}</span>
+              <span style={{background:leftRuleColor, boxShadow: isSoon?`0 0 0 4px ${leftRuleColor}22, 0 0 10px ${leftRuleColor}55`:'none'}} className={`h-[7px] w-[7px] rounded-full ${isSoon?"nylah-dot nylah-dot--urgent":""}`} />
             </span>
-            <span className="mt-0.5 flex items-center gap-1.5">
-              <span className="block text-[11px] truncate max-w-[150px]" style={{color:'var(--muted)'}}>{sub || forLabel}</span>
-              {isPending && <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold border" style={{background:'var(--chip-bg)', color:'var(--text)', borderColor:'var(--border)'}}><span style={{color:'var(--accent)'}}>✦</span> Needs you</span>}
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-1.5">
+                <span className="block text-[14px] font-semibold tracking-tight truncate" style={{color:'var(--text)', fontFamily:'var(--font-ui)'}}>{ev.title}</span>
+              </span>
+              <span className="mt-0.5 flex items-center gap-1.5">
+                <span className="block text-[11px] truncate max-w-[150px]" style={{color:'var(--muted)'}}>{sub || forLabel}</span>
+                {isPending && <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold border" style={{background:'var(--chip-bg)', color:'var(--text)', borderColor:'var(--border)'}}><span style={{color:'var(--accent)'}}>✦</span> Needs you</span>}
+              </span>
             </span>
+            <span className="shrink-0 rounded-full h-8 w-8 grid place-items-center border text-[12px]" style={{background:'var(--chip-bg)', borderColor:'var(--border)', color:'var(--muted)'}} aria-hidden="true">›</span>
           </span>
-          <span className="shrink-0 rounded-full h-8 w-8 grid place-items-center border text-[12px]" style={{background:'var(--chip-bg)', borderColor:'var(--border)', color:'var(--muted)'}} aria-hidden="true">›</span>
-        </span>
-      </button>
+        </button>
+        <button onClick={(e)=>{ e.stopPropagation(); setConfirmDialog({title:"Delete event?", msg:`Remove "${ev.title}" for both?`, onConfirm:()=>{ removeEvent(ev.id); setConfirmDialog(null); }}); }} className="shrink-0 self-center h-[44px] w-[44px] grid place-items-center rounded-full border bg-[var(--card-bg)] text-[14px] active:scale-95" style={{borderColor:"var(--border)"}} aria-label={`Delete ${ev.title}`} title="Delete">🗑</button>
+      </div>
     );
   };
 
@@ -803,10 +805,11 @@ function CalendarPageV2(props: any) {
               )}
 
               <div className="flex gap-2 pt-1">
-                <button onClick={()=> { setEditing(ev); setActiveEvent(null); }} className="flex-1 rounded-full border bg-[var(--card-bg)] h-[36px] text-[11px]" style={{borderColor:"var(--border)"}}>Edit</button>
-                <button onClick={()=> togglePin(ev)} className="flex-1 rounded-full border bg-[var(--card-bg)] h-[36px] text-[11px]" style={{borderColor:"var(--border)"}}>{(ev as any).pinned ? "Unpin" : "Pin countdown"}</button>
-                <button onClick={()=> setConfirmDialog({title:"Cancel event?", msg:"It stays visible as cancelled.", onConfirm:()=>{ updateEvent(ev.id, { status:"cancelled" as any }); setActiveEvent(null); setConfirmDialog(null); }})} className="flex-1 rounded-full border bg-[var(--card-bg)] h-[36px] text-[11px] text-[#B91C1C]" style={{borderColor:"var(--border)"}}>Cancel</button>
+                <button onClick={()=> { setEditing(ev); setActiveEvent(null); }} className="flex-1 rounded-full border bg-[var(--card-bg)] h-[36px] text-[11px] font-medium" style={{borderColor:"var(--border)"}}>Edit</button>
+                <button onClick={()=> togglePin(ev)} className="flex-1 rounded-full border bg-[var(--card-bg)] h-[36px] text-[11px]" style={{borderColor:"var(--border)"}}>{(ev as any).pinned ? "Unpin" : "Pin"}</button>
+                <button onClick={()=> setConfirmDialog({title:"Cancel event?", msg:"It stays visible as cancelled.", onConfirm:()=>{ updateEvent(ev.id, { status:"cancelled" as any }); setActiveEvent(null); setConfirmDialog(null); }})} className="flex-1 rounded-full border bg-[var(--card-bg)] h-[36px] text-[11px] text-[#6B7280]" style={{borderColor:"var(--border)"}}>Cancel</button>
               </div>
+              <button onClick={()=> setConfirmDialog({title:"Delete event?", msg:"This removes it for both of you. Can't be undone.", onConfirm:()=>{ removeEvent(ev.id); setActiveEvent(null); setConfirmDialog(null); }})} className="w-full rounded-full border border-[#FECACA] bg-[#FEF2F2] h-[44px] text-[12px] font-semibold text-[#B91C1C] flex items-center justify-center gap-1.5 active:scale-[0.98]">🗑 Delete event</button>
             </div>
           );
         })()}
@@ -824,7 +827,7 @@ function CalendarPageV2(props: any) {
               setEvents((prev:any)=> prev.map((x:any)=> x.id===editing.id ? {...x, ...ev, id: x.id} : x));
               setEditing(null);
             }} currentUser={currentUser} selectedDate={selected} initialEvent={editing} />
-            <button onClick={()=> setConfirmDialog({title:"Delete proposal?", onConfirm:()=>{ removeEvent(editing!.id); setEditing(null); setConfirmDialog(null); }})} className="w-full rounded-full border bg-[var(--card-bg)] py-2.5 text-[11px] text-[#B91C1C] min-h-[44px]" style={{borderColor:"var(--border)"}}>Delete proposal</button>
+            <button onClick={()=> setConfirmDialog({title:"Delete event?", msg:"This removes it for both of you.", onConfirm:()=>{ removeEvent(editing!.id); setEditing(null); setConfirmDialog(null); }})} className="w-full rounded-full border border-[#FECACA] bg-[#FEF2F2] py-3 text-[12px] font-semibold text-[#B91C1C] min-h-[48px] flex items-center justify-center gap-1.5">🗑 Delete event</button>
           </div>
         )}
       </BottomSheet>

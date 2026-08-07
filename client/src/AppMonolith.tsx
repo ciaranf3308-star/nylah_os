@@ -4137,10 +4137,11 @@ function CalendarPageV2({
               )}
 
               <div className="flex gap-2 pt-1">
-                <button onClick={()=> { setEditing(ev); setActiveEvent(null); }} className="flex-1 rounded-full border bg-[var(--card-bg)] h-[36px] text-[11px]" style={{borderColor:"var(--border)"}}>Edit</button>
-                <button onClick={()=> togglePin(ev)} className="flex-1 rounded-full border bg-[var(--card-bg)] h-[36px] text-[11px]" style={{borderColor:"var(--border)"}}>{(ev as any).pinned ? "Unpin" : "Pin countdown"}</button>
-                <button onClick={()=> setConfirmDialog({title:"Cancel event?", msg:"It stays visible as cancelled.", onConfirm:()=>{ updateEvent(ev.id, { status:"cancelled" as any }); setActiveEvent(null); setConfirmDialog(null); }})} className="flex-1 rounded-full border bg-[var(--card-bg)] h-[36px] text-[11px] text-[#B91C1C]" style={{borderColor:"var(--border)"}}>Cancel</button>
+                <button onClick={()=> { setEditing(ev); setActiveEvent(null); }} className="flex-1 rounded-full border bg-[var(--card-bg)] h-[36px] text-[11px] font-medium" style={{borderColor:"var(--border)"}}>Edit</button>
+                <button onClick={()=> togglePin(ev)} className="flex-1 rounded-full border bg-[var(--card-bg)] h-[36px] text-[11px]" style={{borderColor:"var(--border)"}}>{(ev as any).pinned ? "Unpin" : "Pin"}</button>
+                <button onClick={()=> setConfirmDialog({title:"Cancel event?", msg:"It stays visible as cancelled.", onConfirm:()=>{ updateEvent(ev.id, { status:"cancelled" as any }); setActiveEvent(null); setConfirmDialog(null); }})} className="flex-1 rounded-full border bg-[var(--card-bg)] h-[36px] text-[11px] text-[#6B7280]" style={{borderColor:"var(--border)"}}>Cancel</button>
               </div>
+              <button onClick={()=> setConfirmDialog({title:"Delete event?", msg:"This removes it for both of you. Can't be undone.", onConfirm:()=>{ removeEvent(ev.id); setActiveEvent(null); setConfirmDialog(null); }})} className="w-full rounded-full border border-[#FECACA] bg-[#FEF2F2] h-[44px] text-[12px] font-semibold text-[#B91C1C] flex items-center justify-center gap-1.5">🗑 Delete event</button>
             </div>
           );
         })()}
@@ -4158,7 +4159,7 @@ function CalendarPageV2({
               setEvents((prev:any)=> prev.map((x:any)=> x.id===editing.id ? {...x, ...ev, id: x.id} : x));
               setEditing(null);
             }} currentUser={currentUser} selectedDate={selected} initialEvent={editing} />
-            <button onClick={()=> setConfirmDialog({title:"Delete proposal?", onConfirm:()=>{ removeEvent(editing!.id); setEditing(null); setConfirmDialog(null); }})} className="w-full rounded-full border bg-[var(--card-bg)] py-2.5 text-[11px] text-[#B91C1C] min-h-[44px]" style={{borderColor:"var(--border)"}}>Delete proposal</button>
+            <button onClick={()=> setConfirmDialog({title:"🗑 Delete event?", onConfirm:()=>{ removeEvent(editing!.id); setEditing(null); setConfirmDialog(null); }})} className="w-full rounded-full border bg-[var(--card-bg)] py-2.5 text-[11px] text-[#B91C1C] min-h-[44px]" style={{borderColor:"var(--border)"}}>🗑 Delete event</button>
           </div>
         )}
       </BottomSheet>

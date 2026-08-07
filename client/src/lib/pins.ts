@@ -5,14 +5,28 @@
 
 export type PersonKey = "aisling" | "ciaran";
 
+const KNOWN_EMPTY_MIGRATIONS_PIN: Record<string,string> = {
+  "nylah-98jylh": "ash-ciaran-2026",
+  "nylah-fbkf2m": "ash-ciaran-2026",
+  "98jylh": "ash-ciaran-2026",
+  "fbkf2m": "ash-ciaran-2026",
+}
+
 function getHouseholdIdForPins(): string {
   try {
     const custom = localStorage.getItem("couple_v1_household_id");
-    if (custom && custom.trim().length >= 3) return custom.trim();
+    if (custom && custom.trim().length >= 3) {
+      const t = custom.trim();
+      const low = t.toLowerCase();
+      if (KNOWN_EMPTY_MIGRATIONS_PIN[low] || KNOWN_EMPTY_MIGRATIONS_PIN[t]) return (KNOWN_EMPTY_MIGRATIONS_PIN[low] || KNOWN_EMPTY_MIGRATIONS_PIN[t]) as string;
+      return t;
+    }
     const legacyCode = localStorage.getItem("couple_v1_household_code");
     if (legacyCode && legacyCode.trim().length >= 3) {
       const c = legacyCode.trim().toLowerCase();
-      return c.startsWith("nylah-") ? c : `nylah-${c}`;
+      const asId = c.startsWith("nylah-") ? c : `nylah-${c}`;
+      if (KNOWN_EMPTY_MIGRATIONS_PIN[asId] || KNOWN_EMPTY_MIGRATIONS_PIN[c]) return (KNOWN_EMPTY_MIGRATIONS_PIN[asId] || KNOWN_EMPTY_MIGRATIONS_PIN[c]) as string;
+      return asId;
     }
   } catch {}
   return "ash-ciaran-2026";

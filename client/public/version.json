@@ -1,1 +1,1 @@
-{"build":"v120-tabs-fix","builtAt":"2026-08-07T10:50:00.000Z","changelog":"V120 tabs guard fix","code":120,"mandatory":true,"timestamp":"2026-08-07T10:50:00.000Z","version":"120.0.0"}
+{"build":"v121-settings-debug","builtAt":"2026-08-07T12:07:00.000Z","changelog":"V121 settings debug + auto-migrate empty houses + force pull + auto sync after login","code":121,"mandatory":false,"timestamp":"2026-08-07T12:07:00.000Z","version":"121.0.0"}

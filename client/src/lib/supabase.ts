@@ -4,14 +4,43 @@ export const TOKEN = "ash-ciaran-2026"
 export const TABLE = "couple_data"
 export const ROW_ID = "ash-ciaran-2026"
 
+const KNOWN_EMPTY_MIGRATIONS: Record<string,string> = {
+  "nylah-98jylh": "ash-ciaran-2026",
+  "nylah-fbkf2m": "ash-ciaran-2026",
+  "98jylh": "ash-ciaran-2026",
+  "fbkf2m": "ash-ciaran-2026",
+}
+
 export function getEffectiveRowId(): string {
   try {
     const custom = localStorage.getItem("couple_v1_household_id")
-    if (custom && custom.trim().length >= 3) return custom.trim()
+    if (custom && custom.trim().length >= 3) {
+      const t = custom.trim()
+      const low = t.toLowerCase()
+      if (KNOWN_EMPTY_MIGRATIONS[low] || KNOWN_EMPTY_MIGRATIONS[t]) {
+        const target = (KNOWN_EMPTY_MIGRATIONS[low] || KNOWN_EMPTY_MIGRATIONS[t]) as string
+        console.warn(`[household] auto-migrating empty test house ${t} -> ${target}`)
+        try { localStorage.setItem("couple_v1_household_id", target); localStorage.setItem("couple_v1_household_migrated_from", t); localStorage.setItem("couple_v1_household_migrated_at", new Date().toISOString()) } catch {}
+        return target
+      }
+      if (low.startsWith("nylah-") && (low === "nylah-98jylh" || low === "nylah-fbkf2m")) {
+        console.warn(`[household] migrating empty ${t} -> ${ROW_ID}`)
+        try { localStorage.setItem("couple_v1_household_id", ROW_ID) } catch {}
+        return ROW_ID
+      }
+      return t
+    }
     const legacyCode = localStorage.getItem("couple_v1_household_code")
     if (legacyCode && legacyCode.trim().length >= 3) {
       const c = legacyCode.trim().toLowerCase()
-      return c.startsWith("nylah-") ? c : `nylah-${c}`
+      const asId = c.startsWith("nylah-") ? c : `nylah-${c}`
+      if (KNOWN_EMPTY_MIGRATIONS[asId] || KNOWN_EMPTY_MIGRATIONS[c]) {
+        const target = (KNOWN_EMPTY_MIGRATIONS[asId] || KNOWN_EMPTY_MIGRATIONS[c]) as string
+        console.warn(`[household] auto-migrating legacy code ${c} -> ${target}`)
+        try { localStorage.setItem("couple_v1_household_id", target); localStorage.removeItem("couple_v1_household_code") } catch {}
+        return target
+      }
+      return asId
     }
   } catch {}
   return ROW_ID

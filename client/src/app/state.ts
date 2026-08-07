@@ -897,6 +897,90 @@ export function useAppState() {
     return ()=>{ clearInterval(i); document.removeEventListener("visibilitychange", onVis); };
   }, [app.setNowMs]);
 
+  // v121 auto-migrate empty test houses -> ash-ciaran-2026 + force resync after PIN login
+  useEffect(()=>{
+    try{
+      const bad = ["nylah-98jylh","nylah-fbkf2m","98jylh","fbkf2m"];
+      const cur = localStorage.getItem("couple_v1_household_id");
+      if(cur && bad.includes(cur.trim().toLowerCase())){
+        console.warn("[v121] migrating",cur,"-> ash-ciaran-2026");
+        localStorage.setItem("couple_v1_household_id","ash-ciaran-2026");
+        localStorage.setItem("couple_v1_household_migrated_from",cur);
+        localStorage.setItem("couple_v1_household_migrated_at", new Date().toISOString());
+        try{ localStorage.removeItem("couple_v1_household_code"); }catch{}
+      }
+      const code = localStorage.getItem("couple_v1_household_code");
+      if(code && bad.includes(code.trim().toLowerCase())){
+        localStorage.setItem("couple_v1_household_id","ash-ciaran-2026");
+        try{ localStorage.removeItem("couple_v1_household_code"); }catch{}
+      }
+    }catch{}
+    // v121 build marker
+    try{ localStorage.setItem("couple_v1_build","v121-settings-debug"); }catch{}
+    try{ (window as any).__NYLAH_VERSION__ = "v121-settings-debug"; }catch{}
+  },[]);
+
+  // v121 auto-sync after login (PinScreen sets force_resync flag)
+  useEffect(()=>{
+    let cancelled=false;
+    const maybePull = async ()=>{
+      try{
+        const flag = localStorage.getItem("couple_v1_force_resync");
+        if(!flag) return;
+        // if logged in and not cancelled
+        if(!app.currentUser) return;
+        console.log("[v121] force_resync after login", flag);
+        try{
+          const mod = await import("../lib/remoteSync");
+          const data = await mod.remoteLoad();
+          if(cancelled) return;
+          if(data){
+            if(Array.isArray(data.chores) && data.chores.length>0) { try{ v1.setChoresRaw(data.chores as any); }catch{} }
+            if(Array.isArray(data.calendar) && data.calendar.length>0) { try{ v1.setCalendarRaw(data.calendar as any); }catch{} }
+            if(Array.isArray(data.shopping) && data.shopping.length>0) { try{ v1.setShoppingRaw(data.shopping as any); }catch{} }
+            if(Array.isArray(data.notes) && data.notes.length>0) { try{ v1.setNotesRaw(data.notes as any); }catch{} }
+            try{ localStorage.setItem("couple_v1_last_sync", data.updated_at||new Date().toISOString()); }catch{}
+            console.log("[v121] auto-pull ok", {c:data.chores?.length, cal:data.calendar?.length});
+          }
+        }catch{}
+        try{ localStorage.removeItem("couple_v1_force_resync"); }catch{}
+      }catch{}
+    };
+    maybePull();
+    // also listen for custom event from PinScreen
+    const onForce = ()=> maybePull();
+    try{ window.addEventListener("couple-force-resync" as any, onForce as any); }catch{}
+    // when currentUser changes to truthy, trigger
+    if(app.currentUser){
+      const tid = setTimeout(()=> maybePull(), 400);
+      return ()=>{ clearTimeout(tid); try{ window.removeEventListener("couple-force-resync" as any, onForce as any);}catch{} };
+    }
+    return ()=>{ cancelled=true; try{ window.removeEventListener("couple-force-resync" as any, onForce as any);}catch{} };
+  }, [app.currentUser, v1.setChoresRaw, v1.setCalendarRaw, v1.setShoppingRaw, v1.setNotesRaw]);
+
+  // v121 initial remote load if local empty but remote has data — on mount when logged in
+  useEffect(()=>{
+    if(!app.currentUser) return;
+    let cancelled=false;
+    (async()=>{
+      try{
+        const totalLocal = (v1.choresRaw?.length||0)+(v1.calendarRaw?.length||0)+(v1.shoppingRaw?.length||0)+(v1.notesRaw?.length||0);
+        if(totalLocal>0) return;
+        const data = await remoteLoad();
+        if(cancelled||!data) return;
+        const totalRemote = (data.chores?.length||0)+(data.calendar?.length||0)+(data.shopping?.length||0)+(data.notes?.length||0);
+        if(totalRemote===0) return;
+        console.log("[v121] initial remote load rescuing empty local", totalRemote);
+        if(Array.isArray(data.chores) && data.chores.length>0) try{ v1.setChoresRaw(data.chores as any);}catch{}
+        if(Array.isArray(data.calendar) && data.calendar.length>0) try{ v1.setCalendarRaw(data.calendar as any);}catch{}
+        if(Array.isArray(data.shopping) && data.shopping.length>0) try{ v1.setShoppingRaw(data.shopping as any);}catch{}
+        if(Array.isArray(data.notes) && data.notes.length>0) try{ v1.setNotesRaw(data.notes as any);}catch{}
+      }catch{}
+    })();
+    return ()=>{ cancelled=true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [app.currentUser]);
+
   // One unified truthful sync signal — replaces multiple leaked listeners – V16 less aggressive (verbatim from V1AppShell)
   useEffect(()=>{
     const onOnline = async ()=>{

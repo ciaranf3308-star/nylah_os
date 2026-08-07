@@ -119,6 +119,10 @@ export function PinScreen({ onSelect, onPick }: { onSelect: (k: PersonKey)=>void
           localStorage.setItem("couple_v1_remember_user", remember?"1":"0");
           if (!remember) { try{ sessionStorage.setItem("couple_v1_ephemeral_session","1"); }catch{} }
           else { try{ sessionStorage.removeItem("couple_v1_ephemeral_session"); }catch{} }
+          // v121 auto-sync: flag resync so App state pulls remote after login
+          try{ localStorage.setItem("couple_v1_force_resync", String(Date.now())); }catch{}
+          try{ localStorage.setItem("couple_v1_last_login_pin_at", new Date().toISOString()); }catch{}
+          try{ (window as any).__NYLAH_FORCE_RESYNC__ = Date.now(); }catch{}
         }catch{}
         select(who as PersonKey);
       } else {

@@ -1113,6 +1113,102 @@ export function useAppState() {
   // For pure composition we re-expose the effectful sync: actual syncFromRemote logic is in original file 5400-6366.
   // To keep zero-logic-change and compilable, we delegate to a dedicated hook with identical apply logic extracted elsewhere; here we keep reference to raw setters.
 
+  // ---- V156 hotfix: robust shared-space sync ----
+  // If user lost hid (shows –) we recovered it via getEffectiveRowId fallback to ash-ciaran-2026.
+  // Now ensure remote data is merged into local even when local is non-empty.
+  useEffect(()=>{
+    if (!app.currentUser) return;
+    let cancelled=false;
+    const doLoad = async ()=>{
+      try {
+        const data = await remoteLoad();
+        if (cancelled || !data) return;
+        // Don't overwrite local if remote empty but local has data (prevents wipe)
+        try {
+          const totalRemote = (data.chores?.length||0)+(data.calendar?.length||0)+(data.shopping?.length||0)+(data.notes?.length||0);
+          if (totalRemote===0) return;
+          // Merge helper — same as remoteSync mergeById (latest wins)
+          const { mergeById } = await import("../lib/remoteSync");
+          if (Array.isArray(data.calendar) && data.calendar.length>0) {
+            try {
+              const local = v1.calendarRaw as any[];
+              const merged = mergeById(local||[], data.calendar as any);
+              if (merged.length !== local.length || JSON.stringify(merged)!==JSON.stringify(local)) {
+                if (!v1.applyingRemoteRef.current) {
+                  v1.applyingRemoteRef.current = true;
+                  try { v1.setCalendarRaw(merged as any); } finally { setTimeout(()=>{ v1.applyingRemoteRef.current=false }, 200); }
+                }
+              }
+            } catch {}
+          }
+          if (Array.isArray(data.notes) && data.notes.length>0) {
+            try {
+              const local = v1.notesRaw as any[];
+              const { mergeById: m2 } = await import("../lib/remoteSync");
+              const merged = m2(local||[], data.notes as any);
+              if (merged.length !== local.length) {
+                if (!v1.applyingRemoteRef.current) {
+                  v1.applyingRemoteRef.current = true;
+                  try { v1.setNotesRaw(merged as any); } finally { setTimeout(()=>{ v1.applyingRemoteRef.current=false }, 200); }
+                }
+              }
+            } catch {}
+          }
+          if (Array.isArray(data.chores) && data.chores.length>0) {
+            try {
+              const local = v1.choresRaw as any[];
+              const { mergeById: m3 } = await import("../lib/remoteSync");
+              const merged = m3(local||[], data.chores as any);
+              if (merged.length>0) v1.setChoresRaw(merged as any);
+            } catch {}
+          }
+          if (Array.isArray(data.shopping) && data.shopping.length>0) {
+            try {
+              const local = v1.shoppingRaw as any[];
+              const { mergeById: m4 } = await import("../lib/remoteSync");
+              const merged = m4(local||[], data.shopping as any);
+              v1.setShoppingRaw(merged as any);
+            } catch {}
+          }
+        } catch {}
+      } catch {}
+    };
+    doLoad();
+    let unsub: ()=>void = ()=>{};
+    try {
+      unsub = subscribeRemote((rd:any)=>{
+        if (cancelled) return;
+        try {
+          if (rd.updated_at) {
+            try { localStorage.setItem('couple_v1_last_sync', rd.updated_at); } catch {}
+          }
+          // Apply remote push immediately (realtime)
+          const doApply = async ()=>{
+            const { mergeById } = await import("../lib/remoteSync");
+            if (Array.isArray(rd.calendar)) {
+              const merged = mergeById(v1.calendarRaw||[], rd.calendar);
+              v1.setCalendarRaw(merged as any);
+            }
+            if (Array.isArray(rd.notes)) {
+              const merged = mergeById(v1.notesRaw||[], rd.notes);
+              v1.setNotesRaw(merged as any);
+            }
+            if (Array.isArray(rd.chores)) {
+              const merged = mergeById(v1.choresRaw||[], rd.chores);
+              v1.setChoresRaw(merged as any);
+            }
+            if (Array.isArray(rd.shopping)) {
+              const merged = mergeById(v1.shoppingRaw||[], rd.shopping);
+              v1.setShoppingRaw(merged as any);
+            }
+          };
+          doApply();
+        } catch {}
+      });
+    } catch {}
+    return ()=>{ cancelled=true; try{ unsub(); }catch{} };
+  }, [app.currentUser, v1.choresRaw?.length, v1.calendarRaw?.length]); // re-run when user logs in
+
   // Return combined
   return {
     // standalone

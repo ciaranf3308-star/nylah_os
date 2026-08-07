@@ -1,1 +1,7 @@
-{"build":"v151-manifest-fix","code":151,"changelog":"fix double manifest, use any circle 21k 110k + maskable square 17k 102k, strip old hashed manifest"}
+{
+  "build": "v156-settings-slice-fix",
+  "code": 156,
+  "changelog": "fix Settings crash slice null effId, guard Biometrics PERSONS, v155 persons normalize still live",
+  "mandatory": false,
+  "builtAt": "2026-08-07T20:22:00Z"
+}

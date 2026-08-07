@@ -132,11 +132,14 @@ export type ShoppingCategory =
 
 export type ShoppingFrequency = "daily" | "every-2d" | "weekly" | "biweekly" | "monthly" | "as-needed";
 
+export type ShoppingTrip = "grocery" | "online" | "personal" | "want";
+
 export type ShoppingItemV2 = {
   id: string;
   item: string;
   qty: number;
   cat: ShoppingCategory;
+  trip?: ShoppingTrip;
   purchased: boolean;
   addedBy: PersonKey;
   createdAt: string;

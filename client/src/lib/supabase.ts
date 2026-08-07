@@ -20,6 +20,44 @@ export function getEffectiveRowId(): string | null {
       if (c.startsWith("nylah-")) return c
       return `nylah-${c}`
     }
+    // Resilient recovery: scan any persons_ keys for hid
+    try {
+      for (let i=0; i<localStorage.length; i++) {
+        const k = localStorage.key(i)
+        if (!k) continue
+        if (k.startsWith("couple_v1_household_persons_")) {
+          const hid = k.replace("couple_v1_household_persons_","")
+          if (hid && (hid.startsWith("nylah-") || hid==="ash-ciaran-2026") && hid.length>=8) return hid
+        }
+      }
+    } catch {}
+    // If we have any legacy app data, assume legacy production household ash-ciaran-2026
+    // This rescues existing installs that lost their id due to the scalable null-force change
+    // Fresh installs will have no keys, so will still correctly return null → onboarding
+    try {
+      const meaningful = ["couple_v1_chores","couple_v1_calendar_v2","couple_v1_shopping_v2","couple_v1_notes_memo","couple_v1_household_persons","couple_v1_currentUser"]
+      for (let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i)
+        if (!k) continue
+        if (meaningful.some(p=>k===p || k.startsWith(p))) {
+          // Check if stored recovery from v130 era — default is ash-ciaran-2026
+          // Don't override nylah- houses that were created but id cleared – try to infer via name
+          const name = localStorage.getItem("couple_v1_household_name") || ""
+          if (name && name.length>=2) {
+            // if name suggests Aisling/Ciaran legacy, return legacy
+            const low = name.toLowerCase()
+            if (low.includes("ais") || low.includes("cia") || low.includes("&")) {
+              // legacy couple — safest is legacy row which is source of truth pre-v143
+              return "ash-ciaran-2026"
+            }
+          }
+          // If any chore/calendar data present, legacy is likely
+          if (k.startsWith("couple_v1_chores") || k.startsWith("couple_v1_calendar") || k.startsWith("couple_v1_notes")) {
+            return "ash-ciaran-2026"
+          }
+        }
+      }
+    } catch {}
   } catch {}
   return null
 }

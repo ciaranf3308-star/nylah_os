@@ -51,6 +51,36 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
   const canContinueEmail = isValidEmail(recoveryEmail);
   const canContinuePins = /^\d{4}$/.test(youPin) && /^\d{4}$/.test(partnerPin) && youPin!==partnerPin;
 
+  const normalizePersons = (persons:any, householdName:string, hid?:string)=>{
+    if (!Array.isArray(persons) || persons.length===0) persons = [{key:"person_1",name:"Partner 1"},{key:"person_2",name:"Partner 2"}];
+    const isPlaceholder = (n:string)=> !n || n==="Partner 1" || n==="Partner 2" || n.toLowerCase().includes("partner");
+    const allPlaceholder = persons.every((p:any)=> isPlaceholder(p?.name));
+    if (allPlaceholder && householdName && householdName.includes("&")) {
+      const parts = householdName.split("&").map((s:string)=>s.trim()).filter(Boolean);
+      if (parts.length>=2) {
+        const [a,b]=parts;
+        if (hid==='ash-ciaran-2026') {
+          return [{key:"aisling",name:a,initial:a.slice(0,1).toUpperCase()},{key:"ciaran",name:b,initial:b.slice(0,1).toUpperCase()}];
+        }
+        // detect legacy pins: if hid is ash-ciaran keep legacy keys else person_1/2
+        const keys = hid==='ash-ciaran-2026' ? ["aisling","ciaran"] : ["person_1","person_2"];
+        return [
+          {key:keys[0],name:a,initial:a.slice(0,1).toUpperCase()},
+          {key:keys[1],name:b,initial:b.slice(0,1).toUpperCase()},
+        ];
+      }
+    }
+    // fix legacy key mapping: if hid is ash-ciaran but keys are person_1/2, map back
+    if (hid==='ash-ciaran-2026') {
+      return persons.map((p:any,i:number)=>{
+        const realKey = i===0?"aisling":"ciaran";
+        const n = p?.name && !isPlaceholder(p.name) ? p.name : (i===0?"Aisling":"Ciaran");
+        return {key:realKey,name:n,initial:(n.slice(0,1).toUpperCase())};
+      });
+    }
+    return persons;
+  };
+
   const startCreate = () => {
     setError("");
     if (!canContinueNames) { setError("Add both names"); return; }
@@ -197,7 +227,8 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
           const row = Array.isArray(rpcData) ? rpcData[0] : rpcData;
           if (row) {
             const hid = row.id || row.household_id || hidCandidates[0];
-            const persons = row.persons || row.meta?.persons || [{key:"person_1", name:"Partner 1"},{key:"person_2", name:"Partner 2"}];
+            const rawPersons = row.persons || row.meta?.persons || [{key:"person_1", name:"Partner 1"},{key:"person_2", name:"Partner 2"}];
+            const persons = normalizePersons(rawPersons, row.name || row.household_name || "", hid);
             data = { id: hid, meta: { householdName: row.name || row.household_name || "You & Partner", persons, inviteCode: code } };
           }
         }
@@ -241,7 +272,10 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
       }
       const meta = (data as any).meta;
       setJoinMeta(meta);
-      const persons = meta?.persons || [{key:"person_1", name:"Partner 1"}, {key:"person_2", name:"Partner 2"}];
+      const rawPersons = meta?.persons || [{key:"person_1", name:"Partner 1"}, {key:"person_2", name:"Partner 2"}];
+      const mixedHid = (data as any).id || hidCandidates[0] || "";
+      const mixedName = (meta as any)?.householdName || (data as any)?.householdName || "";
+      const persons = normalizePersons(rawPersons, mixedName, mixedHid);
       // Ensure keys are sanitized to person_1 / person_2 or legacy aisling/ciaran
       const safePersons = persons.map((p:any, idx:number)=> ({
         key: (p.key && typeof p.key==="string" ? p.key : (idx===0?"person_1":"person_2")),
@@ -344,8 +378,11 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
       }
       if (!found) { setError("No house found for that email — check spelling or use your code"); setJoining(false); return; }
       const hid = found.id; const code = found.code_ret || found.code || "";
-      setHouseholdId(hid); setInviteCode(code); setJoinMeta({ householdName: found.name || found.household_name, persons: found.persons });
-      setJoinPersons(found.persons || [{key:"person_1",name:"Partner 1"},{key:"person_2",name:"Partner 2"}]);
+      const rawPersons = found.persons;
+      const householdName = found.name || found.household_name || "";
+      const safePersons = normalizePersons(rawPersons, householdName, hid);
+      setHouseholdId(hid); setInviteCode(code); setJoinMeta({ householdName, persons: safePersons });
+      setJoinPersons(safePersons);
       setJoining(false);
       setStep("join_pick");
     } catch (e:any) {

@@ -1,1 +1,7 @@
-{"build":"v139-beirt-dark-deck","code":139,"changelog":"fix deck white-on-white dark mode","mandatory":false}
+{
+  "build": "v155-fix-email-persons",
+  "code": 155,
+  "changelog": "fix email recovery returning Partner 1/2 -> real names Aisling/Ciaran, normalize persons from household name",
+  "mandatory": false,
+  "builtAt": "2026-08-07T19:14:36.369568Z"
+}

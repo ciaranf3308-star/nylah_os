@@ -167,38 +167,52 @@ function FridgePage(props: FridgeProps | any) {
 
 
             {/* ——— fridge hero – pixel perfect to your double phone ref ——— */}
-      <div className="relative overflow-hidden rounded-[28px] px-6 pt-4 pb-6 dark:hero-dark" style={{ background: "#FDF6EF", minHeight: 220, boxShadow:"0 8px 28px rgba(60,40,20,0.06), inset 0 1px 0 rgba(255,255,255,0.9)" }}>
+      <div className="relative overflow-hidden rounded-[28px] px-6 pt-4 pb-6" style={
+        (theme as any)?.id === 'ink' || (theme as any)?.name?.toLowerCase().includes('charcoal')
+        ? { background: "#1B1E22", minHeight: 220, boxShadow:"0 8px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)" }
+        : { background: "#FDF6EF", minHeight: 220, boxShadow:"0 8px 28px rgba(60,40,20,0.06), inset 0 1px 0 rgba(255,255,255,0.9)" }
+      }>
         {/* perfect circles - match goal mock */}
-        <div className="pointer-events-none absolute -right-[18px] -top-[28px] h-[168px] w-[168px] rounded-full" style={{ background:"#F9DCC0", opacity:0.95 }} />
-        <div className="pointer-events-none absolute right-[28px] top-[36px] h-[112px] w-[112px] rounded-full" style={{ background:"#DDE8DC", opacity:0.95 }} />
-        <div className="pointer-events-none absolute right-[92px] top-[8px] h-[64px] w-[64px] rounded-full" style={{ background:"#EBCFB3", opacity:0.88 }} />
+        {(theme as any)?.id === 'ink' || (theme as any)?.name?.toLowerCase().includes('charcoal') ? (
+          <>
+            <div className="pointer-events-none absolute -right-[18px] -top-[28px] h-[168px] w-[168px] rounded-full" style={{ background:"#3A2A22", opacity:0.92 }} />
+            <div className="pointer-events-none absolute right-[28px] top-[36px] h-[112px] w-[112px] rounded-full" style={{ background:"#2B3330", opacity:0.88 }} />
+            <div className="pointer-events-none absolute right-[92px] top-[8px] h-[64px] w-[64px] rounded-full" style={{ background:"#4A352E", opacity:0.75 }} />
+          </>
+        ) : (
+          <>
+            <div className="pointer-events-none absolute -right-[18px] -top-[28px] h-[168px] w-[168px] rounded-full" style={{ background:"#F9DCC0", opacity:0.95 }} />
+            <div className="pointer-events-none absolute right-[28px] top-[36px] h-[112px] w-[112px] rounded-full" style={{ background:"#DDE8DC", opacity:0.95 }} />
+            <div className="pointer-events-none absolute right-[92px] top-[8px] h-[64px] w-[64px] rounded-full" style={{ background:"#EBCFB3", opacity:0.88 }} />
+          </>
+        )}
         {/* faint leaf shadow top center */}
-        <div className="pointer-events-none absolute left-[46%] top-[4px] h-[28px] w-[88px] rotate-[-10deg] opacity-[0.09]" style={{ background:"radial-gradient(ellipse at 50% 50%, #5A5A3A 0%, transparent 70%)" }} />
+        <div className="pointer-events-none absolute left-[46%] top-[4px] h-[28px] w-[88px] rotate-[-10deg]" style={{ opacity: (theme as any)?.id==='ink'? 0.06 : 0.09, background:"radial-gradient(ellipse at 50% 50%, #5A5A3A 0%, transparent 70%)" }} />
 
         {/* mugs / tray / vase – flush bottom edge */}
         <img
           src="./fridge-mugs-transparent.png"
           alt=""
           className="pointer-events-none absolute select-none"
-          style={{ right:-8, bottom:0, width:196, height:"auto", objectFit:"contain", filter:"drop-shadow(0 10px 18px rgba(80,52,32,0.18))" }}
+          style={{ right:-8, bottom:0, width:196, height:"auto", objectFit:"contain", filter: (theme as any)?.id==='ink' ? "brightness(0.88) saturate(0.92) drop-shadow(0 10px 18px rgba(0,0,0,0.5))" : "drop-shadow(0 10px 18px rgba(80,52,32,0.18))" }}
           loading="eager"
         />
 
         <div className="relative z-[1]">
-          <div className="text-[11px] font-[700] tracking-[0.14em] uppercase text-[#9E948E]" style={{ fontFamily:"Inter, system-ui, sans-serif" }}>{dateLabel}</div>
+          <div className="text-[11px] font-[700] tracking-[0.14em] uppercase" style={{ fontFamily:"Inter, system-ui, sans-serif", color: (theme as any)?.id==='ink' ? "#8A8580" : "#9E948E" }}>{dateLabel}</div>
 
           <div className="mt-4 max-w-[58%]">
-            <div className="text-[32px] font-[700] leading-[0.92] text-[#211A15] tracking-[-0.02em]" style={{ fontFamily:"Fraunces, serif" }}>{greeting}</div>
+            <div className="text-[32px] font-[700] leading-[0.92] tracking-[-0.02em]" style={{ fontFamily:"Fraunces, serif", color: (theme as any)?.id==='ink' ? "#F5F0EC" : "#211A15" }}>{greeting}</div>
             <div className="mt-1 flex items-baseline">
-              <span className="text-[44px] font-[800] tracking-[-0.03em] text-[#15110E]" style={{ fontFamily:"Fraunces, serif", lineHeight:0.94 }}>{currentName}</span>
+              <span className="text-[44px] font-[800] tracking-[-0.03em]" style={{ fontFamily:"Fraunces, serif", lineHeight:0.94, color: (theme as any)?.id==='ink' ? "#FFFEFB" : "#15110E" }}>{currentName}</span>
             </div>
             <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-[13px] font-[500] text-[#8F8883]" style={{ fontFamily:"Inter, sans-serif" }}>with</span>
-              <span className="text-[26px] font-[400] italic text-[#C17152]" style={{ fontFamily:'"Pinyon Script", "Snell Roundhand", cursive' }}>{partnerName}</span>
+              <span className="text-[13px] font-[500]" style={{ fontFamily:"Inter, sans-serif", color: (theme as any)?.id==='ink' ? "#9A9190" : "#8F8883" }}>with</span>
+              <span className="text-[26px] font-[400] italic" style={{ fontFamily:'"Pinyon Script", "Snell Roundhand", cursive', color: (theme as any)?.id==='ink' ? "#D9A08A" : "#C17152" }}>{partnerName}</span>
             </div>
             <div className="mt-4 flex items-center gap-2.5">
-              <span className="h-px w-8 bg-[#DDD2C9]" />
-              <span className="text-[10.5px] font-[700] tracking-[0.13em] uppercase text-[#8D837C]">{currentName.toUpperCase()} ♥ {partnerName.toUpperCase()} • BEIRT</span>
+              <span className="h-px w-8" style={{ background: (theme as any)?.id==='ink' ? "#2A2A2E" : "#DDD2C9" }} />
+              <span className="text-[10.5px] font-[700] tracking-[0.13em] uppercase" style={{ color: (theme as any)?.id==='ink' ? "#8A8580" : "#8D837C" }}>{currentName.toUpperCase()} ♥ {partnerName.toUpperCase()} • BEIRT</span>
             </div>
           </div>
         </div>

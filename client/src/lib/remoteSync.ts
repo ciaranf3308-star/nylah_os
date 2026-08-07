@@ -206,6 +206,106 @@ function kindToTable(kind: EntityKind): string {
   }
 }
 
+function cleanRow(kind: EntityKind, src: any): any {
+  const o = src || {}
+  // base always
+  const base: any = { id: o.id }
+  if (o.household_id) base.household_id = o.household_id
+  // pick updated_at from either camel or snake
+  const nowIso = new Date().toISOString()
+  try {
+    if (kind === 'calendar') {
+      return {
+        id: String(o.id),
+        household_id: o.household_id,
+        title: o.title || 'Untitled',
+        start: o.start || o.dueAt || o.due_at || nowIso,
+        end: o.end || o.endAt || o.end_at || null,
+        due_at: o.due_at || o.dueAt || null,
+        all_day: !!(o.all_day ?? o.allDay),
+        type: o.type || 'one-off',
+        frequency: o.frequency || 'once',
+        frequency_detail: o.frequency_detail ?? o.frequencyDetail ?? null,
+        timezone: o.timezone || 'Europe/Dublin',
+        status: o.status || 'proposed',
+        proposer: o.proposer || null,
+        attendees: o.attendees || null,
+        swipes: o.swipes || null,
+        responses: o.responses || null,
+        location: o.location || null,
+        notes: o.notes || null,
+        pinned: !!o.pinned,
+        pinned_at: o.pinned_at || o.pinnedAt || null,
+        created_at: o.created_at || o.createdAt || null,
+        updated_at: o.updated_at || o.updatedAt || nowIso,
+        deleted_at: o.deleted_at || o.deletedAt || null,
+        mutation_id: o.mutation_id || o.mutationId || null,
+      }
+    }
+    if (kind === 'chore') {
+      return {
+        id: String(o.id),
+        household_id: o.household_id,
+        title: o.title || 'Untitled',
+        type: o.type || 'one-off',
+        frequency: o.frequency || 'once',
+        due_at: o.due_at || o.dueAt || null,
+        created_at: o.created_at || o.createdAt || null,
+        pain: typeof o.pain === 'number' ? o.pain : 5,
+        base_points: o.base_points ?? o.basePoints ?? 10,
+        swipes: o.swipes || null,
+        status: o.status || 'open',
+        assigned_to: o.assigned_to || o.assignedTo || null,
+        multiplier: o.multiplier ?? 1,
+        time_window_hours: o.time_window_hours ?? o.timeWindowHours ?? 24,
+        updated_at: o.updated_at || o.updatedAt || nowIso,
+        deleted_at: o.deleted_at || o.deletedAt || null,
+      }
+    }
+    if (kind === 'shopping') {
+      return {
+        id: String(o.id),
+        household_id: o.household_id,
+        item: o.item || o.title || 'Untitled',
+        qty: o.qty ?? 1,
+        cat: o.cat || 'Food',
+        trip: (['grocery','online','personal','want'].includes(o.trip) ? o.trip : 'grocery'),
+        purchased: !!o.purchased,
+        added_by: o.added_by || o.addedBy || null,
+        created_at: o.created_at || o.createdAt || null,
+        last_done_at: o.last_done_at || o.lastDoneAt || null,
+        repeat_count: o.repeat_count ?? o.repeatCount ?? 0,
+        frequency: o.frequency || 'as-needed',
+        need_days: o.need_days ?? o.needDays ?? null,
+        updated_at: o.updated_at || o.updatedAt || nowIso,
+        deleted_at: o.deleted_at || o.deletedAt || null,
+        archived_at: o.archived_at || o.archivedAt || null,
+        status: o.status || 'active',
+      }
+    }
+    if (kind === 'note') {
+      return {
+        id: String(o.id),
+        household_id: o.household_id,
+        body: o.body || o.text || '',
+        author: o.author || 'unknown',
+        created_at: o.created_at || o.createdAt || nowIso,
+        seen_by: o.seen_by ?? o.seenBy ?? null,
+        is_love: !!(o.is_love ?? o.isLove),
+        photo_data_url: o.photo_data_url || o.photoDataUrl || null,
+        photo_thumb_data_url: o.photo_thumb_data_url || o.photoThumbDataUrl || null,
+        reactions: o.reactions || null,
+        pinned_at: o.pinned_at || o.pinnedAt || null,
+        archived_at: o.archived_at || o.archivedAt || null,
+        deleted_at: o.deleted_at || o.deletedAt || null,
+        updated_at: o.updated_at || o.updatedAt || nowIso,
+      }
+    }
+  } catch {}
+  // fallback minimal
+  return { id: String(o.id), household_id: o.household_id, updated_at: nowIso, ...(o.title ? {title:o.title} : {}) }
+}
+
 export async function remoteSaveOperations(ops: QueuedOp[]): Promise<boolean> {
   if (!ops || ops.length === 0) return true
   const hid = getRowId()
@@ -238,13 +338,8 @@ export async function remoteSaveOperations(ops: QueuedOp[]): Promise<boolean> {
           }
         }
       } else {
-        const row = {
-          id: op.id,
-          household_id: targetHid,
-          ...(op.payload || {}),
-        } as any
-        if (!row.updated_at && !row.updatedAt) row.updated_at = new Date().toISOString()
-        const { error } = await (sb as any).from(table).upsert(row, { onConflict: 'id' } as any)
+        const cleaned = cleanRow(op.kind as any, { ...(op.payload || {}), id: op.id, household_id: targetHid })
+        const { error } = await (sb as any).from(table).upsert(cleaned, { onConflict: 'id' } as any)
         if (error) {
           console.warn('[supabase] upsert error', table, op.id, error.message)
           return false

@@ -184,14 +184,99 @@ export async function drainOps(sb: SupaLike): Promise<boolean> {
             else lastErr = error
           }
         } else {
-          // upsert: ensure payload has id + household_id + updated_at
-          const upsertRow = {
-            id: op.id,
-            household_id: op.household_id,
-            ...(op.payload || {}),
-          } as any
-          // drop undefined keys that could break upsert
-          if (!upsertRow.updated_at && !upsertRow.updatedAt) upsertRow.updated_at = new Date().toISOString()
+          // upsert: ensure payload has id + household_id + updated_at - clean to DB columns only
+          const o = op.payload || {}
+          let upsertRow: any
+          try {
+            const nowIso = new Date().toISOString()
+            if (op.kind === 'calendar') {
+              upsertRow = {
+                id: String(op.id),
+                household_id: op.household_id,
+                title: o.title || 'Untitled',
+                start: o.start || o.dueAt || o.due_at || nowIso,
+                end: o.end || o.endAt || o.end_at || null,
+                due_at: o.due_at || o.dueAt || null,
+                all_day: !!(o.all_day ?? o.allDay),
+                type: o.type || 'one-off',
+                frequency: o.frequency || 'once',
+                frequency_detail: o.frequency_detail ?? o.frequencyDetail ?? null,
+                timezone: o.timezone || 'Europe/Dublin',
+                status: o.status || 'proposed',
+                proposer: o.proposer || null,
+                attendees: o.attendees || null,
+                swipes: o.swipes || null,
+                responses: o.responses || null,
+                location: o.location || null,
+                notes: o.notes || null,
+                pinned: !!o.pinned,
+                pinned_at: o.pinned_at || o.pinnedAt || null,
+                created_at: o.created_at || o.createdAt || null,
+                updated_at: o.updated_at || o.updatedAt || nowIso,
+                deleted_at: o.deleted_at || o.deletedAt || null,
+              }
+            } else if (op.kind === 'chore') {
+              upsertRow = {
+                id: String(op.id),
+                household_id: op.household_id,
+                title: o.title || 'Untitled',
+                type: o.type || 'one-off',
+                frequency: o.frequency || 'once',
+                due_at: o.due_at || o.dueAt || null,
+                created_at: o.created_at || o.createdAt || null,
+                pain: typeof o.pain === 'number' ? o.pain : 5,
+                base_points: o.base_points ?? o.basePoints ?? 10,
+                swipes: o.swipes || null,
+                status: o.status || 'open',
+                assigned_to: o.assigned_to || o.assignedTo || null,
+                multiplier: o.multiplier ?? 1,
+                time_window_hours: o.time_window_hours ?? o.timeWindowHours ?? 24,
+                updated_at: o.updated_at || o.updatedAt || nowIso,
+                deleted_at: o.deleted_at || o.deletedAt || null,
+              }
+            } else if (op.kind === 'shopping') {
+              upsertRow = {
+                id: String(op.id),
+                household_id: op.household_id,
+                item: o.item || o.title || 'Untitled',
+                qty: o.qty ?? 1,
+                cat: o.cat || 'Food',
+                trip: (['grocery','online','personal','want'].includes(o.trip) ? o.trip : 'grocery'),
+                purchased: !!o.purchased,
+                added_by: o.added_by || o.addedBy || null,
+                created_at: o.created_at || o.createdAt || null,
+                last_done_at: o.last_done_at || o.lastDoneAt || null,
+                repeat_count: o.repeat_count ?? o.repeatCount ?? 0,
+                frequency: o.frequency || 'as-needed',
+                need_days: o.need_days ?? o.needDays ?? null,
+                updated_at: o.updated_at || o.updatedAt || nowIso,
+                deleted_at: o.deleted_at || o.deletedAt || null,
+                archived_at: o.archived_at || o.archivedAt || null,
+                status: o.status || 'active',
+              }
+            } else if (op.kind === 'note') {
+              upsertRow = {
+                id: String(op.id),
+                household_id: op.household_id,
+                body: o.body || o.text || '',
+                author: o.author || 'unknown',
+                created_at: o.created_at || o.createdAt || nowIso,
+                seen_by: o.seen_by ?? o.seenBy ?? null,
+                is_love: !!(o.is_love ?? o.isLove),
+                photo_data_url: o.photo_data_url || o.photoDataUrl || null,
+                photo_thumb_data_url: o.photo_thumb_data_url || o.photoThumbDataUrl || null,
+                reactions: o.reactions || null,
+                pinned_at: o.pinned_at || o.pinnedAt || null,
+                archived_at: o.archived_at || o.archivedAt || null,
+                deleted_at: o.deleted_at || o.deletedAt || null,
+                updated_at: o.updated_at || o.updatedAt || nowIso,
+              }
+            } else {
+              upsertRow = { id: op.id, household_id: op.household_id, ...(op.payload||{}), updated_at: new Date().toISOString() }
+            }
+          } catch {
+            upsertRow = { id: op.id, household_id: op.household_id, ...(op.payload||{}), updated_at: new Date().toISOString() }
+          }
           const { error } = await sb.from(table).upsert(upsertRow, { onConflict: 'id' } as any)
           if (!error) success = true
           else lastErr = error

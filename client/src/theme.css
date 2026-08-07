@@ -297,13 +297,27 @@ html[data-theme="ink"] .bottom-nav-v11 {
 html[data-theme="ink"] .bottom-nav-v11 button { color: var(--text-secondary) !important; }
 html[data-theme="ink"] .bottom-nav-v11 .nav-item-active { color:#FF6B26 !important; background: linear-gradient(180deg, rgba(255,107,38,0.14) 0%, rgba(44,44,48,0.6) 100%) !important; }
 
-/* anti-leak: bg-white / hardcoded light must map to tokens in dark — simplified single coverage */
+/* v124 dark legibility fix: ensure data-theme set by App.tsx actually paints text (was bg #121214 + text #292624 invisible) */
+html[data-theme="ink"] h1,
+html[data-theme="ink"] .hero-script,
+html[data-theme="ink"] [class*="font-display"] { color: var(--text) !important; }
+html[data-theme="ink"] h1.hero-script { color: #F5F3F0 !important; }
+
+/* v124: overdue red too dark on charcoal — lift */
+html[data-theme="ink"] [style*="#991B1B"] { color: #FCA5A5 !important; }
+
+/* anti-leak: bg-white / hardcoded light must map to tokens in dark — simplified single coverage + extra bg shades */
 html[data-theme="ink"] [class*="bg-white"]:not([class*="bg-white/"]),
 html[data-theme="ink"] [class*="bg-[#FFFEFB]"],
-html[data-theme="ink"] [class*="bg-[#FFFFFF]"] {
+html[data-theme="ink"] [class*="bg-[#FFFEFD]"],
+html[data-theme="ink"] [class*="bg-[#FFFEFB]"],
+html[data-theme="ink"] [class*="bg-[#FFFFFF]"],
+html[data-theme="ink"] [class*="bg-[#FFFCF8]"],
+html[data-theme="ink"] [class*="bg-[#FFFEFB]/"] { 
   background: var(--card-bg) !important; background-color: var(--card-bg) !important; color: var(--text) !important; border-color: var(--border) !important;
 }
-html[data-theme="ink"] [class*="bg-[#F9F1E8]"] { background: var(--chip-bg) !important; }
+html[data-theme="ink"] [class*="bg-[#F9F1E8]"],
+html[data-theme="ink"] [class*="bg-[#F7EFE8]"] { background: var(--chip-bg) !important; color: var(--text) !important; }
 html[data-theme="ink"] [class*="text-[#292624]"],
 html[data-theme="ink"] [class*="text-[#2D2118]"],
 html[data-theme="ink"] [class*="text-[#0A0A0A]"] { color: var(--text) !important; }
@@ -311,6 +325,14 @@ html[data-theme="ink"] [class*="text-[#5A5655]"],
 html[data-theme="ink"] [class*="text-[#6B5242]"],
 html[data-theme="ink"] [class*="text-[#8B7357]"],
 html[data-theme="ink"] [class*="text-[#9A8A7D]"] { color: var(--text-secondary) !important; }
+
+/* bottom nav icons visible in dark */
+html[data-theme="ink"] .bottom-nav-v11 button { color: var(--text-secondary) !important; }
+html[data-theme="ink"] .bottom-nav-v11 button .nav-icon,
+html[data-theme="ink"] .bottom-nav-v11 button .nav-label { color: inherit !important; }
+
+/* polaroid stays physical paper white (intentional) — ensure text inside stays dark */
+html[data-theme="ink"] .polaroid-v11 { background: #FFFEFE !important; color: #292624 !important; }
 
 html[data-theme="ink"] [class*="rotate-[-0.8deg]"] { background: var(--card-bg) !important; }
 html[data-theme="ink"] [style*="rgba(255,254,251"] { background: var(--chip-bg) !important; color: var(--text) !important; border-color: var(--border) !important; }

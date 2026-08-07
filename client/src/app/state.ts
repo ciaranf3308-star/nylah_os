@@ -915,9 +915,9 @@ export function useAppState() {
         try{ localStorage.removeItem("couple_v1_household_code"); }catch{}
       }
     }catch{}
-    // v121 build marker
-    try{ localStorage.setItem("couple_v1_build","v121-settings-debug"); }catch{}
-    try{ (window as any).__NYLAH_VERSION__ = "v121-settings-debug"; }catch{}
+    // v124 build marker
+    try{ localStorage.setItem("couple_v1_build","v124-dark-fix"); }catch{}
+    try{ (window as any).__NYLAH_VERSION__ = "v124-dark-fix"; }catch{}
   },[]);
 
   // v121 auto-sync after login (PinScreen sets force_resync flag)

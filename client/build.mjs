@@ -114,13 +114,21 @@ try {
     }
   } catch (e) { console.warn("[build] strip err", e?.message||e); }
 
-  // html fixes
+  // html fixes - GH Pages needs relative ./assets/ not absolute /assets/
   for (const htmlName of ["index.html","404.html"]) {
     const p = `${outDir}/${htmlName}`;
     if (!existsSync(p)) continue;
     try {
       let h = await readFile(p,"utf8");
       let ch=false;
+      // fix absolute /assets/ -> ./assets/ for GitHub Pages /nylah_os/ base
+      if (h.includes('"/assets/') || h.includes("'/assets/") || h.includes('href="/assets/') || h.includes('src="/assets/')) {
+        h = h.replace(/href="\/assets\//g, 'href="./assets/');
+        h = h.replace(/src="\/assets\//g, 'src="./assets/');
+        h = h.replace(/href='\/assets\//g, "href='./assets/");
+        h = h.replace(/src='\/assets\//g, "src='./assets/");
+        ch=true;
+      }
       if (/href="\.\/assets\/manifest-.*\.webmanifest"/.test(h)) {
         h = h.replace(/<link\s+rel="manifest"\s+href="\.\/assets\/manifest-[^"]+\.webmanifest"\s*\/?>/, `<link rel="manifest" href="./manifest.webmanifest" />`);
         h = h.replace(/\.\/assets\/manifest-[^"]+\.webmanifest/g, "./manifest.webmanifest");
@@ -128,6 +136,8 @@ try {
       }
       if (h.includes("./assets/icon-192-eg94heyn.png")) { h=h.replace(/\.\/assets\/icon-192-eg94heyn\.png/g,"./icon-192.png"); ch=true; }
       if (h.includes("./assets/icon-512-eg94heyn.png")) { h=h.replace(/\.\/assets\/icon-512-eg94heyn\.png/g,"./icon-512.png"); ch=true; }
+      // normalize any lingering ./assets vs assets
+      // ensure supabase-env.js present and before module
       if (!h.includes("supabase-env.js")) {
         h = h.replace(/<script[^>]+type="module"[^>]*src=["'][^"']*assets\/index-[^"']*\.js["'][^>]*><\/script>/, m=>`<script src="./supabase-env.js"></script>${m}`);
         if (!h.includes("supabase-env.js")) h=h.replace("</head>",`<script src="./supabase-env.js"></script></head>`);

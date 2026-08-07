@@ -1,5 +1,5 @@
-// Nylah OS SW v122 theme facelift
-const CACHE_NAME = "nylah-os-v122-theme-facelift";
+// Nylah OS SW v123 hotfix - absolute path fix + ErrorBoundary
+const CACHE_NAME = "nylah-os-v123-hotfix";
 const URLS = ["./","./index.html","./manifest.webmanifest"];
 self.addEventListener("install", e=>{
   e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(URLS.map(u=>new Request(u,{cache:"reload"}))).catch(()=>{})));
@@ -18,4 +18,19 @@ self.addEventListener("push", e=>{
 self.addEventListener("notificationclick", e=>{
   e.notification.close();
   e.waitUntil(clients.openWindow(e.notification.data.url || "./"));
+});
+self.addEventListener("fetch", e=>{
+  if(e.request.method!=="GET") return;
+  const url = new URL(e.request.url);
+  if(url.origin!==location.origin) return;
+  if(url.pathname.includes("/assets/") || url.pathname.endsWith(".js") || url.pathname.endsWith(".css") || url.pathname.endsWith(".webmanifest")){
+    e.respondWith(caches.match(e.request).then(r=> r || fetch(e.request).then(res=>{
+      const clone=res.clone(); caches.open(CACHE_NAME).then(c=>c.put(e.request, clone)).catch(()=>{});
+      return res;
+    }).catch(()=>caches.match("./index.html"))));
+    return;
+  }
+  if(e.request.mode==="navigate"){
+    e.respondWith(fetch(e.request).catch(()=>caches.match("./index.html").then(r=>r||caches.match("./"))));
+  }
 });

@@ -1,1 +1,1 @@
-{"build":"v122-theme-facelift","builtAt":"2026-08-07T12:40:00.000Z","changelog":"V122 professional theme facelift - beige/charcoal clarity","code":122,"mandatory":false,"timestamp":"2026-08-07T12:40:00.000Z","version":"122.0.0"}
+{"build":"v123-hotfix","builtAt":"2026-08-07T13:05:00.000Z","changelog":"V123 hotfix - GH Pages absolute asset path fix, ErrorBoundary, restore leak guards","code":123,"mandatory":true,"timestamp":"2026-08-07T13:05:00.000Z","version":"123.0.0"}

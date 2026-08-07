@@ -1,6 +1,19 @@
 import { createRoot } from "react-dom/client";
+import React from "react";
 import { App } from "./App";
 import "./theme.css";
+
+class ErrorBoundary extends React.Component<any,{hasError:boolean; err:any}>{
+  constructor(p:any){ super(p); this.state={hasError:false, err:null} }
+  static getDerivedStateFromError(err:any){ return {hasError:true, err} }
+  componentDidCatch(e:any){ console.error("[nylah] boundary", e) }
+  render(){
+    if(this.state.hasError){
+      return React.createElement("pre",{style:{padding:"16px",margin:"16px",borderRadius:"12px",background:"#F5F3F0",color:"#0A0A0A",whiteSpace:"pre-wrap",font:"12px/1.4 ui-monospace",border:"1px solid #E8DDD3"}}, `Nylah error - tap to reload\n${this.state.err?.message||this.state.err}\n\n${this.state.err?.stack||""}`);
+    }
+    return this.props.children;
+  }
+}
 
 function mount() {
   const raw = document.querySelector<HTMLElement>("[data-generated-space-root]") ||
@@ -16,7 +29,7 @@ function mount() {
   try {
     createRoot(rootEl).render(
       <div className="hatch-space-root" data-hatch-space-root>
-        <App />
+        <ErrorBoundary><App /></ErrorBoundary>
       </div>
     );
   } catch (e: any) {

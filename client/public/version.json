@@ -1,1 +1,1 @@
-{"build":"v136b-fix-clipping","code":136,"changelog":"fix How heavy 10-dot clipping — grid 10 cols 36px max not 32px fixed flex overflow"}
+{"build":"v137-beirt-icon-centered","code":137,"changelog":"fix app icon off-center + tiny — rebaked 192/512 from transparent bbox 224,102,1021,966 — now 84% canvas (86% @192) centered, lifted 1.8% optically, maskable-safe fix"}

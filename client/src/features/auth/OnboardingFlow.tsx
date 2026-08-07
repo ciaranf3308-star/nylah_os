@@ -152,10 +152,10 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
   };
   const doShare = async () => {
     const url = `${location.origin}${location.pathname}?code=${inviteCode}`;
-    const text = `Join our Nylah — our private space for two. Code: ${inviteCode} — ${url}`;
+    const text = `Join our Beirt — our private space for two. Code: ${inviteCode} — ${url}`;
     try {
       if ((navigator as any).share) {
-        await (navigator as any).share({ title: "Join us on Nylah", text, url });
+        await (navigator as any).share({ title: "Join us on Beirt", text, url });
       } else {
         await navigator.clipboard.writeText(text);
         setError("Link copied!");
@@ -244,8 +244,8 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
         {step==="welcome" && (
           <>
             <div className="h-12 w-12 rounded-full grid place-items-center bg-[#0A0A0A] text-white text-[20px] font-display">♥</div>
-            <div className="mt-3 font-display text-[26px] font-semibold tracking-tight text-[#0A0A0A] text-center">Nylah</div>
-            <div className="mt-1 text-[13px] text-[#6B5242] text-center leading-[1.4]">A private space for two. Shared calendar, chores, shopping, notes. No ads. Just you two.</div>
+            <div className="mt-3 font-display text-[26px] font-semibold tracking-tight text-[#0A0A0A] text-center">Beirt</div>
+            <div className="mt-1 text-[13px] text-[#6B5242] text-center leading-[1.4]">Beirt — Irish for two. A private space for two. Shared calendar, chores, shopping, notes. No ads. Just you two.</div>
             <div className="mt-5 w-full space-y-2.5">
               <button onClick={()=> setStep("create_names")} className="w-full h-[52px] rounded-full bg-[#0A0A0A] text-white text-[14px] font-semibold active:scale-[0.98] shadow-sm">Create our space</button>
               <button onClick={startJoin} className="w-full h-[48px] rounded-full bg-white border border-[var(--border)] text-[#2D2118] text-[13px] font-medium active:scale-[0.98]">I have a code</button>

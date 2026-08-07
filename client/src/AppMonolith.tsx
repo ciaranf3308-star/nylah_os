@@ -178,7 +178,7 @@ async function registerBiometric(user: PersonKey): Promise<string | null> {
     const cred: any = await (navigator.credentials as any).create({
       publicKey: {
         challenge,
-        rp: { name: "Nylah OS", id: rpId },
+        rp: { name: "Beirt", id: rpId },
         user: { id: userId, name: user, displayName: PERSONS[user].name },
         pubKeyCredParams: [{ type:"public-key", alg:-7 }, { type:"public-key", alg:-257 }],
         authenticatorSelection: { authenticatorAttachment:"platform", requireResidentKey:false, userVerification:"required" },
@@ -273,7 +273,7 @@ function getTabMeta(tab: string) {
 }
 function getPageTitle(tab: TabKey): string {
   const meta = getTabMeta(tab as any);
-  if (meta.k === "fridge") return "Nylah";
+  if (meta.k === "fridge") return "Beirt";
   return meta.title ?? meta.label;
 }
 const LEGACY_TABS = TABS;
@@ -1429,10 +1429,10 @@ function OnboardingFlow({ onComplete }: { onComplete: (hid: string)=>void }) {
   };
   const doShare = async () => {
     const url = `${location.origin}${location.pathname}?code=${inviteCode}`;
-    const text = `Join our Nylah — our private space for two. Code: ${inviteCode} — ${url}`;
+    const text = `Join our Beirt — our private space for two. Code: ${inviteCode} — ${url}`;
     try {
       if ((navigator as any).share) {
-        await (navigator as any).share({ title: "Join us on Nylah", text, url });
+        await (navigator as any).share({ title: "Join us on Beirt", text, url });
       } else {
         await navigator.clipboard.writeText(text);
         setError("Link copied!");
@@ -5252,7 +5252,7 @@ function BlueprintPanel({
             <div className="w-full rounded-[16px] border bg-[var(--card-bg)] px-4 py-3 space-y-2" style={{borderColor:"var(--border)"}}>
               <div className="flex items-center justify-between">
                 <div><div className="text-[13px] font-medium">Invite your partner</div><div className="text-[11px] text-[var(--muted)] mt-0.5">{(()=>{ try{ const code = localStorage.getItem("couple_v1_household_code"); const hid = localStorage.getItem("couple_v1_household_id")||"ash-ciaran-2026"; const name = localStorage.getItem("couple_v1_household_name")||"Your space"; if(code) return `${name} • Code: ${code}`; return `${name} • ${hid.slice(0,14)}…`; }catch{return "Your couple space"} })()}</div></div>
-                <button onClick={async()=>{ try{ const code = localStorage.getItem("couple_v1_household_code")||""; const url = `${location.origin}${location.pathname}?code=${code}`; const txt = code ? `Join us on Nylah — Code: ${code} — ${url}` : url; if ((navigator as any).share) await (navigator as any).share({title:"Join us on Nylah", text:txt, url}); else { await navigator.clipboard.writeText(txt); (window as any).toast?.("Link copied"); } }catch{} }} className="h-[34px] rounded-full bg-[#0A0A0A] text-white px-3 text-[11px] font-semibold">Share</button>
+                <button onClick={async()=>{ try{ const code = localStorage.getItem("couple_v1_household_code")||""; const url = `${location.origin}${location.pathname}?code=${code}`; const txt = code ? `Join us on Beirt — Code: ${code} — ${url}` : url; if ((navigator as any).share) await (navigator as any).share({title:"Join us on Beirt", text:txt, url}); else { await navigator.clipboard.writeText(txt); (window as any).toast?.("Link copied"); } }catch{} }} className="h-[34px] rounded-full bg-[#0A0A0A] text-white px-3 text-[11px] font-semibold">Share</button>
               </div>
               <div className="flex items-center gap-2"><div className="text-[11px] font-mono tracking-[0.14em] rounded-full border bg-[var(--chip-bg)] px-2.5 py-1" style={{borderColor:"var(--border)"}}>{(()=>{ try{ const c = localStorage.getItem("couple_v1_household_code"); return c?c.toUpperCase(): (localStorage.getItem("couple_v1_household_id")||"").slice(-6).toUpperCase() || "COUPLE"; }catch{return "COUPLE"} })()}</div><button onClick={async()=>{ try{ const code = localStorage.getItem("couple_v1_household_code")||""; await navigator.clipboard.writeText(code); }catch{} }} className="text-[10px] text-[var(--muted)] underline">Copy code</button><div className="text-[10px] text-[var(--muted)] ml-auto">Private to you two</div></div>
             </div>
@@ -5322,7 +5322,7 @@ function BlueprintPanel({
         {openGroups.advanced && (
           <div className="px-4 pb-3 pt-2 border-t space-y-2" style={{borderColor:"var(--border)"}}>
             <button className="w-full flex items-center justify-between min-h-[48px] px-4 rounded-[12px] border bg-[var(--chip-bg)] text-left" style={{borderColor:"var(--border)"}}><span className="text-[13px]">Privacy</span><span className="text-[11px] text-[var(--muted)]">›</span></button>
-            <div className="w-full flex items-center justify-between min-h-[48px] px-4 rounded-[12px] border bg-[var(--chip-bg)]" style={{borderColor:"var(--border)"}}><span className="text-[13px]">About</span><span className="text-[11px] text-[var(--muted)]">Nylah OS Beta</span></div>
+            <div className="w-full flex items-center justify-between min-h-[48px] px-4 rounded-[12px] border bg-[var(--chip-bg)]" style={{borderColor:"var(--border)"}}><span className="text-[13px]">About</span><span className="text-[11px] text-[var(--muted)]">Beirt</span></div>
             <button onClick={()=> setShowDev(v=> !v)} className="text-[11px] underline text-[var(--muted)] px-1">{showDev ? "Hide developer" : "Developer"}</button>
             {showDev && (
               <div className="space-y-2 rounded-[12px] border bg-[var(--chip-bg)] p-3 text-[11px]" style={{borderColor:"var(--border)"}}>
@@ -5386,7 +5386,7 @@ function V1AppShell({
   const prevChoresRef = useRef<Map<string, any>>(new Map());
   const [pushToast, setPushToast] = useState<{title:string; body:string}|null>(null);
   useEffect(()=>{
-    const onToast=(e:any)=>{ try{ const d=e?.detail||{}; setPushToast({title:d.title||'Nylah', body:d.body||''}); setTimeout(()=>setPushToast(null), 3500); }catch{} };
+    const onToast=(e:any)=>{ try{ const d=e?.detail||{}; setPushToast({title:d.title||'Beirt', body:d.body||''}); setTimeout(()=>setPushToast(null), 3500); }catch{} };
     try{ window.addEventListener('couple-push-fallback-toast', onToast as any); }catch{}
     return ()=>{ try{ window.removeEventListener('couple-push-fallback-toast', onToast as any);}catch{} };
   },[]);

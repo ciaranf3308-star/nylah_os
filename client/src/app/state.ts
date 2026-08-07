@@ -207,7 +207,7 @@ export async function registerBiometric(user: PersonKey): Promise<string | null>
     const cred: any = await (navigator.credentials as any).create({
       publicKey: {
         challenge,
-        rp: { name: "Nylah OS", id: rpId },
+        rp: { name: "Beirt", id: rpId },
         user: { id: userId, name: user, displayName: PERSONS[user].name },
         pubKeyCredParams: [{ type:"public-key", alg:-7 }, { type:"public-key", alg:-257 }],
         authenticatorSelection: { authenticatorAttachment:"platform", requireResidentKey:false, userVerification:"required" },
@@ -441,7 +441,7 @@ export function useV1AppShellState() {
   const [pushToast, setPushToast] = useState<{title:string; body:string}|null>(null);
 
   useEffect(()=>{
-    const onToast=(e:any)=>{ try{ const d=e?.detail||{}; setPushToast({title:d.title||'Nylah', body:d.body||''}); setTimeout(()=>setPushToast(null), 3500); }catch{} };
+    const onToast=(e:any)=>{ try{ const d=e?.detail||{}; setPushToast({title:d.title||'Beirt', body:d.body||''}); setTimeout(()=>setPushToast(null), 3500); }catch{} };
     try{ window.addEventListener('couple-push-fallback-toast', onToast as any); }catch{}
     return ()=>{ try{ window.removeEventListener('couple-push-fallback-toast', onToast as any);}catch{} };
   },[]);
@@ -916,8 +916,8 @@ export function useAppState() {
       }
     }catch{}
     // v124 build marker
-    try{ localStorage.setItem("couple_v1_build","v125-clean-css"); }catch{}
-    try{ (window as any).__NYLAH_VERSION__ = "v125-clean-css"; }catch{}
+    try{ localStorage.setItem("couple_v1_build","v126-beirt-rebrand"); }catch{}
+    try{ (window as any).__NYLAH_VERSION__ = "v126-beirt-rebrand"; }catch{}
   },[]);
 
   // v121 auto-sync after login (PinScreen sets force_resync flag)

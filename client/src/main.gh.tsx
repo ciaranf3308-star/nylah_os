@@ -6,10 +6,10 @@ import "./theme.css";
 class ErrorBoundary extends React.Component<any,{hasError:boolean; err:any}>{
   constructor(p:any){ super(p); this.state={hasError:false, err:null} }
   static getDerivedStateFromError(err:any){ return {hasError:true, err} }
-  componentDidCatch(e:any){ console.error("[nylah] boundary", e) }
+  componentDidCatch(e:any){ console.error("[beirtos] boundary", e) }
   render(){
     if(this.state.hasError){
-      return React.createElement("pre",{style:{padding:"16px",margin:"16px",borderRadius:"12px",background:"#232326",color:"#F5F3F0",whiteSpace:"pre-wrap",font:"12px/1.4 ui-monospace",border:"1px solid rgba(255,255,255,0.08)"}}, `Nylah error - tap to reload\n${this.state.err?.message||this.state.err}\n\n${this.state.err?.stack||""}`);
+      return React.createElement("pre",{style:{padding:"16px",margin:"16px",borderRadius:"12px",background:"#232326",color:"#F5F3F0",whiteSpace:"pre-wrap",font:"12px/1.4 ui-monospace",border:"1px solid rgba(255,255,255,0.08)"}}, `Beirt error - tap to reload\n${this.state.err?.message||this.state.err}\n\n${this.state.err?.stack||""}`);
     }
     return this.props.children;
   }
@@ -33,7 +33,7 @@ function mount() {
       </div>
     );
   } catch (e: any) {
-    rootEl.innerHTML = `<pre style="padding:16px;color:#8B5E3C;background:#FFFEFB">Nylah mount error: ${e?.message||e}\n${e?.stack||""}</pre>`;
+    rootEl.innerHTML = `<pre style="padding:16px;color:#8B5E3C;background:#FFFEFB">Beirt mount error: ${e?.message||e}\n${e?.stack||""}</pre>`;
     console.error(e);
   }
 }

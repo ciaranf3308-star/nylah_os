@@ -16,7 +16,7 @@ export const PERSONS: Record<PersonKey, { name: string; initial: string; accent:
 };
 
 export const TABS: TABSItem[] = [
-  { k: "fridge", label: "Home", title: "Nylah", icon: "" },
+  { k: "fridge", label: "Home", title: "Beirt", icon: "" },
   { k: "plans", label: "Plans", title: "Plans", icon: "" },
   { k: "chores", label: "Chores", title: "Chores", icon: "" },
   { k: "shopping", label: "Shop", title: "Shop", icon: "" },

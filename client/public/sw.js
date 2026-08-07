@@ -1,5 +1,5 @@
-// Nylah OS SW v123 hotfix - absolute path fix + ErrorBoundary
-const CACHE_NAME = "nylah-os-v125-clean-css";
+// Beirt SW v123 hotfix - absolute path fix + ErrorBoundary
+const CACHE_NAME = "beirt-v126-rebrand";
 const URLS = ["./","./index.html","./manifest.webmanifest"];
 self.addEventListener("install", e=>{
   e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(URLS.map(u=>new Request(u,{cache:"reload"}))).catch(()=>{})));
@@ -11,7 +11,7 @@ self.addEventListener("activate", e=>{
 });
 self.addEventListener("push", e=>{
   const data = e.data ? e.data.json() : {};
-  const title = data.title || "Nylah OS";
+  const title = data.title || "Beirt";
   const body = data.body || "New chore for you";
   e.waitUntil(self.registration.showNotification(title, {body, vibrate:[200,100,200], data:{url:data.url||"./"}}));
 });

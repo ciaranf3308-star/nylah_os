@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * Nylah OS — Pure 195-320 line composer root (v118-preview)
+ * Beirt — Pure 195-320 line composer root (v118-preview)
  * Zero logic change from V117 prod 117 89cb7d8. Uses app/state.ts verbatim.
  * Fast-edit base: features/* product areas.
  */
@@ -34,7 +34,7 @@ function getPageTitle(tab: TabKey): string {
     notes: "Notes",
     blueprint: "Settings",
   };
-  return m[tab] || "Nylah";
+  return m[tab] || "Beirt";
 }
 function TabIcon({ k, active }: { k: TabKey; active?: boolean }) {
   // minimal inline icons — same palette as monolith

@@ -54,7 +54,7 @@ function BottomSheet({ open, onClose, children, title }: { open: boolean; onClos
   return (
     <div className="fixed inset-0 z-[70] flex items-end justify-center">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={onClose} />
-      <div className="relative w-full max-w-[390px] rounded-t-[28px] border bg-[var(--card-bg)] px-4 py-4 pb-[calc(12px+env(safe-area-inset-bottom))]" style={{borderColor:"var(--border)"}}>
+      <div className="relative w-full max-w-[390px] max-h-[88vh] overflow-auto no-scrollbar rounded-t-[28px] border bg-[var(--card-bg)] px-4 py-4 pb-[calc(20px+env(safe-area-inset-bottom))]" style={{borderColor:"var(--border)"}}>
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[var(--border)]" />
         {title && <div className="text-[14px] font-semibold mb-3" style={{fontFamily:"Fraunces"}}>{title}</div>}
         {children}
@@ -254,20 +254,14 @@ export function App() {
                 <div className="px-3 pb-3 flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-full border text-[13px] font-bold" style={{ background:(PERSONS[safeCurrentUser]?.wash||'var(--wash-top)'), borderColor:"var(--border)" }}>{(PERSONS[safeCurrentUser]?.initial||'?')}</span><div><div className="text-[15px] font-semibold">{(PERSONS[safeCurrentUser]?.name||safeCurrentUser||'You')}</div><div className="text-[12px] text-[var(--muted)]">Current profile</div></div></div>
                 <button onClick={()=>{ setShowSwitch(false); safeSetTab("fridge" as any); }} className="flex min-h-[52px] w-full items-center justify-between rounded-[16px] px-4 text-[14px] leading-[20px] hover:bg-[var(--chip-bg)] active:scale-[0.98]"><span>Profile</span><span className="text-[11px] text-[var(--muted)]">{(PERSONS[safeCurrentUser]?.name||safeCurrentUser||'You')}</span></button>
                 <div className="flex min-h-[52px] w-full items-center justify-between rounded-[16px] px-4 text-[14px] leading-[20px]"><span>Sync status</span><span className="text-[11px] text-[var(--muted)]">{(()=>{ const k=(s.syncStatus as any)?.kind; if(k==='failed') return 'Failed — will retry'; if(k==='offline-queued'||(s.syncStatus as any)?.kind==='offline'){ const n=(s.syncStatus as any)?.queueCount||1; return `${n} queued — server not reached`; } if(k==='saving') return 'Saving to server...'; const last=(s.syncStatus as any)?.lastSavedAt; if(last){ try{ const t=new Date(last).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); return `Saved ${t} server ✓`; }catch{return 'Saved server ✓';}} return 'No confirmed save yet'; })()}</span></div>
-                <button onClick={()=>{ setShowSwitch(false); setShowBlueprint(true); }} className="flex min-h-[52px] w-full items-center justify-between rounded-[16px] px-4 text-[14px] leading-[20px] hover:bg-[var(--chip-bg)] active:scale-[0.98]"><span>Appearance</span><span className="text-[11px] text-[var(--muted)]">{THEMES.find((t:any)=> t.id===themeId)?.name || "Beige"}</span></button>
-                <button onClick={()=>{ setShowSwitch(false); setShowBlueprint(true); }} className="flex min-h-[52px] w-full items-center justify-between rounded-[16px] px-4 text-[14px] leading-[20px] hover:bg-[var(--chip-bg)] active:scale-[0.98]">Settings<span className="text-[11px] text-[var(--muted)]">›</span></button>
+                <button onClick={()=>{ setShowSwitch(false); safeSetTab("blueprint" as any); }} className="flex min-h-[52px] w-full items-center justify-between rounded-[16px] px-4 text-[14px] leading-[20px] hover:bg-[var(--chip-bg)] active:scale-[0.98]"><span>Appearance</span><span className="text-[11px] text-[var(--muted)]">{THEMES.find((t:any)=> t.id===themeId)?.name || "Beige"}</span></button>
+                <button onClick={()=>{ setShowSwitch(false); safeSetTab("blueprint" as any); }} className="flex min-h-[52px] w-full items-center justify-between rounded-[16px] px-4 text-[14px] leading-[20px] hover:bg-[var(--chip-bg)] active:scale-[0.98]">Settings<span className="text-[11px] text-[var(--muted)]">›</span></button>
                 <div className="pt-3 border-t mt-2" style={{ borderColor:"var(--border)"}}><div className="text-[11px] text-[var(--muted)] px-2 mb-2">Switch to</div><div className="flex items-center gap-3 px-2">{(["aisling","ciaran"] as const).map(k=> (<button key={k} onClick={()=>{ if(k===safeCurrentUser){ setShowSwitch(false); return;} setPendingSwitchTo(k); }} className={"flex flex-col items-center gap-1.5 active:scale-[0.98] "+(safeCurrentUser===k?"opacity-100":"opacity-70")}><span className={"grid h-11 w-11 place-items-center rounded-full border text-[13px] font-bold "+(safeCurrentUser===k?"ring-2 ring-[#0A0A0A] ring-offset-2":"")} style={{ background: PERSONS[k].wash, borderColor: PERSONS[k].accent }}>{PERSONS[k].initial}</span><span className="text-[11px]">{PERSONS[k].name}</span></button>))}</div></div>
               </div>
             )}
           </BottomSheet>
         )}
 
-        {showBlueprint && (
-          <BottomSheet open={showBlueprint} onClose={()=> setShowBlueprint(false)} title="Settings + Blueprint">
-            {/* single Settings 5-group — product area settings — v120 defensive [] */}
-            <SettingsScreen theme={safeTheme as any} setTheme={setThemeId as any} onConfetti={()=> (s as any).triggerConfetti?.()} choresRaw={(safeChoresRaw||[])} calendarRaw={(safeCalendarRaw||[])} shoppingRaw={(safeShoppingRaw||[])} notesRaw={(safeNotesRaw||[])} setChoresRaw={safeSetChoresRaw as any} setCalendarRaw={safeSetCalendarRaw as any} setShoppingRaw={safeSetShoppingRaw as any} setNotesRaw={safeSetNotesRaw as any} currentUser={safeCurrentUser} />
-          </BottomSheet>
-        )}
       </div>
     </>
   );

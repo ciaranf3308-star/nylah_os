@@ -3,6 +3,9 @@ import type { PersonKey, TabKey, ChoreV2, CalendarEventV2, ShoppingItemV2 } from
 import { PERSONS } from "../../constants/themes";
 import { HOUSEHOLD_TZ, toLocalKey as toLocalKeyDublin, tzWallToUtc } from "../../lib/dates";
 import { getDueMsChore } from "../../shared/utils/helpers";
+import { computeShoppingNextDue } from "../../lib/shoppingDue";
+import EventIcon from "../../components/EventIcon";
+import { inferKindFromTitle } from "../../lib/eventTypes";
 
 type Props = {
   currentUser: PersonKey;
@@ -13,10 +16,6 @@ type Props = {
   todayDateStr: string;
   setTab: (k: TabKey) => void;
 };
-
-// boutique tokens #E8CEB7 #F7EFE8 preserve, charcoal #121214 44px spring cubic-bezier(0.34,1.56,0.64,1)
-// real shopping due preserved from monolith
-import { computeShoppingNextDue } from "../../lib/shoppingDue";
 
 export default function Upcoming({ currentUser, calendar, chores, shopping, nowMs, todayDateStr, setTab }: Props) {
   const activeChores = useMemo(() => (chores as any[]).filter(c => !(c as any).deletedAt), [chores]);
@@ -149,17 +148,20 @@ export default function Upcoming({ currentUser, calendar, chores, shopping, nowM
             <span className="text-[11px] text-[var(--muted)]">{todayCals.length + todayChoresMine.length + (shoppingDueList.length>0?1:0)} items • Tap to open</span>
           </div>
           <div className="rounded-[22px] border bg-[var(--card-bg)] overflow-hidden" style={{ borderColor:"var(--border)", boxShadow:"0 8px 28px rgba(0,0,0,.06), 0 1px 0 rgba(255,255,255,0.06) inset" }}>
-            {(todayCals as any[]).map((ev:any, i:number)=>(
+            {(todayCals as any[]).map((ev:any, i:number)=>{
+              const ek = (ev as any).kind || (ev as any).eventKind || inferKindFromTitle(ev.title, "other");
+              const isDark = typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme')==='ink';
+              return (
               <button key={ev.id} onClick={()=> setTab("calendar")} className="w-full text-left flex items-stretch gap-0 min-h-[56px] hover:bg-[var(--chip-bg)]/50 transition" style={{ borderTop: i===0? undefined : "1px solid var(--border)" }}>
                 <span className="w-[56px] shrink-0 grid place-items-center border-r" style={{ borderColor:'var(--border)' }}>
-                  <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--chip-bg)] text-[11px] font-bold text-[#8B5E3C] border shadow-sm" style={{borderColor:'var(--border)'}}><IconClock/></span>
+                  <EventIcon kind={ek} size={30} theme={isDark ? "dark":"light"} />
                 </span>
                 <span className="flex-1 flex items-center justify-between gap-3 px-4 py-3.5">
                   <span className="min-w-0"><span className="block text-[11px] tabular-nums text-[var(--muted)] flex items-center gap-1">{fmtTime(ev.dueAt)} <span className="h-1 w-1 rounded-full bg-[var(--accent)] animate-pulse" /></span><span className="block text-[15px] font-medium truncate text-[var(--text)]">{ev.title}</span></span>
                   <span className="text-[11px] rounded-full border px-2.5 py-1 bg-[var(--chip-bg)] text-[var(--text-secondary)]" style={{ borderColor:'var(--border)' }}>Agreed • {ev.location||"Today"}</span>
                 </span>
               </button>
-            ))}
+            )})}
             {(todayChoresMine as any[]).map((ch:any, i:number)=>(
               <button key={ch.id} onClick={()=> setTab("chores")} className="w-full text-left flex items-stretch gap-0 min-h-[56px] hover:bg-[var(--chip-bg)]/50 transition" style={{ borderTop: (todayCals.length>0 || i>0) ? "1px solid var(--border)" : undefined }}>
                 <span className="w-[56px] shrink-0 grid place-items-center border-r" style={{ borderColor:'var(--border)' }}>
@@ -200,9 +202,11 @@ export default function Upcoming({ currentUser, calendar, chores, shopping, nowM
             {(upcoming as any[]).map((ev:any, idx:number)=>{
               const diff = dueDiff(ev.dueAt);
               const isSoon = (()=>{ try{ const due = ev.dueAt ? new Date(ev.dueAt).getTime() : ev.start ? new Date(ev.start).getTime() : null; if(!due) return false; const diff2=due-Date.now(); return diff2>=0 && diff2<=24*3600000; }catch{return false} })();
+              const ek = (ev as any).kind || (ev as any).eventKind || inferKindFromTitle(ev.title, "other");
+              const isDark = typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme')==='ink';
               return (
                 <button key={ev.id} onClick={()=> setTab("calendar")} className="w-full text-left flex items-center gap-3 px-4 py-3.5 min-h-[56px] hover:bg-[var(--chip-bg)]/50 transition" style={{ borderTop: idx===0?undefined:"1px solid var(--chip-bg)" }}>
-                  <span className={"h-2 w-2 rounded-full shrink-0 "+(isSoon?"bg-[var(--accent)]":"bg-[var(--border)]")} style={isSoon?{boxShadow:'0 0 0 4px rgba(255,107,38,0.28)'}:undefined} aria-hidden="true" />
+                  <EventIcon kind={ek} size={36} theme={isDark ? "dark":"light"} />
                   <div className="min-w-0 flex-1">
                     <div className="text-[14px] font-medium truncate text-[var(--text)]">{ev.title}</div>
                     <div className="text-[11px] text-[var(--muted)] flex items-center gap-1.5"><span>{fmtDay(ev.dueAt)}</span>{ev.location && <><span className="h-1 w-1 rounded-full bg-[var(--border)]" />{ev.location}</>}</div>

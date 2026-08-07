@@ -3,6 +3,8 @@ import type { PersonKey } from "../../types";
 import { PERSONS } from "../../constants/themes";
 import { todayKey, toLocalKey as toLocalKeyDublin, tzWallToUtc } from "../../lib/dates";
 import { HOUSEHOLD_TZ } from "../../lib/buildMeta";
+import EventIcon from "../../components/EventIcon";
+import { EVENT_KIND_LIST, EVENT_KINDS, getKindDef } from "../../lib/eventTypes";
 
 function timePartFromIsoDublin(iso?: string): string {
   if (!iso) return "10:00";
@@ -97,6 +99,7 @@ export function AddEventForm({ onAdd, currentUser, selectedDate, initialEvent }:
     if (initialEvent?.attendees && Array.isArray(initialEvent.attendees) && initialEvent.attendees.length) return initialEvent.attendees;
     return ["aisling","ciaran"];
   });
+  const [kind,setKind]=useState<string>(()=> (initialEvent?.kind || initialEvent?.eventKind || "home") as any);
 
   useEffect(()=>{
     if (multiDay && date && endDate===date) {
@@ -122,6 +125,29 @@ export function AddEventForm({ onAdd, currentUser, selectedDate, initialEvent }:
   return <div className="space-y-3">
     <div className="text-[11px] text-[var(--muted)]">Responding as {(PERSONS[currentUser]?.name||currentUser||'You')} • Europe/Dublin — {initialEvent ? "editing" : "new"}</div>
     <input id="cal-title" aria-label="Event title" value={title} onChange={e=> setTitle(e.target.value)} placeholder="Title — e.g. Dinner with Mia" className="w-full rounded-full border bg-[var(--card-bg)] px-4 h-[44px] text-[13px]" style={{ borderColor:"var(--border)" }} />
+    {/* v166 event kind selector - boutique chips */}
+    <div className="pt-1">
+      <div className="text-[11px] font-medium tracking-wide text-[var(--muted)] mb-1.5">Type</div>
+      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+        {EVENT_KIND_LIST.map(kd=>{
+          const active = kind===kd.id;
+          const isDark = typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme')==='ink';
+          const pal = isDark ? kd.dark : kd.light;
+          return (
+            <button key={kd.id} type="button" onClick={()=> setKind(kd.id)} className={"inline-flex items-center gap-1.5 rounded-full border px-3 h-[36px] min-h-[36px] shrink-0 text-[12px] font-medium transition active:scale-[0.97]"}
+              style={{
+                background: active ? pal.bg : "var(--card-bg)",
+                color: active ? pal.fg : "var(--muted)",
+                borderColor: active ? pal.fg+"44" : "var(--border)",
+                boxShadow: active ? `0 1px 8px ${pal.bg}` : undefined
+              }}>
+              <span className="grid place-items-center"><EventIcon kind={kd.id} size={18} theme={isDark?"dark":"light"} /></span>
+              <span>{kd.label}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
     <div className="flex gap-2">
       <div className="flex-1">
         <label htmlFor="cal-date" className="text-[11px] text-[var(--muted)]">Start date (Dublin)</label>
@@ -226,6 +252,8 @@ export function AddEventForm({ onAdd, currentUser, selectedDate, initialEvent }:
         ...(initialEvent ? {...initialEvent} : {}),
         id: initialEvent?.id || `ev_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,
         title:title.trim(),
+        kind,
+        eventKind: kind,
         type: repeat === "once" ? "one-off" : "repeat",
         frequency: repeat,
         dueAt: startIso,

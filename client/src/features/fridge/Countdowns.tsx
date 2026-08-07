@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import type { TabKey, CalendarEventV2 } from "../../types";
 import { HOUSEHOLD_TZ, toLocalKey as toLocalKeyDublin } from "../../lib/dates";
+import EventIcon from "../../components/EventIcon";
+import { inferKindFromTitle } from "../../lib/eventTypes";
 
 type Props = {
   calendar: CalendarEventV2[];
@@ -59,10 +61,20 @@ export default function Countdowns({ calendar, nowMs, todayDateStr, setTab }: Pr
           const {days, overdue} = dueDiff(ev.dueAt);
           const big = Math.abs(days)<=7;
           const isStar = Math.abs(days)<=3;
+          const ek = (ev as any).kind || (ev as any).eventKind || inferKindFromTitle(ev.title, "other");
+          const isDark = typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme')==='ink';
           return (
             <button key={ev.id} onClick={()=> setTab("calendar")} className="text-left rounded-[22px] border px-4 py-4 min-h-[112px] relative overflow-hidden transition hover:shadow-[0_6px_16px_rgba(0,0,0,0.08)]" style={{borderColor: overdue?'rgba(239,68,68,0.28)':'var(--border)', background: overdue?'linear-gradient(180deg, color-mix(in srgb, #FEF2F2 58%, var(--card-bg)) 0%, var(--card-bg) 100%)': 'var(--card-bg)', boxShadow:'0 8px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.06)'}}>
               <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full blur-[14px] pointer-events-none" style={{background:'radial-gradient(100% 100% at 50% 50%, var(--accent) 0%, transparent 70%)', opacity: isStar?0.18:0.08}} aria-hidden="true" />
-              {isStar && <span className="absolute right-3 top-3 text-[12px] opacity-80" style={{color:'var(--accent)'}}>✦</span>}
+              {/* large watermark icon behind */}
+              <div className="absolute -right-[8px] -bottom-[10px] w-[96px] h-[96px] pointer-events-none rotate-[-6deg]" aria-hidden="true">
+                <EventIcon kind={ek} size={96} variant="watermark" theme={isDark ? "dark":"light"} />
+              </div>
+              {/* small bubble top right for kind */}
+              <div className="absolute right-3 top-3 pointer-events-none" aria-hidden="true">
+                <EventIcon kind={ek} size={22} theme={isDark ? "dark":"light"} />
+              </div>
+              {isStar && <span className="absolute right-10 top-3 text-[12px] opacity-80" style={{color:'var(--accent)'}}>✦</span>}
               <div className="flex items-start justify-between relative">
                 <span className={"text-[11px] rounded-full border px-2.5 py-1 font-semibold min-h-[22px] grid place-items-center "+(overdue?"bg-[#FEF2F2] text-[#991B1B] border-[#FECACA]":"")} style={overdue?{}:{background:'var(--chip-bg)', color:'var(--text-secondary)', borderColor:'var(--border)'}}>{overdue?"OVERDUE":days===0?"TODAY":days===1?"TOMORROW":`${Math.abs(days)}d ${days<0?"ago":"left"}`}</span>
                 <span className="h-[7px] w-[7px] rounded-full" style={{background:'var(--accent)', boxShadow: isStar?'0 0 0 5px rgba(255,107,38,0.22), 0 0 12px rgba(255,107,38,0.36)':'0 0 0 4px rgba(255,107,38,0.16)', animation: big?'fridge-peach-pulse 1.8s infinite':undefined}} />

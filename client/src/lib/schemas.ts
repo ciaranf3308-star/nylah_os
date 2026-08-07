@@ -126,6 +126,9 @@ export const calendarEventV2Schema = baseEntitySchema.extend({
   recurrenceUntil: z.string().optional(),
   pinned: z.boolean().optional(),
   pinnedAt: z.string().optional(),
+  // legacy compat snake
+  pinned_at: z.string().optional().nullable(),
+  isPinned: z.boolean().optional(),
   mutationId: z.string().optional(),
   location: z.string().optional(),
   notes: z.string().optional(),
@@ -133,6 +136,9 @@ export const calendarEventV2Schema = baseEntitySchema.extend({
   reminderMinutes: z.number().optional(),
   responseDeadline: z.string().optional(),
   responses: z.array(z.any()).optional(),
+  // v166 kinds optional
+  kind: z.string().optional(),
+  eventKind: z.string().optional(),
 });
 export type CalendarEventV2 = z.infer<typeof calendarEventV2Schema>;
 

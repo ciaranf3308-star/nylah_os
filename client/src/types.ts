@@ -117,6 +117,13 @@ export type CalendarEventV2 = {
   proposalReason?: string;
   mutationId?: string;
   lastNotifiedState?: string;
+  // v166 event kinds
+  kind?: string;
+  eventKind?: string;
+  pinned?: boolean;
+  pinnedAt?: string | null;
+  pinned_at?: string | null;
+  isPinned?: boolean;
 };
 
 export type ShoppingCategory =

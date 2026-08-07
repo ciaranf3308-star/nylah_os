@@ -1,8 +1,8 @@
 {
-  "build": "v165-beirt-clean-bg-perfect",
-  "code": 165,
-  "version": "165.0.0",
-  "changelog": "use your clean background PNG - palm shadow peach sage blobs real tray/mugs, bottom sheet overlay, no double headline",
+  "build": "v166-beirt-event-kinds-fridge-hero",
+  "code": 166,
+  "version": "166.0.0",
+  "changelog": "event kinds 10 types with boutique svg bubbles, fridge hero light/dark plant pot & mugs, upcoming icon bubbles infer from title, pinned watermark, calendar type selector chips, dark mode tokens",
   "mandatory": false,
-  "builtAt": "2026-08-07T22:05:00Z"
+  "builtAt": "2026-08-07T22:12:00Z"
 }

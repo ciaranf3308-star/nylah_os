@@ -163,6 +163,22 @@ function FridgePage(props: FridgeProps | any) {
       )}
 
       <div className="nylah-hero-v101 nylah-grain rounded-[28px] px-6 pt-6 pb-5 relative overflow-hidden" style={{ fontSmooth: 'always' } as any}>
+        {/* botanical blobs behind - absolute organic shapes matching target */}
+        <div className="absolute right-[-22px] top-[-18px] w-[180px] h-[180px] rounded-full pointer-events-none" style={{ background: "radial-gradient(80% 80% at 30% 30%, #F6D1BF 0%, #F3D8C6 42%, transparent 72%)", opacity: 0.9 }} aria-hidden="true"/>
+        <div className="absolute right-[44px] top-[42px] w-[96px] h-[96px] rounded-[32px] rotate-[-12deg] pointer-events-none" style={{ background: "#C6D9CE", opacity: 0.88 }} aria-hidden="true"/>
+        <div className="absolute right-[-8px] top-[66px] w-[72px] h-[72px] rounded-[22px] rotate-[8deg] pointer-events-none" style={{ background: "#E9C6BB", opacity: 0.9 }} aria-hidden="true"/>
+        {/* plant pot + mugs hero - boutique right-side illustration */}
+        <div className="absolute right-[-14px] bottom-[-8px] w-[208px] h-[238px] pointer-events-none select-none overflow-hidden" aria-hidden="true" style={{ filter: (theme as any)?.id === 'ink' ? "brightness(0.88) contrast(1.05)" : undefined }}>
+          <img
+            src={(theme as any)?.id === 'ink' ? "./fridge-hero-dark.png" : "./fridge-hero-light.png"}
+            alt=""
+            className="h-full w-full object-cover object-[center_top]"
+            loading="eager"
+            style={{}}
+          />
+        </div>
+        {/* soft palm shadow mimicking target */}
+        <div className="absolute left-[28%] top-[12px] w-[220px] h-[140px] pointer-events-none opacity-[0.18]" style={{ background: "radial-gradient(70% 70% at 30% 30%, #9AB0A0 0%, transparent 70%)", filter:"blur(14px)" }} aria-hidden="true"/>
         <div className="relative flex items-start justify-between gap-3">
           <div className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ fontFamily: "var(--font-ui)", color: "var(--muted)", textRendering: 'optimizeLegibility' }}>{dateLabel}</div>
           <div className="shrink-0 opacity-90">{syncMinimal}</div>
@@ -180,8 +196,8 @@ function FridgePage(props: FridgeProps | any) {
             <span className="h-px w-8" style={{ background: "var(--border)" }} /> {(PERSONS as any)[currentUser]?.name || (typeof currentUser==='string' ? currentUser : 'You')} ♥ {(PERSONS as any)[partner]?.name || partner} • Beirt
           </div>
         </div>
-        {/* single subtle glow - cut extra blobs */}
-        <div className="absolute -right-12 -bottom-12 w-[160px] h-[160px] rounded-full blur-[36px] opacity-[0.12] pointer-events-none" style={{ background: "var(--accent)" }} />
+        {/* single subtle glow - cut extra blobs - now behind hero illustration */}
+        <div className="absolute -right-12 -bottom-12 w-[160px] h-[160px] rounded-full blur-[28px] opacity-[0.10] pointer-events-none" style={{ background: "var(--accent)" }} />
       </div>
 
       <NeedsYou currentUser={currentUser} calendar={activeCalendar as any} chores={activeChores as any} nowMs={nowMs} setTab={setTab as any} />

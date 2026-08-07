@@ -20,7 +20,7 @@ async function registerBiometric(user: PersonKey): Promise<string|null> {
   const userId=crypto.getRandomValues(new Uint8Array(16));
   const rpId=location.hostname;
   try{
-    const cred:any=await (navigator.credentials as any).create({ publicKey:{ challenge, rp:{name:"Nylah OS", id:rpId}, user:{id:userId, name:user, displayName:PERSONS[user].name}, pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}], authenticatorSelection:{authenticatorAttachment:"platform", requireResidentKey:false, userVerification:"required"}, timeout:60000, attestation:"none" }});
+    const cred:any=await (navigator.credentials as any).create({ publicKey:{ challenge, rp:{name:"Nylah OS", id:rpId}, user:{id:userId, name:user, displayName:(PERSONS as any)[user]?.name || user}, pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}], authenticatorSelection:{authenticatorAttachment:"platform", requireResidentKey:false, userVerification:"required"}, timeout:60000, attestation:"none" }});
     if(!cred||!cred.rawId) return null;
     const idB64u=bufToB64u(cred.rawId);
     try{ localStorage.setItem(webAuthnIdKey(user), idB64u); localStorage.setItem("couple_v1_biometric_enabled","1"); }catch{}

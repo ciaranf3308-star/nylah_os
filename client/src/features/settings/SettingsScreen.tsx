@@ -187,7 +187,7 @@ export function SettingsScreen(props: any = {}) {
       }
       setAnonPresent(found ? `eyJ…${tail}` : "no");
     } catch { setAnonPresent("err"); }
-    try { setEffId(getEffectiveRowId() as any); } catch {}
+    try { const nid = getEffectiveRowId(); if (nid) setEffId(nid); } catch {}
     try {
       const v = (localStorage.getItem("couple_v1_build") || (window as any).__NYLAH_VERSION__ || "v146-boutique");
       setBuild(String(v).slice(0, 24));
@@ -306,7 +306,7 @@ export function SettingsScreen(props: any = {}) {
           onToggle={() => toggle("household")}
           eyebrow="house"
           title="Your house"
-          meta={`${effId.slice(0,16)} • invite ${inviteCode.slice(0,6)} • Europe/Dublin`}
+          meta={`${(effId||"–").slice(0,16)} • invite ${(inviteCode||"–").slice(0,6)} • Europe/Dublin`}
         >
           <div className="pt-2 space-y-3">
             {/* invite heroic */}
@@ -355,7 +355,7 @@ export function SettingsScreen(props: any = {}) {
                 style={{ borderColor: "var(--border)" }}
               >
                 <span className="text-[var(--muted)]">house · </span>
-                <span className="font-mono">{effId.slice(0,14)}</span>
+                <span className="font-mono">{ (effId||"–").slice(0,14) }</span>
                 {copied === "house" && <span className="ml-2 text-[10px] text-[#16A34A]">copied</span>}
               </button>
               <div className="h-[40px] rounded-full border bg-[var(--chip-bg)] px-3 grid place-items-center text-[11px] text-[var(--muted)]" style={{ borderColor: "var(--border)" }}>
@@ -442,7 +442,7 @@ export function SettingsScreen(props: any = {}) {
             <div className="rounded-[16px] border bg-[var(--card-bg)] p-3" style={{ borderColor: "var(--border)" }}>
               <div className="text-[11px] font-semibold">Health</div>
               <div className="mt-1 text-[10.5px] font-mono leading-[1.35] text-[var(--muted)]">
-                <div>house {effId.slice(0,14)} • {online ? "online" : "offline"} • {anonPresent}</div>
+                <div>house { (effId||"–").slice(0,14) } • {online ? "online" : "offline"} • {anonPresent}</div>
                 <div>local c:{safeChores.length} cal:{safeCalendar.length} s:{safeShopping.length} n:{safeNotes.length} • queue {queueLen}</div>
                 {remoteCounts && <div>remote c:{remoteCounts.c} cal:{remoteCounts.cal} s:{remoteCounts.s} n:{remoteCounts.n}</div>}
                 <div className="truncate">err {String(pushErr).slice(0,90) || "—"}</div>

@@ -92,23 +92,24 @@ export const EVENT_KIND_LIST: EventKindDef[] = [
 
 export function inferKindFromTitle(title?: string, fallback: EventKindId = "other"): EventKindId {
   if (!title) return fallback;
-  const t = title.toLowerCase();
-  if (/(date|dinner|heart|love|with you)/.test(t) && !/(update|day)/.test(t)) {
-    if (t.includes("brunch") || t.includes("friends") || t.includes("milo")) {} else if (t.includes("date")) return "date";
-  }
-  if (/golf|united|match|game|training|run|gym|hurl|cup|final|premiere|football|soccer|sport|gAA|hike|cycle/.test(t)) return "sports";
-  if (/flight|travel|trip|holiday|airport|hotel|away|galgorm|cyprus|weekend|cottage/.test(t)) return "travel";
+  const t = title.toLowerCase().trim();
+  // explicit exact mapping first - solves galgorm/united/brunch colliding with travel/sports generic
+  if (/galgorm/.test(t)) return "family";
+  if (/brunch/.test(t)) return "friends";
+  if (/united/.test(t)) return "sports";
+  if (/golf|match|game|training|run|gym|hurl|cup|final|premiere|football|soccer|sport|gaa|hike|cycle/.test(t)) return "sports";
+  if (/flight|travel|trip|holiday|airport|hotel|away|cyprus|weekend|cottage/.test(t)) return "travel";
   if (/concert|gig|album|music|playlist|spotify|song|band/.test(t)) return "music";
   if (/birthday|bday|cake/.test(t)) return "birthday";
   if (/doctor|dentist|appointment|meeting|call|interview/.test(t)) return "appointment";
   if (/reminder|remind|alarm|bill|due|pay/.test(t)) return "reminder";
   if (/family|mum|dad|parents|sister|brother|anniversary/.test(t)) return "family";
-  if (/friends|milo|mia|brunch|drinks|pub|crew/.test(t)) return "friends";
+  if (/friends|milo|mia|drinks|pub|crew/.test(t)) return "friends";
   if (/home|house|repair|garden|bins|chore|paint/.test(t)) return "home";
   if (/love|date night|romantic/.test(t)) return "date";
-  if (/united/.test(t)) return "sports";
-  if (/brunch/.test(t)) return "friends";
-  if (/galgorm/.test(t)) return "family";
+  if (/(date|dinner|heart|love|with you)/.test(t) && !/(update|day)/.test(t)) {
+    if (t.includes("date")) return "date";
+  }
   return fallback;
 }
 

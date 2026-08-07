@@ -169,33 +169,32 @@ function FridgePage(props: FridgeProps | any) {
             {/* ——— fridge hero – pixel perfect to your double phone ref ——— */}
       <div className="relative overflow-hidden rounded-[28px] px-6 pt-4 pb-6" style={
         (theme as any)?.id === 'ink' || (theme as any)?.name?.toLowerCase().includes('charcoal')
-        ? { background: "#1B1E22", minHeight: 220, boxShadow:"0 8px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)" }
-        : { background: "#FDF6EF", minHeight: 220, boxShadow:"0 8px 28px rgba(60,40,20,0.06), inset 0 1px 0 rgba(255,255,255,0.9)" }
+        ? { background: "#1B1E22", minHeight: 216, boxShadow:"0 8px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)" }
+        : { background: "#FDF6EF", minHeight: 216, boxShadow:"0 8px 28px rgba(60,40,20,0.06), inset 0 1px 0 rgba(255,255,255,0.9)" }
       }>
         {/* perfect circles - match goal mock */}
         {(theme as any)?.id === 'ink' || (theme as any)?.name?.toLowerCase().includes('charcoal') ? (
           <>
-            <div className="pointer-events-none absolute -right-[18px] -top-[28px] h-[168px] w-[168px] rounded-full" style={{ background:"#3A2A22", opacity:0.92 }} />
-            <div className="pointer-events-none absolute right-[28px] top-[36px] h-[112px] w-[112px] rounded-full" style={{ background:"#2B3330", opacity:0.88 }} />
-            <div className="pointer-events-none absolute right-[92px] top-[8px] h-[64px] w-[64px] rounded-full" style={{ background:"#4A352E", opacity:0.75 }} />
+            <div className="pointer-events-none absolute -right-[22px] -top-[26px] h-[164px] w-[164px] rounded-full" style={{ background:"#3A2A22", opacity:0.92 }} />
+            <div className="pointer-events-none absolute right-[30px] top-[38px] h-[108px] w-[108px] rounded-full" style={{ background:"#2B3330", opacity:0.88 }} />
+            <div className="pointer-events-none absolute right-[94px] top-[10px] h-[60px] w-[60px] rounded-full" style={{ background:"#4A352E", opacity:0.75 }} />
           </>
         ) : (
           <>
-            <div className="pointer-events-none absolute -right-[18px] -top-[28px] h-[168px] w-[168px] rounded-full" style={{ background:"#F9DCC0", opacity:0.95 }} />
-            <div className="pointer-events-none absolute right-[28px] top-[36px] h-[112px] w-[112px] rounded-full" style={{ background:"#DDE8DC", opacity:0.95 }} />
-            <div className="pointer-events-none absolute right-[92px] top-[8px] h-[64px] w-[64px] rounded-full" style={{ background:"#EBCFB3", opacity:0.88 }} />
+            <div className="pointer-events-none absolute -right-[22px] -top-[28px] h-[168px] w-[168px] rounded-full" style={{ background:"#F9DCC0", opacity:0.96 }} />
+            <div className="pointer-events-none absolute right-[28px] top-[40px] h-[112px] w-[112px] rounded-full" style={{ background:"#DDE8DC", opacity:0.96 }} />
+            <div className="pointer-events-none absolute right-[92px] top-[10px] h-[64px] w-[64px] rounded-full" style={{ background:"#EBCFB3", opacity:0.9 }} />
           </>
         )}
-        {/* faint leaf shadow top center */}
-        <div className="pointer-events-none absolute left-[46%] top-[4px] h-[28px] w-[88px] rotate-[-10deg]" style={{ opacity: (theme as any)?.id==='ink'? 0.06 : 0.09, background:"radial-gradient(ellipse at 50% 50%, #5A5A3A 0%, transparent 70%)" }} />
 
-        {/* mugs / tray / vase – flush bottom edge */}
+        {/* mugs / tray / vase – flush bottom edge, no drop-shadow to avoid grey halo */}
         <img
           src="./fridge-mugs-transparent.png"
           alt=""
           className="pointer-events-none absolute select-none"
-          style={{ right:-8, bottom:0, width:196, height:"auto", objectFit:"contain", filter: (theme as any)?.id==='ink' ? "brightness(0.88) saturate(0.92) drop-shadow(0 10px 18px rgba(0,0,0,0.5))" : "drop-shadow(0 10px 18px rgba(80,52,32,0.18))" }}
+          style={{ right:-6, bottom:0, width:198, height:"auto", objectFit:"contain", filter: (theme as any)?.id==='ink' ? "brightness(0.88) saturate(0.92)" : "none" }}
           loading="eager"
+          draggable={false}
         />
 
         <div className="relative z-[1]">

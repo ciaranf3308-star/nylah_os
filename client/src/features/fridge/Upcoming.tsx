@@ -15,42 +15,42 @@ type Props = {
   setTab: (k: TabKey) => void;
 };
 
-function IconFriends() {
+function IconFriends({stroke}:{stroke:string}) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8C5A3E" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="7" r="3.2" />
-      <path d="M6.2 14.2c0-2.3 1.8-4.2 4.2-4.6" />
-      <path d="M13.6 9.6c2.4.4 4.2 2.3 4.2 4.6v2.2H6.2v-2.2c0-.4.1-.8.2-1.2" />
-      <circle cx="18" cy="9" r="1.5" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9.2" cy="7.8" r="2.6" />
+      <path d="M4.2 19c.5-2.9 2.5-5 5-5s4.5 2.1 5 5" />
+      <circle cx="17.2" cy="9.2" r="1.7" />
+      <path d="M18.8 19c.2-1.6-.6-2.9-1.8-3.6" opacity={0.85}/>
     </svg>
   );
 }
-function IconFootball() {
+function IconFootball({stroke}:{stroke:string}) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8C5A3E" strokeWidth="1.25" strokeLinecap="round">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.25" strokeLinecap="round">
       <circle cx="12" cy="12" r="7.6" />
       <path d="M12 12m-2.2 0a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0" />
       <path d="M12 4.4v2.8M19 12h-2.8M12 19.6v-2.8M5 12h2.8M6.6 6.6l2 2M17.4 6.6l-2 2M17.4 17.4l-2-2M6.6 17.4l2-2" />
     </svg>
   );
 }
-function IconPlane() {
+function IconPlane({stroke}:{stroke:string}) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5E7A6B" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round">
       <path d="M3.5 11l15.8-4.6a.6.6 0 0 1 .8.7L14.9 20a.6.6 0 0 1-1 .3l-2.4-3.6-3.1 2.1a.6.6 0 0 1-.9-.4l-.3-3.8L18 7.2" />
     </svg>
   );
 }
 function getBubble(k: EventKind | string) {
   const key = (k||"").toLowerCase();
-  if (key === "sports") return { bg:"#F9D5BC", Icon: IconFootball };
-  if (key === "friends" || key==="family" || key==="date") {
-    if (key==="family") return { bg:"#DDEBD5", Icon: IconFriends };
-    // brunch/people use same peach as sports per ref
-    return { bg:"#F9D5BC", Icon: IconFriends };
-  }
-  if (key==="travel") return { bg:"#D6E6DC", Icon: IconPlane };
-  return { bg:"#F9D5BC", Icon: IconFriends };
+  if (key === "sports") return { bg:"#F9DCC0", fg:"#8D5A3E", border:"#E8C5A6", Icon: (p:any)=> <IconFootball stroke={p.fg}/> };
+  if (key === "friends") return { bg:"#DDE8DC", fg:"#5A6F64", border:"#C4D5CC", Icon: (p:any)=> <IconFriends stroke={p.fg}/> };
+  if (key === "family") return { bg:"#F2E3C9", fg:"#7A6A55", border:"#E6D4B0", Icon: (p:any)=> <IconFriends stroke={p.fg}/> };
+  if (key === "date") return { bg:"#F2E9DC", fg:"#7A6A55", border:"#E2D2BA", Icon: (p:any)=> <IconFriends stroke={p.fg}/> };
+  if (key==="travel") return { bg:"#D6E6DC", fg:"#5E7A6B", border:"#C0D5C8", Icon: (p:any)=> <IconPlane stroke={p.fg}/> };
+  if (key==="birthday") return { bg:"#FCE8E2", fg:"#9E6A5E", border:"#F0D0C6", Icon: (p:any)=> <IconFriends stroke={p.fg}/> };
+  // default to friends/people neutral
+  return { bg:"#D8E5DF", fg:"#5A7367", border:"#C8D9CE", Icon: (p:any)=> <IconFriends stroke={p.fg}/> };
 }
 
 export default function Upcoming({ currentUser, calendar, chores, shopping, nowMs, todayDateStr, setTab }: Props) {
@@ -106,11 +106,16 @@ export default function Upcoming({ currentUser, calendar, chores, shopping, nowM
         {upcoming.map((ev:any, idx:number)=>{
           const kind = (ev as any).kind || (ev as any).eventKind || inferKindFromTitle(ev.title||"") || "friends";
           const bubble = getBubble(kind);
-          const Icon = bubble.Icon;
-          const isAisling = Array.isArray(ev.attendees) && ev.attendees.includes("aisling") || ev.attendees?.length===1;
+          const Icon = (bubble as any).Icon;
+          const isAisling = (()=> {
+            const at = (ev as any).attendees as string[]|undefined;
+            if (!at) return (ev as any).ownerId==="aisling" || (ev as any).person==="aisling";
+            if (at.length===1) return at[0]==="aisling";
+            return at.includes("aisling") && !at.includes("ciaran");
+          })();
           return (
-            <button key={ev.id} onClick={()=> setTab("calendar")} className="w-full text-left flex items-center gap-3 px-3.5 py-3.5 min-h-[66px] hover:bg-[#FFD9C4]/18 transition" style={{ borderTop: idx===0?undefined:"1px solid #F0E5D8" }}>
-              <span className="h-[44px] w-[44px] shrink-0 grid place-items-center rounded-full border" style={{ background: bubble.bg, borderColor:"#E9CBB6" }}><Icon /></span>
+            <button key={ev.id} onClick={()=> setTab("calendar")} className="w-full text-left flex items-center gap-3 px-3.5 py-3.5 min-h-[66px] hover:bg-[#FFD9C4]/12 transition" style={{ borderTop: idx===0?undefined:"1px solid #F0E5D8" }}>
+              <span className="h-[44px] w-[44px] shrink-0 grid place-items-center rounded-full border" style={{ background: (bubble as any).bg, borderColor:(bubble as any).border }}><Icon fg={(bubble as any).fg} /></span>
               <div className="min-w-0 flex-1">
                 <div className="text-[15px] font-[650] text-[#19140F] truncate" style={{ fontFamily:"Fraunces, serif", letterSpacing:"-0.01em" }}>{ev.title}</div>
                 <div className="mt-0.5 text-[12px] text-[#7E766F] flex items-center gap-1" style={{ fontFamily:"Inter, sans-serif" }}>{fmtDayShort(ev.dueAt)}</div>

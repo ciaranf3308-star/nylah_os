@@ -1,1 +1,8 @@
-{"build":"v170-fridge-dark-match","code":170,"version":"170.0.0","changelog":"dark hero #1B1E22 circles dark brown/green, light #FDF6EF, both themes true ref","mandatory":false,"builtAt":"2026-08-07T23:27:30Z"}
+{
+  "build": "v171-fridge-widget-qa",
+  "code": 171,
+  "version": "171.0.0",
+  "changelog": "hero circles cleaned no shadow, mugs 520x664 true crop, upcoming icon kinds fixed brunch->friends sage / united->sports peach / galgorm->family tan, countdown single full-width 54px, A-dot only aisling",
+  "mandatory": false,
+  "builtAt": "2026-08-07T22:35:00Z"
+}

@@ -3,6 +3,60 @@ import React from "react";
 import { App } from "./App";
 import "./theme.css";
 
+// V174 self-heal: old queue with camelCase caused upsert error -> Sync failed stuck + PWA stale 172
+try{
+  const raw = localStorage.getItem('idb_mutation_queue');
+  if(raw){
+    try{
+      const arr = JSON.parse(raw);
+      if(Array.isArray(arr) && arr.length>0){
+        let dirty = false;
+        for(const o of arr){
+          if(!o) continue;
+          if((o.retries||0)>=2){ dirty = true; break; }
+          const p = o.payload||{};
+          if(p.deletedAt || p.createdAt || p.updatedAt || p.pinnedAt || p.dueAt || p.allDay){ dirty = true; break; }
+        }
+        if(dirty){
+          console.log('[beirt v174 self-heal] clearing stuck camelCase queue', arr.length);
+          // keep household safe, just wipe queue - server will be source of truth on next load
+          try{ localStorage.removeItem('idb_mutation_queue'); }catch{}
+          try{ localStorage.removeItem('couple_v1_queue_count'); }catch{}
+          try{ localStorage.setItem('idb_mutation_queue','[]'); }catch{}
+          try{ localStorage.setItem('couple_v1_queue_count','0'); }catch{}
+          try{ localStorage.removeItem('couple_v1_last_push_err'); }catch{}
+          try{ indexedDB.deleteDatabase('couple_v1_idb'); }catch{}
+          // force SW update if still on 172
+          try{
+            if('serviceWorker' in navigator){
+              navigator.serviceWorker.getRegistrations().then(regs=>{
+                for(const r of regs){ try{ r.update(); }catch{} }
+              }).catch(()=>{});
+              // also clear caches if >1 day old stuck
+              if('caches' in window){
+                // @ts-ignore
+                caches.keys().then(keys=>{ for(const k of keys){ try{ caches.delete(k) }catch{} } }).catch(()=>{})
+              }
+            }
+          }catch{}
+        }
+      }
+    }catch{}
+  }
+  // also if version.json says 173+ but local code is old, force SW update on load
+  try{
+    const codeRaw = localStorage.getItem('couple_v1_app_code');
+    const code = codeRaw ? Number(JSON.parse(codeRaw)) : Number(codeRaw||0);
+    if(code && code < 173){
+      if('serviceWorker' in navigator){
+        navigator.serviceWorker.getRegistrations().then(regs=>{
+          for(const r of regs){ try{ r.update(); }catch{} }
+        }).catch(()=>{});
+      }
+    }
+  }catch{}
+}catch{}
+
 // V159 outside-login wipe — ?wipe=1 clears stale cache before anything loads
 try{
   const sp = new URLSearchParams(location.search);

@@ -1,8 +1,8 @@
 {
-  "build": "v163-beirt-photoreal-perfect",
-  "code": 163,
-  "version": "163.0.0",
-  "changelog": "photoreal onboarding: use your target image mid-photo for blobs+table real mugs/plant/candle, chopped bottom sheet overlay real buttons, logo/headline sharp text, meta generic",
+  "build": "v164-beirt-fix-double-headline",
+  "code": 164,
+  "version": "164.0.0",
+  "changelog": "fix double headline: tight crop mid photo to exclude headline/copy, only blobs+table real photo, bottom sheet overlay",
   "mandatory": false,
-  "builtAt": "2026-08-07T21:53:00Z"
+  "builtAt": "2026-08-07T22:00:00Z"
 }

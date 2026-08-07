@@ -57,7 +57,7 @@ export function BiometricsSettings({ currentUser }: { currentUser?: PersonKey })
   return (
     <div className="space-y-3">
       <div className="rounded-[16px] border bg-[var(--card-bg)] px-4 py-3 flex items-center justify-between" style={{borderColor:'var(--border)'}}>
-        <div><div className="text-[13px] font-medium">Face ID / Touch ID</div><div className="text-[11px] text-[var(--muted)]">{supported ? (enrolled.length?enrolled.map(u=>PERSONS[u].name).join(", ")+" enrolled":"available"): "not available on this device"}</div>{error && <div className="text-[11px] text-[#B91C1C] mt-1">{error}</div>}</div>
+        <div><div className="text-[13px] font-medium">Face ID / Touch ID</div><div className="text-[11px] text-[var(--muted)]">{supported ? (enrolled.length?enrolled.map(u=>(PERSONS as any)[u]?.name||u).join(", ")+" enrolled":"available"): "not available on this device"}</div>{error && <div className="text-[11px] text-[#B91C1C] mt-1">{error}</div>}</div>
         <label className="relative inline-flex cursor-pointer"><input type="checkbox" checked={enabled} onChange={toggleBiometric} disabled={!supported||loading} className="peer sr-only"/><span className="h-[28px] w-[44px] rounded-full bg-[var(--border)] relative flex items-center px-[3px] peer-checked:bg-[#0A0A0A] transition"><span className="h-[22px] w-[22px] bg-white rounded-full shadow-sm transition-transform translate-x-0 peer-checked:translate-x-[16px] inline-block"/></span></label>
       </div>
       <div className="rounded-[16px] border bg-[var(--card-bg)] px-4 py-3 flex items-center justify-between" style={{borderColor:'var(--border)'}}>

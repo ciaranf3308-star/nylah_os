@@ -1,5 +1,6 @@
 // PinScreen — scalable dynamic persons, server-only PIN verify via verify_household_pin RPC
 // No hardcoded aisling/ciaran, uses local household persons for names
+// Supports props {user/onBack/onSuccess} from composer + legacy {onSelect/onPick}
 
 import { useEffect, useState } from "react";
 import type { PersonKey } from "../../types";
@@ -48,18 +49,27 @@ async function canDoPlatformBiometric(): Promise<boolean> {
     return true;
   } catch { return false; }
 }
-async function authenticateBiometricDynamic(): Promise<PersonKey | null> {
+async function authenticateBiometricDynamic(expectedUser?: PersonKey): Promise<PersonKey | null> {
   if (!isWebAuthnSupported()) return null;
   const persons = getHouseholdPersonsRaw();
-  const keys: string[] = persons?.map((p:any)=>p.key) || ["person_1","person_2"];
+  const keys: string[] = expectedUser ? [expectedUser] : (persons?.map((p:any)=>p.key) || ["person_1","person_2"]);
   const stored: { user: string; id: string }[] = [];
   try {
     for (const u of keys) {
       const v = localStorage.getItem(`couple_v1_webauthn_${u}`);
       if (v) stored.push({ user: u, id: v });
     }
+    // fallback broad scan if expected missing but any enrolled
+    if (stored.length===0 && expectedUser) {
+      const allKeys = (persons?.map((p:any)=>p.key) || []).concat(["person_1","person_2","aisling","ciaran"]);
+      for (const u of allKeys) {
+        if (u===expectedUser) continue;
+        const v = localStorage.getItem(`couple_v1_webauthn_${u}`);
+        if (v) stored.push({ user: u, id: v });
+      }
+    }
     // legacy fallback aisling/ciaran
-    if (stored.length===0) {
+    if (stored.length===0 && !expectedUser) {
       for (const u of ["aisling","ciaran"] as string[]) {
         const v = localStorage.getItem(`couple_v1_webauthn_${u}`);
         if (v) stored.push({ user: u, id: v });
@@ -89,14 +99,30 @@ async function authenticateBiometricDynamic(): Promise<PersonKey | null> {
   }
 }
 
-export function PinScreen({ onSelect, onPick }: { onSelect: (k: PersonKey)=>void; onPick?: (k: PersonKey)=>void }) {
-  const select = onSelect || onPick!;
+type PinScreenProps = {
+  user?: PersonKey;
+  expectedUser?: PersonKey;
+  onBack?: ()=>void;
+  onSuccess?: (k: PersonKey)=>void;
+  onSelect?: (k: PersonKey)=>void;
+  onPick?: (k: PersonKey)=>void;
+};
+
+export function PinScreen(props: PinScreenProps) {
+  const expectedUser = (props.user || (props as any).expectedUser) as PersonKey | undefined;
+  const onBack = (props as any).onBack as (()=>void) | undefined;
+  const rawSuccess = (props as any).onSuccess as ((k: PersonKey)=>void) | undefined;
+  const rawSelect = (props as any).onSelect || (props as any).onPick;
+  const select = (k: PersonKey) => {
+    if (rawSuccess) rawSuccess(k);
+    else if (rawSelect) rawSelect(k);
+  };
   const [pin, setPin] = useState("");
   const [wrong, setWrong] = useState(false);
   const [shaking, setShaking] = useState(false);
   const [popIdx, setPopIdx] = useState<number|null>(null);
   const [checking, setChecking] = useState(false);
-  const [remember, setRemember] = useState<boolean>(false);
+  const [remember, setRemember] = useState<boolean>(true); // default true so refresh keeps you
   const [bioSupported, setBioSupported] = useState(false);
   const [bioEnrolled, setBioEnrolled] = useState<PersonKey[]>([]);
   const [bioLoading, setBioLoading] = useState(false);
@@ -107,6 +133,11 @@ export function PinScreen({ onSelect, onPick }: { onSelect: (k: PersonKey)=>void
   useEffect(()=>{
     const raw = getHouseholdPersonsRaw();
     if (raw) setPersons(raw);
+    // respect previously stored remember choice, but default true
+    try {
+      const r = localStorage.getItem("couple_v1_remember_user");
+      if (r==="0" || r==="false" || r==="\"0\"" || r==="\"false\"") setRemember(false);
+    } catch {}
   }, []);
 
   useEffect(()=>{
@@ -118,26 +149,36 @@ export function PinScreen({ onSelect, onPick }: { onSelect: (k: PersonKey)=>void
         setBioSupported(ok);
         const enrolled: PersonKey[] = [];
         try{
-          const keys = (persons?.map((p:any)=>p.key) || ["person_1","person_2"]).concat(["aisling","ciaran"]);
+          const keys = expectedUser ? [expectedUser] : (persons?.map((p:any)=>p.key) || ["person_1","person_2"]).concat(["aisling","ciaran"]);
           for (const k of keys) {
             if (localStorage.getItem(webAuthnIdKey(k))) enrolled.push(k as PersonKey);
           }
         }catch{}
         // dedupe
         const uniq = Array.from(new Set(enrolled)) as PersonKey[];
-        setBioEnrolled(uniq);
+        if (expectedUser) {
+          // only show biometric if expected user enrolled
+          setBioEnrolled(uniq.filter(k=> k===expectedUser));
+        } else {
+          setBioEnrolled(uniq);
+        }
       }catch{}
     })();
     return ()=>{ cancelled=true; };
-  },[persons]);
+  },[persons, expectedUser]);
 
   const handleBiometric = async () => {
     if (bioLoading) return;
     setBioLoading(true); setBioError("");
     try{
-      const who = await authenticateBiometricDynamic();
+      const who = await authenticateBiometricDynamic(expectedUser);
       if (who) {
-        try{ localStorage.setItem("couple_v1_remember_user","1"); try{ sessionStorage.removeItem("couple_v1_ephemeral_session"); }catch{} }catch{}
+        if (expectedUser && who!==expectedUser) {
+          setBioError(`That Face ID is for another account — use PIN for ${persons?.find((p:any)=>p.key===expectedUser)?.name || expectedUser}`);
+          setBioLoading(false);
+          return;
+        }
+        try{ localStorage.setItem("couple_v1_remember_user","1"); try{ sessionStorage.removeItem("couple_v1_ephemeral_session"); }catch{} try{ sessionStorage.setItem("couple_v1_session_user", JSON.stringify(who)); }catch{} }catch{}
         select(who as PersonKey);
       } else setBioError("couldn't verify — try again or use PIN");
     } catch { setBioError("Face ID not available — use PIN"); }
@@ -151,10 +192,19 @@ export function PinScreen({ onSelect, onPick }: { onSelect: (k: PersonKey)=>void
     try{
       const who = await verifyPin(code);
       if (who) {
+        if (expectedUser && who!==expectedUser) {
+          setWrong(true); setShaking(true);
+          setBioError(`That PIN is for ${persons?.find((p:any)=>p.key===who)?.name || who}, not ${persons?.find((p:any)=>p.key===expectedUser)?.name || expectedUser}`);
+          try{ (navigator as any).vibrate?.([30,50,30]); }catch{}
+          setTimeout(()=> { setShaking(false); setPin(""); },460);
+          setChecking(false);
+          return;
+        }
         try{
           localStorage.setItem("couple_v1_remember_user", remember?"1":"0");
           if (!remember) { try{ sessionStorage.setItem("couple_v1_ephemeral_session","1"); }catch{} }
           else { try{ sessionStorage.removeItem("couple_v1_ephemeral_session"); }catch{} }
+          try{ sessionStorage.setItem("couple_v1_session_user", JSON.stringify(who)); }catch{}
           try{ localStorage.setItem("couple_v1_force_resync", String(Date.now())); }catch{}
           try{ localStorage.setItem("couple_v1_last_login_pin_at", new Date().toISOString()); }catch{}
           try{ (window as any).__NYLAH_FORCE_RESYNC__ = Date.now(); }catch{}
@@ -182,8 +232,9 @@ export function PinScreen({ onSelect, onPick }: { onSelect: (k: PersonKey)=>void
   const pushDigit = (d:string)=>{ if (pin.length>=4||checking) return; setWrong(false); setPopIdx(pin.length); setPin(p=> (p+d).slice(0,4)); setTimeout(()=> setPopIdx(null),190); };
   const doBackspace = ()=>{ if (pin.length===0) return; setWrong(false); setPin(p=> p.slice(0,-1)); };
 
-  const titleA = persons?.[0]?.name || PERSONS.person_1?.name || PERSONS.aisling?.name || "Partner 1";
-  const titleB = persons?.[1]?.name || PERSONS.person_2?.name || PERSONS.ciaran?.name || "Partner 2";
+  const titleA = persons?.[0]?.name || (PERSONS as any).person_1?.name || (PERSONS as any).aisling?.name || "Partner 1";
+  const titleB = persons?.[1]?.name || (PERSONS as any).person_2?.name || (PERSONS as any).ciaran?.name || "Partner 2";
+  const expectedName = expectedUser ? (persons?.find((p:any)=>p.key===expectedUser)?.name || (PERSONS as any)[expectedUser]?.name || expectedUser) : null;
 
   return (
     <div className="absolute inset-0 z-[80] flex flex-col items-center justify-center px-6 py-8 overflow-auto" style={{background:"linear-gradient(180deg,var(--wash-top), var(--card-bg))", minHeight:"100%"}}>
@@ -192,12 +243,13 @@ export function PinScreen({ onSelect, onPick }: { onSelect: (k: PersonKey)=>void
         <div className="flex flex-col items-center mb-7">
           <div className="flex items-center gap-[9px] tracking-tight" style={{fontFamily:'"Fraunces", ui-serif, Georgia, serif', fontSize:'26px', fontWeight:600 as any, letterSpacing:'-0.02em', color:'var(--text)'}}><span>{titleA}</span><span className="inline-flex -mt-[1px]"><svg width="20" height="20" viewBox="0 0 16 16" fill="#E07A5F"><path d="M8 13.2 L3.6 9.3 A2.85 2.85 0 0 1 2.9 7.15 A2.36 2.36 0 0 1 5.08 5.03 A2.20 2.20 0 0 1 8 6.35 A2.20 2.20 0 0 1 10.92 5.03 A2.36 2.36 0 0 1 13.10 7.15 C13.10 7.93 12.84 8.54 12.4 9.28 L8 13.2Z" /></svg></span><span>{titleB}</span></div>
           <div className="mt-1.5 text-[11px] uppercase tracking-wide text-[var(--muted)]">private • just you two</div>
+          {expectedName && <div className="mt-2 text-[12px] text-[var(--muted)]">PIN for <b>{expectedName}</b> {onBack && <button onClick={onBack} className="ml-2 underline text-[11px]">← switch</button>}</div>}
         </div>
         <div className={"w-full rounded-[28px] border px-6 pt-7 pb-6 flex flex-col items-center shadow-[0_18px_48px_rgba(0,0,0,0.10),0_1px_0_rgba(255,255,255,0.6)_inset] "+(shaking?"who-shake ":"")} style={{background:'var(--card-bg)', borderColor: wrong?'#E07A5F':'var(--border)'}}>
-          <div className="text-[13px] font-semibold uppercase tracking-wide text-[var(--muted)]">Enter PIN</div>
+          <div className="text-[13px] font-semibold uppercase tracking-wide text-[var(--muted)]">Enter PIN {expectedName ? `for ${expectedName}` : ""}</div>
           <div className="mt-4 flex gap-3">{[0,1,2,3].map(i=>{const filled=i<pin.length; const isPop=popIdx===i&&filled; return <div key={i} className={"grid h-[16px] w-[16px] place-items-center rounded-full border "+(isPop?"who-dot-pop ":"")} style={{borderColor: wrong?'#E07A5F':filled?'var(--text)':'var(--border)', background: filled?(wrong?'#E07A5F':'var(--text)'):'transparent'}}><div className="h-[6px] w-[6px] rounded-full bg-white/90" style={{opacity: filled?(wrong?1:0):0}}/></div>;})}</div>
-          <div className="mt-2 min-h-[18px] text-[11px]" style={{color: wrong?'#B91C1C':'transparent'}}>{wrong? (setupNeeded? 'no connection — online needed for PIN check': 'wrong code — try again'):'·'}</div>
-          {bioSupported && bioEnrolled.length>0 && (<div className="mt-2 w-full"><button onClick={handleBiometric} disabled={bioLoading} className="w-full h-[56px] rounded-full bg-[#0A0A0A] text-white text-[13.5px] font-semibold flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-60">{bioLoading?"Checking…":`Unlock with ${persons?.find((p:any)=>p.key===bioEnrolled[0])?.name || bioEnrolled[0] || 'Face ID'}`}</button>{bioError && <div className="mt-1.5 text-[11px] text-[#B91C1C] text-center">{bioError}</div>}<div className="my-4 h-px w-full bg-[var(--border)] opacity-60"/></div>)}
+          <div className="mt-2 min-h-[18px] text-[11px] text-center" style={{color: wrong || bioError ?'#B91C1C':'transparent'}}>{wrong? (setupNeeded? 'no connection — online needed for PIN check': expectedUser ? `wrong PIN for ${expectedName}` : 'wrong code — try again') : bioError ? bioError : '·'}</div>
+          {bioSupported && bioEnrolled.length>0 && (<div className="mt-2 w-full"><button onClick={handleBiometric} disabled={bioLoading} className="w-full h-[56px] rounded-full bg-[#0A0A0A] text-white text-[13.5px] font-semibold flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-60">{bioLoading?"Checking…":`Unlock ${expectedName ? expectedName : (persons?.find((p:any)=>p.key===bioEnrolled[0])?.name || bioEnrolled[0] || 'Face ID')}`}</button>{bioError && !wrong && <div className="mt-1.5 text-[11px] text-[#B91C1C] text-center">{bioError}</div>}<div className="my-4 h-px w-full bg-[var(--border)] opacity-60"/></div>)}
           <div className="w-full grid grid-cols-3 gap-3 mt-2">
             {[1,2,3,4,5,6,7,8,9].map(n=><button key={n} onClick={()=>pushDigit(String(n))} className="h-[52px] min-h-[52px] rounded-full border bg-[var(--card-bg)] text-[17px] font-[600]" style={{borderColor:'var(--border)', background:'var(--chip-bg)', transition:'transform 160ms cubic-bezier(0.34,1.56,0.64,1)'}}>{n}</button>)}
             <div className="min-h-[64px] grid place-items-start pt-1 justify-items-center">
@@ -206,7 +258,8 @@ export function PinScreen({ onSelect, onPick }: { onSelect: (k: PersonKey)=>void
             <button onClick={()=>pushDigit("0")} className="h-[52px] rounded-full border" style={{borderColor:'var(--border)', background:'var(--chip-bg)'}}>0</button>
             <button onClick={doBackspace} className="h-[52px] rounded-full border bg-[var(--card-bg)] grid place-items-center" style={{borderColor:'var(--border)'}}>⌫</button>
           </div>
-          <div className="mt-5 text-[11px] text-[var(--muted)]/70 text-center">{checking?"checking…":"PIN verified server-side — household only"}</div>
+          {!expectedUser && onBack && <button onClick={onBack} className="mt-3 text-[11px] underline text-[var(--muted)]">← back to Who's there</button>}
+          <div className="mt-3 text-[11px] text-[var(--muted)]/70 text-center">{checking?"checking…":"PIN verified server-side — household only"}</div>
         </div>
       </div>
     </div>

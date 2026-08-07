@@ -776,31 +776,41 @@ export function useAppCurrentUserState() {
   const isRememberOptedIn = () => {
     try {
       const r = localStorage.getItem("couple_v1_remember_user");
-      return (r==="1" || r==="\"1\"" || r==="true");
-    } catch { return false; }
+      if (r===null) return true; // default stay logged in — pull-to-refresh should keep you
+      return (r==="1" || r==="\"1\"" || r==="true" || r==="\"true\"");
+    } catch { return true; }
   };
 
+  // Restore sessionUser from sessionStorage on mount so refresh keeps login
   useEffect(() => {
     if (!standalone) return;
+    if (sessionUser) return;
     try {
-      const remember = localStorage.getItem("couple_v1_remember_user");
-      const ephemeral = (()=>{ try{ return sessionStorage.getItem("couple_v1_ephemeral_session")==="1"; }catch{return false} })();
-      const stayLoggedIn = (remember==="1" || remember==="\"1\"" || remember==="true");
-      const shouldClear = !stayLoggedIn || ephemeral;
-      if (!shouldClear) return;
-      try { localStorage.removeItem("couple_v1_currentUser"); } catch {}
-      try {
-        idbSet("couple_v1_currentUser", null as any);
-        openIdb().then(db=>{ try{ const tx=db!.transaction("kv","readwrite"); tx.objectStore("kv").delete("couple_v1_currentUser"); }catch{} });
-      } catch {}
+      const ss = sessionStorage.getItem("couple_v1_session_user");
+      if (ss) {
+        const parsed = JSON.parse(ss);
+        if (parsed && typeof parsed === "string") {
+          setSessionUser(parsed as any);
+          return;
+        }
+      }
     } catch {}
+    try {
+      const ephemeral = sessionStorage.getItem("couple_v1_ephemeral_session");
+      if (ephemeral==="1") return; // explicit ephemeral -> don't restore
+    } catch {}
+    // If remembered, hydrate session from persisted
+    if (persistedUserRaw) {
+      setSessionUser(persistedUserRaw as any);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [standalone]);
 
   useEffect(()=>{
     if (!standalone) return;
     if (sessionUser) return;
     if (!isRememberOptedIn()) return;
-    if (persistedUserRaw && (persistedUserRaw==="aisling" || persistedUserRaw==="ciaran")) {
+    if (persistedUserRaw) {
       setSessionUser(persistedUserRaw as any);
     }
   }, [standalone, persistedUserRaw, sessionUser]);
@@ -810,8 +820,12 @@ export function useAppCurrentUserState() {
     if (standalone) {
       const resolve = typeof v === 'function' ? v(sessionUser ?? persistedUserRaw) : v;
       setSessionUser(resolve as any);
+      try { sessionStorage.setItem("couple_v1_session_user", JSON.stringify(resolve)); } catch {}
       try {
         if (isRememberOptedIn()) {
+          (setPersistedUserRaw as any)(resolve);
+        } else {
+          // still persist when no explicit opt-out (we default true above) so refresh works
           (setPersistedUserRaw as any)(resolve);
         }
       } catch { try { (setPersistedUserRaw as any)(resolve); } catch {} }

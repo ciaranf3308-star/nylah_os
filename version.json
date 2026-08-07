@@ -1,7 +1,8 @@
 {
-  "build": "v156-settings-slice-fix",
-  "code": 156,
-  "changelog": "fix Settings crash slice null effId, guard Biometrics PERSONS, v155 persons normalize still live",
+  "build": "v160-pull-refresh-pin-fix",
+  "code": 160,
+  "changelog": "fix pull-to-refresh logout (default remember, sessionStorage restore, no aggressive clear), enforce PIN for both accounts when switching, default stay-logged-in true",
   "mandatory": false,
-  "builtAt": "2026-08-07T20:22:00Z"
+  "builtAt": "2026-08-07T21:20:00Z",
+  "version": "160.0.0"
 }

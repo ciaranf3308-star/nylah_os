@@ -235,20 +235,6 @@ export function SettingsScreen(props: any = {}) {
     } catch (e: any) { alert("export " + String(e?.message || e)); }
   }
 
-  const debugJson = useMemo(() => {
-    const j: any = {
-      build, effHouse: effId, lsHouseId, lsCode: lsHouseCode, inviteCode, currentUser: safeCurrentUser,
-      table: (()=>{ try{return getEffectiveTable()}catch{return "households"}})(),
-      countsLocal: { c: safeChores.length, cal: safeCalendar.length, s: safeShopping.length, n: safeNotes.length },
-      countsRemote: remoteCounts||"not pulled",
-      rev, lastSync, lastConfirmed, lastMutation: String(lastMut).slice(0,16),
-      hadRemote, lastPushErr: String(pushErr).slice(0,120), queueLen,
-      online: online?"online":"offline", anon: anonPresent, tz: "Europe/Dublin",
-      ts: new Date().toISOString(),
-    };
-    return JSON.stringify(j,null,2);
-  }, [build, effId, lsHouseId, lsHouseCode, inviteCode, safeCurrentUser, safeChores.length, safeCalendar.length, safeShopping.length, safeNotes.length, rev, lastSync, lastConfirmed, lastMut, hadRemote, pushErr, queueLen, online, anonPresent, remoteCounts]);
-
   const showEmptyWarning = useMemo(() => {
     const localEmpty = (safeChores.length + safeCalendar.length + safeShopping.length + safeNotes.length) === 0;
     const effIsTest = effId === "nylah-98jylh" || effId === "nylah-fbkf2m" || (effId && typeof effId.startsWith === "function" && effId.startsWith("nylah-"));
@@ -454,14 +440,16 @@ export function SettingsScreen(props: any = {}) {
             </div>
 
             <div className="rounded-[16px] border bg-[var(--card-bg)] p-3" style={{ borderColor: "var(--border)" }}>
-              <div className="flex items-center justify-between">
-                <div className="text-[11px] font-semibold">Debug JSON</div>
-                <button onClick={async()=>{ try{ await navigator.clipboard.writeText(debugJson); setPullMsg("copied ✓"); setTimeout(()=>setPullMsg(null),1800);}catch{}}} className="h-[32px] rounded-full border bg-[var(--chip-bg)] px-3 text-[11px]">copy</button>
+              <div className="text-[11px] font-semibold">Health</div>
+              <div className="mt-1 text-[10.5px] font-mono leading-[1.35] text-[var(--muted)]">
+                <div>house {effId.slice(0,14)} • {online ? "online" : "offline"} • {anonPresent}</div>
+                <div>local c:{safeChores.length} cal:{safeCalendar.length} s:{safeShopping.length} n:{safeNotes.length} • queue {queueLen}</div>
+                {remoteCounts && <div>remote c:{remoteCounts.c} cal:{remoteCounts.cal} s:{remoteCounts.s} n:{remoteCounts.n}</div>}
+                <div className="truncate">err {String(pushErr).slice(0,90) || "—"}</div>
               </div>
-              <pre className="mt-2 max-h-[180px] overflow-auto rounded-[12px] border bg-[var(--chip-bg)] p-2.5 text-[10px] font-mono leading-[1.35]" style={{ borderColor: "var(--border)", whiteSpace:"pre-wrap", wordBreak:"break-word"}}>{debugJson}</pre>
             </div>
 
-            <div className="text-[10px] text-[var(--muted)]">Scalable households — each code isolated. No hard-coded main house. v121 auto-migrate removed.</div>
+            <div className="text-[10px] text-[var(--muted)]">Scalable households — each code isolated. No hard-coded main house.</div>
           </div>
         </Card>
       </div>

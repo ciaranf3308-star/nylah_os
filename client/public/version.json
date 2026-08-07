@@ -1,7 +1,8 @@
 {
-  "build": "v156-settings-slice-fix",
-  "code": 156,
-  "changelog": "fix Settings crash slice null effId, guard Biometrics PERSONS, v155 persons normalize still live",
+  "build": "v162-beirt-onboarding-match",
+  "code": 162,
+  "version": "162.0.0",
+  "changelog": "onboarding welcome matches screenshot: Beirt logo tan house mint terracotta HOME PEOPLE TOGETHER headline, boutique warm, bottom charcoal sheet with orange Create and mint outline I have a code",
   "mandatory": false,
-  "builtAt": "2026-08-07T20:22:00Z"
+  "builtAt": "2026-08-07T21:32:00Z"
 }

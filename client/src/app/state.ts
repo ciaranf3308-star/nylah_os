@@ -917,9 +917,9 @@ export function useAppState() {
         try{ localStorage.removeItem("couple_v1_household_code"); }catch{}
       }
     }catch{}
-    // v130 build marker
-    try{ localStorage.setItem("couple_v1_build","v131-championship-arena"); }catch{}
-    try{ (window as any).__NYLAH_VERSION__ = "v131-championship-arena"; }catch{}
+    // v132 build marker
+    try{ localStorage.setItem("couple_v1_build","v132-beirt-logo-transparent"); }catch{}
+    try{ (window as any).__NYLAH_VERSION__ = "v132-beirt-logo-transparent"; }catch{}
   },[]);
 
   // v121 auto-sync after login (PinScreen sets force_resync flag)

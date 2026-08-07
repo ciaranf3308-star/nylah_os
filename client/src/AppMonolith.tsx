@@ -1515,7 +1515,7 @@ function OnboardingFlow({ onComplete }: { onComplete: (hid: string)=>void }) {
               <p className="mt-3 max-w-[312px] text-[13px] leading-[1.55] text-[#6E5F55] text-center">Beirt is your private space for two.<br/>Stay organised, share responsibilities,<br/>and build a stronger home—together.</p>
             </div>
             <div className="relative mt-5 w-full flex-1 min-h-[300px] overflow-hidden">
-              <img src="./onboarding-mid-photo.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-[center_top] scale-[1.04]" draggable={false} />
+              <img src="./onboarding-mid-photo.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-[center_bottom] scale-[1.02]" draggable={false} />
               <div className="absolute inset-x-0 top-0 h-[64px] bg-gradient-to-b from-[#FEF7F0] to-transparent pointer-events-none" />
             </div>
             <div className="w-full px-[18px] pb-[18px] mt-auto bg-[#FEF7F0]">

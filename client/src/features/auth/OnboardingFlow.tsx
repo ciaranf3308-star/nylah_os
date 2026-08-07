@@ -436,7 +436,7 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
           <img
             src="./onboarding-mid-photo.jpg"
             alt=""
-            className="absolute inset-0 w-full h-full object-cover object-[center_top] scale-[1.04]"
+            className="absolute inset-0 w-full h-full object-cover object-[center_bottom] scale-[1.02]"
             draggable={false}
           />
           {/* subtle top fade into beige so text meets photo softly */}

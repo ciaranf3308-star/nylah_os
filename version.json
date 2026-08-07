@@ -1,8 +1,8 @@
 {
-  "build": "v164-beirt-fix-double-headline",
-  "code": 164,
-  "version": "164.0.0",
-  "changelog": "fix double headline: tight crop mid photo to exclude headline/copy, only blobs+table real photo, bottom sheet overlay",
+  "build": "v165-beirt-clean-bg-perfect",
+  "code": 165,
+  "version": "165.0.0",
+  "changelog": "use your clean background PNG - palm shadow peach sage blobs real tray/mugs, bottom sheet overlay, no double headline",
   "mandatory": false,
-  "builtAt": "2026-08-07T22:00:00Z"
+  "builtAt": "2026-08-07T22:05:00Z"
 }

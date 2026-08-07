@@ -918,8 +918,8 @@ export function useAppState() {
       }
     }catch{}
     // v130 build marker
-    try{ localStorage.setItem("couple_v1_build","v130-onboarding-fresh-fix"); }catch{}
-    try{ (window as any).__NYLAH_VERSION__ = "v130-onboarding-fresh-fix"; }catch{}
+    try{ localStorage.setItem("couple_v1_build","v131-championship-arena"); }catch{}
+    try{ (window as any).__NYLAH_VERSION__ = "v131-championship-arena"; }catch{}
   },[]);
 
   // v121 auto-sync after login (PinScreen sets force_resync flag)

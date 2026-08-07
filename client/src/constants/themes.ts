@@ -9,10 +9,13 @@ export const THEMES: Theme[] = [
   { id: "ink", name: "Charcoal Orange", bg: "#121214", phoneBg: "linear-gradient(180deg,#232326 0%,#1E1E20 28%,#161618 58%,#121214 100%)", accent: "#FF6B26", accentStrong: "#FF8A4D", text: "#F5F3F0", cardBd: "rgba(255,255,255,0.08)", navBg: "rgba(22,22,24,0.88)", navActiveBg: "#FF6B26", navActiveText: "#121214", topBarBg: "#1E1E20", washTop: "#2E2E32", washMid: "#242428", chipBg: "#2C2C30", cardBg: "#232326" },
 ];
 
-// PERSONS — exact copy from App.tsx 117-120
-export const PERSONS: Record<PersonKey, { name: string; initial: string; accent: string; accent2: string; wash: string }> = {
+// PERSONS — scalable: supports legacy aisling/ciaran and generic person_1/person_2
+// Names are mutated at runtime via applyCustomPersonNames() reading localStorage
+export const PERSONS: Record<string, { name: string; initial: string; accent: string; accent2: string; wash: string }> = {
   aisling: { name: "Aisling", initial: "Á", accent: "#A89FDA", accent2: "#977DDA", wash: "#E9E0FF" },
   ciaran: { name: "Ciaran", initial: "C", accent: "var(--border)", accent2: "#E07A5F", wash: "var(--wash-top)" },
+  person_1: { name: "Partner 1", initial: "1", accent: "#A89FDA", accent2: "#977DDA", wash: "#E9E0FF" },
+  person_2: { name: "Partner 2", initial: "2", accent: "var(--border)", accent2: "#E07A5F", wash: "var(--wash-top)" },
 };
 
 export const TABS: TABSItem[] = [

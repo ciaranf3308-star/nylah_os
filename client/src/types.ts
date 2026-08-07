@@ -1,7 +1,9 @@
 // ZERO LOGIC CHANGE — extracted from App.tsx 4cfbabb V117
 // This file contains all core domain types. No runtime code, only types + trivial const arrays that are required for type guards.
 
-export type PersonKey = "aisling" | "ciaran";
+// Scalable person keys — no hardcoded Aisling/Ciaran, any household can have 2 distinct members
+// Legacy data may still use "aisling"/"ciaran" but new households use "person_1"/"person_2"
+export type PersonKey = string;
 
 export type Theme = {
   id: string;

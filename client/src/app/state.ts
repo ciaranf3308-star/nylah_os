@@ -851,13 +851,32 @@ export function useAppCurrentUserState() {
   const currentUser: PersonKey | null = (() => {
     if (!currentUserRaw) return null;
     const v = currentUserRaw as any;
-    if (v === "aisling" || v === "ciaran") return v;
-    if (typeof v === "string") {
-      const low = v.toLowerCase();
-      if (low.includes("ais")) return "aisling";
-      if (low.includes("cia") || low.includes("ciaran")) return "ciaran";
-      if (low === "a" || low === "alex") return "aisling";
-      if (low === "b" || low === "sam") return "ciaran";
+    if (typeof v === "string" && v.trim().length >= 1) {
+      // Scalable: new households use person_1 / person_2, legacy uses aisling/ciaran, custom names may have been stored as key
+      const raw = v.trim();
+      if (raw === "aisling" || raw === "ciaran" || raw === "person_1" || raw === "person_2") return raw;
+      const low = raw.toLowerCase();
+      // Legacy fuzzy maps — keep for old localStorage ("Alex" etc) but map to current dynamic keys where possible
+      if (low.includes("ais")) {
+        try { const persons = getHouseholdPersonsRaw(); const found = persons?.find((p:any)=>p.key && (p.key==="person_1" || p.key==="aisling")); if (found) return found.key; } catch {}
+        return "aisling";
+      }
+      if (low.includes("cia") || low.includes("ciaran")) {
+        try { const persons = getHouseholdPersonsRaw(); const found = persons?.find((p:any)=>p.key && (p.key==="person_2" || p.key==="ciaran")); if (found) return found.key; } catch {}
+        return "ciaran";
+      }
+      // If stored as custom name like "Maya", try to resolve to key via persons list
+      try {
+        const persons = getHouseholdPersonsRaw();
+        if (persons) {
+          const byName = persons.find((p:any)=> p.name && p.name.toLowerCase()===low);
+          if (byName) return byName.key;
+          const byInitial = persons.find((p:any)=> p.initial && p.initial.toLowerCase()===low.slice(0,1));
+          if (persons.length===2 && low.length===1) return byInitial?.key || persons[0].key;
+        }
+      } catch {}
+      // Finally, treat raw as key directly (person_1/person_2 or any custom key)
+      return raw as PersonKey;
     }
     return null;
   })();

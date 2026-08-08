@@ -1,8 +1,8 @@
 {
-  "build": "v202-chores-planner-delete",
-  "builtAt": "2026-08-08T13:23:42Z",
-  "changelog": "chores delete now core (detail + mine/open quick delete), planner grouped by overdue/today/tomorrow/week/later + priority chips + ready-made 3-step plan, monthly picks date dropdown 1-31 not weekdays, admin edit monthly day support",
-  "code": 202,
+  "build": "v203-fridge-unread-fix",
+  "builtAt": "2026-08-08T13:26:12Z",
+  "changelog": "fridge note fix: opening a note now marks seenBy for viewer so Ash doesnt see already-read notes as Unread in fridge; stickyPick stays pinned-or-unread only",
+  "code": 203,
   "mandatory": false,
-  "version": "202.0.0"
+  "version": "203.0.0"
 }

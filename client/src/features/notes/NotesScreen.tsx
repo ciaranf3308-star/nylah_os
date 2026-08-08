@@ -70,6 +70,26 @@ function NotesMemoPage(props: any) {
   const [selected, setSelected] = useState<NoteMemo|null>(null);
   useEffect(()=>{ try{ localStorage.removeItem("couple_v1_deleted_notes"); }catch{} }, []);
 
+  // when a note is opened, mark it seen for the viewer (fixes fridge still showing as Unread)
+  useEffect(()=>{
+    if(!selected) return;
+    try{
+      const viewer = currentUser as any;
+      const author = (selected as any).author;
+      if(author===viewer) return;
+      const seen = (selected as any).seenBy || {};
+      if(seen[viewer]) return;
+      const nextSeen = { ...seen, [viewer]: true };
+      const nowISO = new Date().toISOString();
+      const next = { ...(selected as any), seenBy: nextSeen, updatedAt: nowISO, updated_at: nowISO };
+      setNotes((p:any)=> (Array.isArray(p)?p:[]).map((x:any)=> x.id===selected.id ? {...x, seenBy: nextSeen, updatedAt: nowISO, updated_at: nowISO} : x));
+      try{ hardPersistNote(next, 'update'); }catch{}
+      // also patch selected itself so UI doesn't re-trigger
+      setSelected((s:any)=> s ? {...s, seenBy: nextSeen} as any : s);
+    }catch{}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.id]);
+
   const activeNotes = useMemo(()=> notes.filter((n:any)=> !(n as any).deletedAt && !(n as any).archived_at && !(n as any).archivedAt), [notes]);
   const partner: PersonKey = currentUser==="aisling"?"ciaran":"aisling";
 

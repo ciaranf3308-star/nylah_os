@@ -1,8 +1,0 @@
-{
-  "build": "v206-db-restore-plus-blank-fix",
-  "builtAt": "2026-08-08T13:42:00Z",
-  "changelog": "restore DB 16/3/12/8 from backup, fix wipe param strict ?wipe=1 only (prevents accidental blank), keep all V201-V205 features: half-split calendar, stickyPick unread/pinned, NeedsYou awaiting, monthly 1-31 dropdown, planner buckets, true-live pins",
-  "code": 206,
-  "mandatory": false,
-  "version": "206.0.0"
-}

@@ -90,10 +90,46 @@ export default function EventIcon({kind="other", title, size=52, variant="bubble
   const isDark = theme === "dark" || (theme === "auto" && typeof document !== "undefined" && document.documentElement.getAttribute("data-theme")==="ink");
   const pal = isDark ? def.dark : def.light;
 
+// boutique football for big watermark — world-class stitched leather from v222
+function BoutiqueFootballWM({ size=180, color="#8A4A2A" }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id={`paper-wm-${size}`} cx="0.32" cy="0.28" r="0.92">
+          <stop offset="0%" stopColor="white"/>
+          <stop offset="42%" stopColor="#FFFDFA"/>
+          <stop offset="100%" stopColor="#FFF6EE"/>
+        </radialGradient>
+      </defs>
+      <circle cx="32" cy="32.5" r="18.6" fill={`url(#paper-wm-${size})`} stroke={color} strokeWidth="1.15" strokeLinecap="round" opacity="0.28"/>
+      <circle cx="32" cy="32.5" r="18.2" fill="white" stroke={color} strokeWidth="1.62" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="32" cy="32.5" r="18.2" fill="none" stroke="white" strokeWidth="1.25" opacity="0.72" strokeLinecap="round"/>
+      <path d="M18.6 21.7 Q30.2 13.4 43.6 19.4" stroke="white" strokeWidth="2.2" opacity="0.62" strokeLinecap="round"/>
+      <path d="M32 21.8 L39.2 26.7 L36.8 35.2 L27.2 35.2 L24.8 26.7 Z" fill={color} stroke={color} strokeWidth="1.9" strokeLinejoin="round" strokeLinecap="round"/>
+      <path d="M32 21.8 C32 19.2 32 17 32 14.8" stroke={color} strokeWidth="1.22" strokeLinecap="round"/>
+      <path d="M39.2 26.7 C42 25.4 45.2 24.1 48.2 22.7" stroke={color} strokeWidth="1.18" strokeLinecap="round"/>
+      <path d="M24.8 26.7 C22 25.4 18.8 24.1 15.8 22.7" stroke={color} strokeWidth="1.18" strokeLinecap="round"/>
+      <path d="M36.8 35.2 C38.4 38.2 40.2 41.6 41.6 44.8" stroke={color} strokeWidth="1.18" strokeLinecap="round"/>
+      <path d="M27.2 35.2 C25.6 38.2 23.8 41.6 22.4 44.8" stroke={color} strokeWidth="1.18" strokeLinecap="round"/>
+      <circle cx="29.2" cy="26.6" r="0.9" fill="white" opacity="0.38"/>
+    </svg>
+  );
+}
+
   if (variant === "watermark") {
     const s = size || 164;
     const iconFn = ICON_MAP[def.id] || ICON_MAP.other;
     const isFootball = def.id === "sports" && getSportsVariant(title) === "football";
+    if (isFootball) {
+      // soft boutique ball, slightly bigger than container so edge crops — no harsh thick stroke
+      return (
+        <div className={className} style={{ width: s, height: s, display:"grid", placeItems:"center", opacity: isDark ? 0.78 : 0.90, pointerEvents:"none", ...style }}>
+          <div style={{ transform: `scale(1)`, transformOrigin:"center", filter: isDark ? "drop-shadow(0 10px 28px rgba(0,0,0,0.34))" : "drop-shadow(0 16px 26px rgba(122,74,38,0.16)) drop-shadow(0 2px 8px rgba(122,74,38,0.10))" }}>
+            <BoutiqueFootballWM size={s} color={pal.fg as string} />
+          </div>
+        </div>
+      );
+    }
     return (
       <div className={className} style={{ width: s, height: s, display:"grid", placeItems:"center", opacity: isFootball ? 0.86 : isDark ? 0.42 : 0.34, pointerEvents:"none", ...style }}>
         <div style={{ transform: `scale(${s/38})`, transformOrigin:"center", filter: isDark ? "drop-shadow(0 8px 22px rgba(0,0,0,0.36))" : "drop-shadow(0 14px 26px rgba(80,45,18,0.16))" }}>

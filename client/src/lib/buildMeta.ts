@@ -8,8 +8,8 @@ export const BUILD_CHANNEL = "beta" as const;
 export const BUILD_META = {
   tz: HOUSEHOLD_TZ,
   channel: BUILD_CHANNEL,
-  build: "v225-cropped-huge-watermark",
-  code: 225,
+  build: "v226-boutique-ball-not-chunky",
+  code: 226,
 } as const;
 export const HOUSEHOLD_ID: string | null = null;
 export const HOUSEHOLD_ROW_ID: string | null = null;

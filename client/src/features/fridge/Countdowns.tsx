@@ -77,14 +77,14 @@ export default function Countdowns({ calendar, nowMs, todayDateStr, setTab }: Pr
                 {fmtDay(ev.dueAt)}{(ev as any).location ? ` • ${(ev as any).location}` : ""}
               </div>
 
-              {/* huge cropped illustration — bigger than box, inside so cut off */}
-              <div className="pointer-events-none absolute right-[-36px] bottom-[-38px] rotate-[-8deg] select-none group-hover:rotate-[-5deg] group-hover:scale-[1.02] transition-transform duration-500">
-                <div className="relative" style={{ width:252, height:252 }}>
-                  {/* warm wash blob behind — soft so icon reads */}
-                  <div className="absolute inset-[18px] rounded-[42px] rotate-[8deg]" style={{ background:`radial-gradient(120% 90% at 35% 30%, white 0%, ${pal.bg} 48%, ${pal.chipBg||pal.bg} 82%)`, opacity:0.92, filter:"blur(0.2px)" }} />
-                  {/* illustration — 252 so it spills and card overflow clips */}
-                  <div className="relative w-full h-full grid place-items-center" style={{ filter:"drop-shadow(0 18px 28px rgba(80,45,18,0.18)) drop-shadow(0 3px 8px rgba(80,45,18,0.10))" }}>
-                    <EventIcon kind={def.id} title={ev.title} size={252} variant="watermark" theme="light" />
+              {/* boutique ball — sits inside card, bigger than wash so edges softly cropped, not spilling over X */}
+              <div className="pointer-events-none absolute right-[-14px] bottom-[-18px] rotate-[-6deg] select-none group-hover:rotate-[-3deg] group-hover:scale-[1.02] transition-transform duration-500">
+                <div className="relative" style={{ width:188, height:188 }}>
+                  {/* warm wash blob behind — soft */}
+                  <div className="absolute inset-[18px] rounded-[32px] rotate-[7deg]" style={{ background:`radial-gradient(115% 88% at 34% 30%, white 0%, ${pal.bg} 46%, ${pal.chipBg||pal.bg} 78%)`, opacity:0.86 }} />
+                  {/* illustration */}
+                  <div className="relative w-full h-full grid place-items-center">
+                    <EventIcon kind={def.id} title={ev.title} size={172} variant="watermark" theme="light" />
                   </div>
                 </div>
               </div>

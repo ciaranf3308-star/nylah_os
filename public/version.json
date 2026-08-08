@@ -1,8 +1,8 @@
 {
-  "build": "v225-cropped-huge-watermark",
-  "builtAt": "2026-08-08T20:12:00Z",
-  "changelog": "V225 cropped huge: watermark 164→252, right -36 bottom -38 rotate -8deg, 252 boxed spills beyond card rounded overflow so clipped — bigger than box but inside so cut off as goal image, shadow 18px/28 richer, wash opacity 0.92",
-  "code": 225,
+  "build": "v226-boutique-ball-not-chunky",
+  "builtAt": "2026-08-08T20:24:00Z",
+  "changelog": "V226 fix awful: football watermark now boutique worldclass (stitched leather 72° paper stock letterpress) not chunky Phosphor fill, size 252→172 inside 188 wash, right -14 bottom -18 rotate -6 so no X overlap, opacity 0.90 soft shadow 16px, bubble pack kept for small icons",
+  "code": 226,
   "mandatory": false,
-  "version": "225.0.0"
+  "version": "226.0.0"
 }

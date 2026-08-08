@@ -574,8 +574,18 @@ function CalendarPageV2(props: any) {
     return { days, hours, mins, past:false, label: days>1 ? `${days} days` : days===1 ? "1 day" : `${hours}h ${mins}m` };
   }
   function togglePin(ev: any){
-    if(ev.pinned) updateEvent(ev.id, { pinned:false, pinnedAt: undefined } as any);
-    else setEvents((prev:any)=> prev.map((x:any)=> x.id===ev.id ? {...x, pinned:true, pinnedAt:new Date().toISOString(), updatedAt:new Date().toISOString()} : {...x, pinned:false, pinnedAt:undefined}));
+    const nowISO = new Date().toISOString();
+    if(ev.pinned || (ev as any).pinned_at || (ev as any).pinnedAt || (ev as any).isPinned){
+      // unpin → multiplayer true-live
+      updateEvent(ev.id, { pinned:false, pinnedAt: undefined, pinned_at: null as any, isPinned:false } as any);
+    } else {
+      // enforce at most one pinned locally: unpin existing others with persistence
+      try{
+        const existing = (events as any[]).filter((x:any)=> (x.pinned || x.pinned_at || x.pinnedAt || x.isPinned) && x.id!==ev.id);
+        existing.forEach((x:any)=> { try{ updateEvent(x.id, { pinned:false, pinnedAt: undefined, pinned_at: null as any, isPinned:false } as any); }catch{} });
+      }catch{}
+      updateEvent(ev.id, { pinned:true, pinnedAt: nowISO, pinned_at: nowISO as any, isPinned:true } as any);
+    }
   }
 
   // Agenda sections (no declined/cancelled unless history)

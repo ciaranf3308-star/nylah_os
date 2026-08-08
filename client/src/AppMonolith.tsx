@@ -3762,8 +3762,16 @@ function CalendarPageV2({
     return { days, hours, mins, past:false, label: days>1 ? `${days} days` : days===1 ? "1 day" : `${hours}h ${mins}m` };
   }
   function togglePin(ev: any){
-    if(ev.pinned) updateEvent(ev.id, { pinned:false, pinnedAt: undefined } as any);
-    else setEvents((prev:any)=> prev.map((x:any)=> x.id===ev.id ? {...x, pinned:true, pinnedAt:new Date().toISOString(), updatedAt:new Date().toISOString()} : {...x, pinned:false, pinnedAt:undefined}));
+    const nowISO=new Date().toISOString();
+    if(ev.pinned || (ev as any).pinned_at || (ev as any).pinnedAt || (ev as any).isPinned){
+      updateEvent(ev.id, { pinned:false, pinnedAt: undefined, pinned_at: null as any, isPinned:false } as any);
+    } else {
+      try{
+        const existing=(events as any[]).filter((x:any)=> (x.pinned || (x as any).pinned_at || (x as any).pinnedAt || (x as any).isPinned) && x.id!==ev.id);
+        existing.forEach((x:any)=>{ try{ updateEvent(x.id, { pinned:false, pinnedAt: undefined, pinned_at: null as any, isPinned:false } as any); }catch{} });
+      }catch{}
+      updateEvent(ev.id, { pinned:true, pinnedAt: nowISO, pinned_at: nowISO as any, isPinned:true } as any);
+    }
   }
 
   // Agenda sections (no declined/cancelled unless history)

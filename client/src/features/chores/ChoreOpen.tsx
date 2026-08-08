@@ -3,6 +3,22 @@ import type { ChoreV2 } from "./choreTypes";
 import { effectivePoints, getDueMsChore, isBonusChore, timingLabel, todayKey, toLocalKeyDublin, HOUSEHOLD_TZ } from "./choreScoring";
 import { PERSONS } from "../../constants/themes";
 import { ChoreIcon } from "../../lib/choreIcons";
+import { getSupabase, getEffectiveRowId } from "../../lib/supabase";
+
+function hardPersistChoreInline(chore:any, op:'create'|'update'|'delete'='update'){
+  try{
+    const hid=getEffectiveRowId(); if(!hid) return;
+    const sb=getSupabase(); const id=String(chore?.id||''); if(!id) return;
+    const payload={...chore, household_id:hid, updated_at: chore?.updatedAt|| chore?.updated_at|| new Date().toISOString(), created_at: chore?.createdAt|| chore?.created_at|| new Date().toISOString()};
+    if(op==='delete'){
+      (async()=>{ try{ if(sb) await (sb as any).from('chores').delete().eq('id',id).eq('household_id',hid);}catch{} })();
+      import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('chore','delete', id, hid, {id, deleted_at:new Date().toISOString()}); }catch{} });
+      return;
+    }
+    (async()=>{ try{ if(sb){ const row:any={id, household_id:hid, data:payload, updated_at:payload.updated_at, created_at:payload.created_at}; await (sb as any).from('chores').upsert(row,{onConflict:'id'});} }catch{} })();
+    import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('chore', op, id, hid, payload); const {getQueue}=await import("../../data/offlineQueue"); const q=await getQueue(); if(q.length){ const {drainOps}=await import("../../data/offlineQueue"); const cli=sb; if(cli) try{ await drainOps(cli as any);}catch{} } }catch{} });
+  }catch{}
+}
 
 type Props = {
   list: ChoreV2[];
@@ -107,7 +123,7 @@ export function ChoreOpen({ list, nowMs, currentUser, onDetail, onComplete, onDe
               <div className="flex flex-col gap-1 shrink-0 items-end">
                 <button onClick={()=> onComplete(c)} className="h-[36px] rounded-full bg-[#0A0A0A] px-3 text-[11px] text-white active:scale-[0.96] min-w-[52px]" style={{minHeight:36}}>Done</button>
                 <div className="flex gap-1">
-                  {canSteal && <button onClick={()=>{ const nowISO=new Date().toISOString(); setChores((p:any)=> p.map((x:any)=> x.id===c.id ? {...x, assignedTo:currentUser, updatedAt:nowISO}:x)); setToast(`${PERSONS[currentUser].name} stole ${c.title}`); setTimeout(()=>setToast(null),3000); }} className="h-[28px] rounded-full border bg-[var(--card-bg)] px-2.5 text-[10px] font-semibold" style={{borderColor:"var(--border)", minHeight:28}}>Steal</button>}
+                  {canSteal && <button onClick={()=>{ const nowISO=new Date().toISOString(); const upd:any={...c, assignedTo:currentUser, updatedAt:nowISO, updated_by:currentUser}; setChores((p:any)=> p.map((x:any)=> x.id===c.id ? {...x, assignedTo:currentUser, updatedAt:nowISO, updatedBy:currentUser}:x)); try{ hardPersistChoreInline(upd,'update'); }catch{} setToast(`${PERSONS[currentUser].name} stole ${c.title}`); setTimeout(()=>setToast(null),3000); }} className="h-[28px] rounded-full border bg-[var(--card-bg)] px-2.5 text-[10px] font-semibold" style={{borderColor:"var(--border)", minHeight:28}}>Steal</button>}
                   {onDelete && <button onClick={()=> onDelete(c.id)} className="h-[28px] w-[28px] grid place-items-center rounded-full border bg-[#FEF2F2] border-[#FECACA] text-[#B91C1C] text-[10px]" aria-label="Delete">✕</button>}
                 </div>
               </div>

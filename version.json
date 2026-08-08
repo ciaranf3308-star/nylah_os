@@ -1,8 +1,8 @@
 {
-  "build": "v203-fridge-unread-fix",
-  "builtAt": "2026-08-08T13:26:12Z",
-  "changelog": "fridge note fix: opening a note now marks seenBy for viewer so Ash doesnt see already-read notes as Unread in fridge; stickyPick stays pinned-or-unread only",
-  "code": 203,
+  "build": "v204-true-multiplayer-pin-audit",
+  "builtAt": "2026-08-08T13:29:02Z",
+  "changelog": "true multiplayer audit: pinned events now save (togglePin now uses updateEvent+persist unpins others), chore steal/split/reshuffle/detail-done all now hardPersist, admin reshuffle/archive delete now persist, split deletes original, AppMonolith pin fixed same logic, shopping/chore/note/ calendar all via direct upsert+queue+drain",
+  "code": 204,
   "mandatory": false,
-  "version": "203.0.0"
+  "version": "204.0.0"
 }

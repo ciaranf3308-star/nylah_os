@@ -940,8 +940,8 @@ export function useAppState() {
   // v144 scalable — no hard-coded ash-ciaran-2026 migration. Keep build marker only.
   useEffect(()=>{
     // v144 build marker
-    try{ localStorage.setItem("couple_v1_build","v203-fridge-unread-fix"); }catch{}
-    try{ (window as any).__NYLAH_VERSION__ = "v203-fridge-unread-fix"; }catch{}
+    try{ localStorage.setItem("couple_v1_build","v204-true-multiplayer-pin-audit"); }catch{}
+    try{ (window as any).__NYLAH_VERSION__ = "v204-true-multiplayer-pin-audit"; }catch{}
   },[]);
 
   // v121 auto-sync after login (PinScreen sets force_resync flag)

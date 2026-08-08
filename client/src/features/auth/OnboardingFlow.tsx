@@ -431,28 +431,25 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
           </p>
         </div>
 
-        {/* Photoreal illustration — pixel perfect to your target with peach + sage circles behind */}
-        <div className="relative mt-5 w-full flex-1 min-h-[340px] overflow-visible flex items-end justify-center">
-          {/* boutique shapes behind — match your iPhone ref exactly */}
-          <div className="pointer-events-none absolute left-[-42px] bottom-[28px] w-[340px] h-[340px] rounded-full bg-[#F3D0A8]/95 blur-[0.3px]" />
-          <div className="pointer-events-none absolute left-[-6px] top-[92px] w-[88px] h-[160px] opacity-[0.22] rotate-[-6deg]" style={{background:"radial-gradient(ellipse at center, #9E8B78 0%, transparent 70%)"}} />
-          <div className="pointer-events-none absolute right-[-58px] bottom-[44px] w-[312px] h-[312px] rounded-full bg-[#C9D5CC]/90" />
-          {/* leaf shadow left edge like ref */}
-          <div className="pointer-events-none absolute left-[-10px] top-[16px] w-[140px] h-[180px] opacity-[0.26]" style={{backgroundImage:"radial-gradient(ellipse at 40% 30%, rgba(115,95,75,0.22) 0%, transparent 65%)"}} />
+        {/* Photoreal illustration — goal match: big soft shapes filling background, plant bottom */}
+        <div className="relative w-full h-[440px] shrink-0 overflow-hidden">
+          {/* big shapes - exactly like your iPhone ref */}
+          <div className="pointer-events-none absolute left-[-130px] top-[-36px] w-[420px] h-[520px] rounded-[9999px] bg-[#F6D2A9]" style={{opacity:0.98}} />
+          <div className="pointer-events-none absolute left-[-24px] top-[84px] opacity-[0.32]" style={{width:"96px", height:"168px", background:"radial-gradient(ellipse at 60% 40%, rgba(88,70,58,0.22) 0%, transparent 72%)", filter:"blur(0.3px)"}} />
+          <div className="pointer-events-none absolute left-[24%] top-[200px] w-[320px] h-[320px] rounded-full bg-[#EBC392]" style={{opacity:0.96}} />
+          <div className="pointer-events-none absolute right-[-118px] top-[88px] w-[360px] h-[460px] rounded-[9999px] bg-[#CBD4C8]" style={{opacity:0.93}} />
 
           <img
-            src="./onboarding-mid-photo.jpg"
+            src="./onboarding-photo.png"
             alt=""
-            className="relative z-[1] w-[100%] max-w-[500px] h-auto object-contain object-bottom translate-y-[12px]"
-            style={{ filter:"drop-shadow(0 8px 24px rgba(90,60,35,0.12))" }}
+            className="absolute bottom-[-8px] left-0 w-full h-auto object-contain object-bottom"
+            style={{ filter:"drop-shadow(0 12px 28px rgba(80,50,25,0.10))" }}
             draggable={false}
           />
-          {/* soft top fade so text meets shapes */}
-          <div className="absolute inset-x-0 top-0 h-[84px] bg-gradient-to-b from-[#FEF7F0] to-transparent pointer-events-none z-[2]" />
         </div>
 
-        {/* Bottom sheet — charcoal, slightly overlaps wood like ref */}
-        <div className="w-full px-[18px] pb-[max(18px,env(safe-area-inset-bottom))] mt-[-14px] bg-transparent relative z-[3]">
+        {/* Bottom sheet — charcoal, flush to wood like ref */}
+        <div className="w-full px-[18px] pb-[max(18px,env(safe-area-inset-bottom))] mt-[0px] bg-[#FEF7F0] relative z-[3]">
           <div className="mx-auto w-full max-w-[384px] rounded-[26px] bg-[#101214] px-[18px] pt-[14px] pb-[18px] shadow-[0_22px_60px_rgba(0,0,0,0.42),0_2px_0_rgba(255,255,255,0.04)_inset] border border-white/[0.04]">
             <button
               onClick={()=> setStep("create_names")}

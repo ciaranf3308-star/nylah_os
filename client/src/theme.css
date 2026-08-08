@@ -268,8 +268,8 @@ html, body {
   -webkit-backdrop-filter: blur(1px);
 }
 .bottom-nav-v11 {
-  position: absolute !important; left: 12px !important; right: 12px !important; inset-inline: 12px !important; bottom: 12px !important; top: auto !important; transform: none !important; z-index: 60 !important;
-  display: flex !important; height: 68px !important; width: auto !important; max-width: 392px !important; margin: 0 auto !important;
+  position: fixed !important; left: 0 !important; right: 0 !important; inset-inline: 0 !important; bottom: 12px !important; top: auto !important; transform: none !important; z-index: 60 !important;
+  display: flex !important; height: 68px !important; width: calc(100% - 24px) !important; max-width: 392px !important; margin: 0 auto !important;
   align-items: center !important; justify-content: space-around !important;
   border: 1px solid color-mix(in srgb, var(--border) 88%, transparent) !important; border-radius: 22px !important;
   background: color-mix(in srgb, var(--nav-bg) 94%, white 6%) !important;

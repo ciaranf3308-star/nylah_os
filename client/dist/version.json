@@ -1,8 +1,8 @@
 {
-  "build": "v215-boutique-nav-centered",
-  "builtAt": "2026-08-08T19:00:00Z",
-  "changelog": "V215 fix nav off-center: revert to absolute inside frame left12 right12 margin auto max392 centered, keeps floating boutique dock 68px rounded 22px + tab persistence + boutique 1by1 SVG nav",
-  "code": 215,
+  "build": "v216-boutique-nav-fix",
+  "builtAt": "2026-08-08T19:05:00Z",
+  "changelog": "V216 fix nav disappearing: restore fixed left0 right0 margin auto centered width calc(100%-24) max392, escapes phone overflow-hidden, keeps floating 68px 22px dock + tab persistence + boutique SVG",
+  "code": 216,
   "mandatory": false,
-  "version": "215.0.0"
+  "version": "216.0.0"
 }

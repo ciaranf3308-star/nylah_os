@@ -166,33 +166,33 @@ function FridgePage(props: FridgeProps | any) {
       )}
 
 
-            {/* ——— fridge hero – pixel perfect to your double phone ref ——— */}
-      <div className="relative overflow-hidden rounded-[28px] px-6 pt-4 pb-6" style={
+      {/* ——— fridge hero – pixel perfect to your double phone ref ——— */}
+      <div className="relative overflow-visible rounded-[28px] px-6 pt-4 pb-6" style={
         (theme as any)?.id === 'ink' || (theme as any)?.name?.toLowerCase().includes('charcoal')
-        ? { background: "#1B1E22", minHeight: 216, boxShadow:"0 8px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)" }
-        : { background: "#FDF6EF", minHeight: 216, boxShadow:"0 8px 28px rgba(60,40,20,0.06), inset 0 1px 0 rgba(255,255,255,0.9)" }
+        ? { background: "#1B1E22", minHeight: 220, boxShadow:"0 8px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)" }
+        : { background: "#FDF6EF", minHeight: 220, boxShadow:"0 12px 32px rgba(60,40,20,0.08), inset 0 1px 0 rgba(255,255,255,0.9)" }
       }>
-        {/* perfect circles - match goal mock */}
+        {/* perfect circles - match goal mock - 4px larger than v170 */}
         {(theme as any)?.id === 'ink' || (theme as any)?.name?.toLowerCase().includes('charcoal') ? (
           <>
-            <div className="pointer-events-none absolute -right-[22px] -top-[26px] h-[164px] w-[164px] rounded-full" style={{ background:"#3A2A22", opacity:0.92 }} />
-            <div className="pointer-events-none absolute right-[30px] top-[38px] h-[108px] w-[108px] rounded-full" style={{ background:"#2B3330", opacity:0.88 }} />
-            <div className="pointer-events-none absolute right-[94px] top-[10px] h-[60px] w-[60px] rounded-full" style={{ background:"#4A352E", opacity:0.75 }} />
+            <div className="pointer-events-none absolute -right-[22px] -top-[26px] h-[168px] w-[168px] rounded-full" style={{ background:"#3A2A22", opacity:0.92 }} />
+            <div className="pointer-events-none absolute right-[30px] top-[38px] h-[112px] w-[112px] rounded-full" style={{ background:"#2B3330", opacity:0.88 }} />
+            <div className="pointer-events-none absolute right-[94px] top-[10px] h-[64px] w-[64px] rounded-full" style={{ background:"#4A352E", opacity:0.75 }} />
           </>
         ) : (
           <>
-            <div className="pointer-events-none absolute -right-[22px] -top-[28px] h-[168px] w-[168px] rounded-full" style={{ background:"#F9DCC0", opacity:0.96 }} />
-            <div className="pointer-events-none absolute right-[28px] top-[40px] h-[112px] w-[112px] rounded-full" style={{ background:"#DDE8DC", opacity:0.96 }} />
-            <div className="pointer-events-none absolute right-[92px] top-[10px] h-[64px] w-[64px] rounded-full" style={{ background:"#EBCFB3", opacity:0.9 }} />
+            <div className="pointer-events-none absolute -right-[22px] -top-[28px] h-[172px] w-[172px] rounded-full" style={{ background:"#F9DCC0", opacity:0.96 }} />
+            <div className="pointer-events-none absolute right-[28px] top-[40px] h-[116px] w-[116px] rounded-full" style={{ background:"#DDE8DC", opacity:0.96 }} />
+            <div className="pointer-events-none absolute right-[92px] top-[10px] h-[68px] w-[68px] rounded-full" style={{ background:"#EBCFB3", opacity:0.9 }} />
           </>
         )}
 
-        {/* mugs / tray / vase – flush bottom edge, no drop-shadow to avoid grey halo */}
+        {/* mugs / tray / vase – overflow bottom edge like goal ref, not clipped inside */}
         <img
           src="./fridge-mugs-transparent.png"
           alt=""
           className="pointer-events-none absolute select-none"
-          style={{ right:-6, bottom:0, width:198, height:"auto", objectFit:"contain", filter: (theme as any)?.id==='ink' ? "brightness(0.88) saturate(0.92)" : "none" }}
+          style={{ right:-18, bottom:-22, width:218, height:"auto", objectFit:"contain", filter: (theme as any)?.id==='ink' ? "brightness(0.88) saturate(0.92) drop-shadow(0 8px 18px rgba(0,0,0,0.22))" : "drop-shadow(0 10px 22px rgba(60,30,10,0.12))", transform:"rotate(-1.5deg)", transformOrigin:"bottom right" }}
           loading="eager"
           draggable={false}
         />

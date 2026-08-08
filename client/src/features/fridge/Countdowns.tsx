@@ -12,10 +12,10 @@ type Props = {
 
 function IconFootballMuted() {
   return (
-    <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#E6C8B2" strokeWidth="1.15" strokeLinecap="round" opacity={0.72}>
-      <circle cx="12" cy="12" r="7.8" />
-      <path d="M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0" />
-      <path d="M12 4.5v2.6M19.2 12H16.6M12 19.5v-2.6M4.8 12h2.6M6.5 6.5l1.9 1.9M17.5 6.5l-1.9 1.9M17.5 17.5l-1.9-1.9M6.5 17.5l1.9-1.9" />
+    <svg width="86" height="86" viewBox="0 0 24 24" fill="none" stroke="#D9A88B" strokeWidth="1.35" strokeLinecap="round" opacity={0.42}>
+      <circle cx="12" cy="12" r="8.4" />
+      <path d="M12 12m-2.2 0a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0-4.4 0" />
+      <path d="M12 3.2v3M20.8 12H17.8M12 20.8v-3M3.2 12h3M5.8 5.8l2.2 2.2M18.2 5.8l-2.2 2.2M18.2 18.2l-2.2-2.2M5.8 18.2l2.2-2.2" />
     </svg>
   );
 }
@@ -73,22 +73,22 @@ export default function Countdowns({ calendar, nowMs, todayDateStr, setTab }: Pr
           const kind = (ev as any).kind || (ev as any).eventKind || inferKindFromTitle(ev.title||"") || "sports";
           const isSports = (kind||"").toLowerCase()==="sports" || /united/.test((ev.title||"").toLowerCase());
           return (
-            <button key={ev.id} onClick={()=> setTab("calendar")} className="w-full text-left rounded-[22px] border bg-[#FFFEFB] px-5 pt-4 pb-5 min-h-[148px] relative overflow-hidden shadow-[0_6px_18px_rgba(60,40,20,0.08)] hover:shadow-[0_10px_26px_rgba(60,40,20,0.12)] transition" style={{borderColor:"#EDE2D6"}}>
+            <button key={ev.id} onClick={()=> setTab("calendar")} className="w-full text-left rounded-[22px] border bg-[#FFFEFB] px-5 pt-4 pb-5 min-h-[156px] relative overflow-hidden shadow-[0_10px_28px_rgba(60,40,20,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] hover:shadow-[0_14px_34px_rgba(60,40,20,0.14)] transition" style={{borderColor:"#EDE2D6"}}>
               {/* top pill */}
               <div className="flex items-start justify-between">
-                <span className="inline-flex h-[28px] items-center rounded-full bg-[#FCE3D8] px-3.5 text-[12px] font-[650] text-[#C06A32] tracking-[-0.01em] border border-[#F1CAB0]">{absDays}d left</span>
-                <span className="h-[8px] w-[8px] rounded-full bg-[#F59E4B] mt-2 mr-1" />
+                <span className="inline-flex h-[28px] items-center rounded-full bg-[#FCE3D8] px-3.5 text-[12px] font-[700] text-[#C06A32] tracking-[-0.01em] border border-[#F1CAB0] shadow-[0_1px_0_rgba(255,255,255,0.7)_inset]">{absDays}d left</span>
+                <span className="h-[8px] w-[8px] rounded-full bg-[#F59E4B] mt-2 mr-1 shadow-[0_0_0_3px_rgba(245,158,75,0.18)]" />
               </div>
 
               <div className="mt-3 flex items-baseline gap-1.5">
-                <span className="text-[54px] font-[800] tracking-[-0.04em] text-[#12100E]" style={{fontFamily:'Fraunces, serif', lineHeight:0.9}}>{absDays}</span>
-                <span className="text-[13px] font-[500] text-[#7C756E]">days</span>
+                <span className="text-[54px] font-[850] tracking-[-0.04em] text-[#12100E]" style={{fontFamily:'Fraunces, serif', lineHeight:0.9}}>{absDays}</span>
+                <span className="text-[13px] font-[600] text-[#7C756E]">days</span>
               </div>
 
-              <div className="mt-1 text-[14px] font-[650] text-[#191410] truncate" style={{fontFamily:'Fraunces, serif'}}>{ev.title}</div>
-              <div className="mt-0.5 text-[12px] text-[#8E867F]">{fmtDay(ev.dueAt)}</div>
+              <div className="mt-1 text-[14.5px] font-[700] text-[#191410] truncate pr-[88px]" style={{fontFamily:'Fraunces, serif'}}>{ev.title}</div>
+              <div className="mt-0.5 text-[12.5px] font-[500] text-[#8E867F] pr-[88px]">{fmtDay(ev.dueAt)}</div>
 
-              {isSports && <div className="pointer-events-none absolute right-[-6px] bottom-[-10px] opacity-[0.22]"><IconFootballMuted/></div>}
+              {isSports && <div className="pointer-events-none absolute right-[4px] bottom-[2px]"><IconFootballMuted/></div>}
             </button>
           )
         })}

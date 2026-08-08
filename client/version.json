@@ -1,7 +1,8 @@
 {
-  "build": "v158-force-recover-boarding",
-  "code": 158,
-  "changelog": "allow ?recover / ?force_onboard=1 to force onboarding even when hid exists, to fix split-brain households like Cyprus trip / baby Gia note",
+  "build": "v187-calendar-save-true-live",
+  "builtAt": "2026-08-08T11:47:29Z",
+  "changelog": "calendar save true live app-wide: direct hard create/update/delete via calendar_events normalized + legacy couple_data prune, enqueueOp chartered, safe queue no wipe on retries>=2, chore delete still hard live",
+  "code": 187,
   "mandatory": false,
-  "builtAt": "2026-08-07T20:45:50Z"
+  "version": "187.0.0"
 }

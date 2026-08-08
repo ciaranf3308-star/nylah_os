@@ -356,8 +356,93 @@ function CalendarPageV2(props: any) {
     return selectedEvents;
   }, [selectedEvents, calFilter]);
 
+  function hardPersistCalendar(ev:any, op:'create'|'update'|'delete'='update'){
+    try{
+      const hid = (()=>{ try{ const fn = (require as any) ? null : null; return null } catch{ return null } })();
+      // fire-and-forget true-live: enqueue + direct supabase upsert/delete
+      (async()=>{
+        try{
+          const { getEffectiveRowId, getSupabase } = await import("../../lib/supabase");
+          const hid2 = getEffectiveRowId() || ev.household_id || (typeof localStorage!=='undefined' ? localStorage.getItem('couple_v1_household_id') : null);
+          if(!hid2){ console.warn('[cal] no hid skip persist', ev.id); return; }
+          const payload = { ...ev, household_id: hid2 };
+          payload.updated_at = payload.updated_at || payload.updatedAt || new Date().toISOString();
+          payload.updatedAt = payload.updated_at;
+          const sb = getSupabase();
+          if(sb){
+            try{
+              if(op==='delete'){
+                try{ await (sb as any).from('calendar_events').delete().eq('id', payload.id).eq('household_id', hid2); }catch{}
+                try{ await (sb as any).from('calendar_events').update({ deleted_at: new Date().toISOString() } as any).eq('id', payload.id).eq('household_id', hid2); }catch{}
+                // legacy couple_data pruning for ash-ciaran-2026
+                try{
+                  const { data: row } = await (sb as any).from('couple_data').select('calendar').eq('id', hid2).maybeSingle();
+                  if(row && Array.isArray((row as any).calendar)){
+                    const filtered = (row as any).calendar.filter((e:any)=> String(e.id)!==String(payload.id));
+                    if(filtered.length !== (row as any).calendar.length){
+                      await (sb as any).from('couple_data').update({ calendar: filtered, updated_at: new Date().toISOString() }).eq('id', hid2);
+                    }
+                  }
+                }catch{}
+              }else{
+                const upRow:any = {
+                  id: String(payload.id),
+                  household_id: hid2,
+                  data: payload,
+                  updated_at: payload.updated_at || new Date().toISOString(),
+                  created_at: payload.created_at || payload.createdAt || new Date().toISOString(),
+                };
+                const da = payload.deleted_at || payload.deletedAt || null;
+                if(da) upRow.deleted_at = da; else if(payload.deleted_at===null || payload.deletedAt===null) upRow.deleted_at = null;
+                const endVal = payload.end || payload.endAt || payload.end_at || null;
+                if(endVal) upRow.end_at = endVal;
+                try{
+                  const { error } = await (sb as any).from('calendar_events').upsert(upRow, { onConflict:'id' } as any);
+                  if(error){
+                    // fallback insert/update
+                    const code = (error as any).code;
+                    const msg = String((error as any).message||'');
+                    if(code==='42P10' || msg.includes('ON CONFLICT')){
+                      const { error: insErr } = await (sb as any).from('calendar_events').insert(upRow as any);
+                      if(insErr && String(insErr.code)==='23505'){
+                        await (sb as any).from('calendar_events').update(upRow as any).eq('id', upRow.id).eq('household_id', hid2);
+                      }
+                    }
+                  }
+                }catch{}
+              }
+            }catch{}
+          }
+          try{
+            const { enqueueOp } = await import("../../data/offlineQueue");
+            await enqueueOp('calendar', op as any, String(payload.id), String(hid2), payload);
+            try{
+              const { remoteSaveOperations } = await import("../../lib/remoteSync");
+              const { getQueue } = await import("../../data/offlineQueue");
+              const q = await getQueue();
+              await remoteSaveOperations(q as any);
+            }catch{}
+          }catch{}
+        }catch(e){ console.warn('[cal true-live] err', (e as any)?.message||e); }
+      })();
+    }catch{}
+  }
+
   function updateEvent(id:string, patch: Partial<CalendarEvent>) {
-    setEvents((prev:any)=> prev.map((ev: CalendarEvent)=> ev.id===id ? { ...ev, ...patch, updatedAt:new Date().toISOString(), updatedBy: currentUser, mutationId: (globalThis.crypto as any)?.randomUUID ? (globalThis.crypto as any).randomUUID() : String(Date.now()) } : ev));
+    const nowIso = new Date().toISOString();
+    const mut = (globalThis.crypto as any)?.randomUUID ? (globalThis.crypto as any).randomUUID() : String(Date.now());
+    const fullPatch = { ...patch, updatedAt: nowIso, updatedBy: currentUser, mutationId: mut };
+    setEvents((prev:any)=> prev.map((ev: CalendarEvent)=> ev.id===id ? { ...ev, ...fullPatch } : ev));
+    // true-live multiplayer: immediate hard persist + queue for updated event
+    try{
+      const ev = (events as any[]).find((e:any)=> e.id===id);
+      if(ev){
+        hardPersistCalendar({ ...ev, ...fullPatch, id }, 'update');
+      }else{
+        // if not found in current events snapshot (stale), persist patch alone with id
+        hardPersistCalendar({ id, ...fullPatch }, 'update');
+      }
+    }catch{}
   }
   async function removeEvent(idOrEv:any) {
     // resolve target event from id or object
@@ -424,7 +509,10 @@ function CalendarPageV2(props: any) {
       return;
     }
     // normal single event — soft-delete locally, queue will DELETE server, also nudge legacy giant JSON cleanup
-    setEvents((prev:any)=> prev.map((ev: CalendarEvent)=> ev.id===id ? { ...ev, deletedAt:new Date().toISOString(), updatedAt:new Date().toISOString(), updatedBy: currentUser } : ev));
+    const nowDel = new Date().toISOString();
+    setEvents((prev:any)=> prev.map((ev: CalendarEvent)=> ev.id===id ? { ...ev, deletedAt: nowDel, updatedAt: nowDel, updatedBy: currentUser } : ev));
+    // true-live multiplayer: hard delete normalized, legacy, queue — defensible
+    hardPersistCalendar({ id, deletedAt: nowDel, updatedAt: nowDel, household_id: (target as any)?.household_id || null } as any, 'delete');
     try {
       const { getSupabase, getEffectiveRowId } = await import("../../lib/supabase");
       const sb = getSupabase();
@@ -432,6 +520,12 @@ function CalendarPageV2(props: any) {
       if (sb && hid) {
         try { await (sb as any).from('calendar_events').delete().eq('id', id).eq('household_id', hid); } catch (e:any) { /* fallback soft-delete if RLS blocks hard delete */ }
         try { await (sb as any).from('calendar_events').update({ deleted_at: new Date().toISOString() } as any).eq('id', id).eq('household_id', hid); } catch {}
+        try{
+          const { getQueue, persistQueue } = await import("../../data/offlineQueue");
+          const q = await getQueue();
+          const next = q.filter((o:any)=> !(o.id===id && o.kind==='calendar'));
+          if(next.length!==q.length) await persistQueue(next as any);
+        }catch{}
       }
     } catch {}
   }
@@ -936,7 +1030,7 @@ function CalendarPageV2(props: any) {
       </BottomSheet>
 
       <BottomSheet open={showAdd} onClose={()=> setShowAdd(false)} title="Add event • Dublin">
-        <AddEventForm onAdd={(ev:any)=> { setEvents((p:any)=> [ev, ...p]); setShowAdd(false); }} currentUser={currentUser} selectedDate={selected} />
+        <AddEventForm onAdd={(ev:any)=> { setEvents((p:any)=> [ev, ...p]); setShowAdd(false); try{ hardPersistCalendar(ev,'create'); }catch{} }} currentUser={currentUser} selectedDate={selected} />
       </BottomSheet>
 
       <BottomSheet open={!!editing} onClose={()=> setEditing(null)} title={editing ? "Edit event" : undefined}>
@@ -945,6 +1039,7 @@ function CalendarPageV2(props: any) {
             <AddEventForm onAdd={(ev:any)=> {
               if (editing.templateId || editing.isTemplate) { setShowEditSeriesAsk({ ev: editing, draft: ev }); return; }
               setEvents((prev:any)=> prev.map((x:any)=> x.id===editing.id ? {...x, ...ev, id: x.id} : x));
+              try{ hardPersistCalendar({...ev, id: editing.id},'update'); }catch{}
               setEditing(null);
             }} currentUser={currentUser} selectedDate={selected} initialEvent={editing} />
             <button onClick={()=> setConfirmDialog({title:"Delete event?", msg:"This removes it for both of you.", onConfirm:()=>{ removeEvent(editing!.id); setEditing(null); setConfirmDialog(null); }})} className="w-full rounded-full border border-[#FECACA] bg-[#FEF2F2] py-3 text-[12px] font-semibold text-[#B91C1C] min-h-[48px] flex items-center justify-center gap-1.5">🗑 Delete event</button>

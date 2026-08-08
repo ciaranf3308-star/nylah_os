@@ -1,8 +1,8 @@
 {
-  "build": "v186-chore-delete-true-live",
-  "builtAt": "2026-08-08T13:35:00Z",
-  "changelog": "chore delete true live: hard delete chores+occurrences+legacy couple_data, offline queue purge, legacy merge no resurrect single category when empty",
-  "code": 186,
+  "build": "v187-calendar-save-true-live",
+  "builtAt": "2026-08-08T11:47:29Z",
+  "changelog": "calendar save true live app-wide: direct hard create/update/delete via calendar_events normalized + legacy couple_data prune, enqueueOp chartered, safe queue no wipe on retries>=2, chore delete still hard live",
+  "code": 187,
   "mandatory": false,
-  "version": "186.0.0"
+  "version": "187.0.0"
 }

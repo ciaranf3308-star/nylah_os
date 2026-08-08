@@ -16,7 +16,9 @@ try{
         let reason = '';
         for(const o of arr){
           if(!o) continue;
-          if((o.retries||0)>=2){ dirty = true; reason='retries>=2'; break; }
+          // v187: only drop unrecoverable, NOT retries>=2 — retries may be legit transient offline,
+          // draining will retry up to 3 attempts (process already handles FK drop). Don't nuke calendar saves.
+          if((o.retries||0)>=5){ dirty = true; reason='retries>=5'; break; } // only if truly stuck
           // old bug: top-level column mismatch caused PGRST204 - those rows had no household_id or missing id
           if(!o.id || !o.household_id){ dirty = true; reason='missing id/hid'; break; }
           // FK unrecoverable: household like nylah-% that never got created due to RPC/RLS bug (23503) blocks queue

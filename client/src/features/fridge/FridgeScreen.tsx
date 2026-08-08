@@ -192,7 +192,7 @@ function FridgePage(props: FridgeProps | any) {
           src="./fridge-mugs-transparent.png"
           alt=""
           className="pointer-events-none absolute select-none"
-          style={{ right:-18, bottom:-22, width:218, height:"auto", objectFit:"contain", filter: (theme as any)?.id==='ink' ? "brightness(0.88) saturate(0.92) drop-shadow(0 8px 18px rgba(0,0,0,0.22))" : "drop-shadow(0 10px 22px rgba(60,30,10,0.12))", transform:"rotate(-1.5deg)", transformOrigin:"bottom right" }}
+          style={{ right:-22, bottom:-26, width:244, height:"auto", objectFit:"contain", filter: (theme as any)?.id==='ink' ? "brightness(0.88) saturate(0.92) drop-shadow(0 10px 20px rgba(0,0,0,0.24))" : "drop-shadow(0 12px 24px rgba(60,30,10,0.14))", transform:"rotate(-1.8deg)", transformOrigin:"bottom right" }}
           loading="eager"
           draggable={false}
         />

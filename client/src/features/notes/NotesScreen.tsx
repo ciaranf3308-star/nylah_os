@@ -68,8 +68,18 @@ function NotesMemoPage(props: any) {
   const [addThumbDataUrl, setAddThumbDataUrl] = useState<string|undefined>(undefined);
   const [isResizing, setIsResizing] = useState(false);
   const [selected, setSelected] = useState<NoteMemo|null>(null);
+  const DELETED_KEY = "couple_v1_deleted_notes";
+  const getDeletedSet = () => { try { const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(DELETED_KEY) : null; if(!raw) return new Set<string>(); const arr = JSON.parse(raw); return new Set<string>(Array.isArray(arr)?arr:[]);} catch{ return new Set<string>(); } };
+  const addToDeletedSet = (id:string)=>{ try{ const s=getDeletedSet(); s.add(id); if(typeof localStorage!=='undefined') localStorage.setItem(DELETED_KEY, JSON.stringify(Array.from(s))); }catch{} };
+  const pruneDeletedSet = (currentNotes:any[])=>{ try{ const s=getDeletedSet(); if(s.size===0) return; const ids=new Set((currentNotes||[]).map((n:any)=>String(n.id))); let changed=false; for(const del of Array.from(s)){ if(!ids.has(del)){ s.delete(del); changed=true; } } if(changed && typeof localStorage!=='undefined') localStorage.setItem(DELETED_KEY, JSON.stringify(Array.from(s))); }catch{} };
 
-  const activeNotes = useMemo(()=> notes.filter((n:any)=> !(n as any).deletedAt && !(n as any).archived_at && !(n as any).archivedAt), [notes]);
+  // Filter out tombstoned deletes so 90% becomes 100% UX
+  const activeNotes = useMemo(()=>{
+    const del=getDeletedSet();
+    let list = (notes||[]).filter((n:any)=> !(n as any).deletedAt && !(n as any).archived_at && !(n as any).archivedAt);
+    if(del.size>0) list = list.filter((n:any)=> !del.has(String(n.id)));
+    return list;
+  }, [notes]);
   const partner: PersonKey = currentUser==="aisling"?"ciaran":"aisling";
 
   const filtered = useMemo(()=>{
@@ -77,8 +87,10 @@ function NotesMemoPage(props: any) {
     if(filter==="unread") list = list.filter(n=> n.author===partner && !((n.seenBy as any)?.[currentUser]));
     else if(filter==="pinned") list = list.filter(n=> (n as any).pinned_at || (n as any).pinnedAt);
     else if(filter==="love") list = list.filter(n=> n.isLove);
-    else if(filter==="archive") { const arch = notes.filter((n:any)=> (n as any).archivedAt || (n as any).archived_at); list = arch as any; }
+    else if(filter==="archive") { const del=getDeletedSet(); let arch=(notes||[]).filter((n:any)=> (n as any).archivedAt || (n as any).archived_at); if(del.size>0) arch=arch.filter((n:any)=> !del.has(String(n.id))); list = arch as any; }
     if(query.trim()){ const q=query.toLowerCase(); list = list.filter(n=> n.body.toLowerCase().includes(q)); }
+    return list;
+  }, [activeNotes, filter, query, notes, partner, currentUser]);
     return list.sort((a,b)=> new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime());
   }, [activeNotes, filter, query, notes, partner, currentUser]);
 
@@ -223,7 +235,7 @@ function NotesMemoPage(props: any) {
               <button onClick={()=> { const nowISO=new Date().toISOString(); const upd=(selected as any).pinned_at || (selected as any).pinnedAt ? null : nowISO; const next={...selected, pinned_at: upd, pinnedAt: upd, updatedAt:nowISO, updatedBy:currentUser}; try{ hardPersistNote(next,'update'); }catch{}; setNotes((p:any)=> p.map((x:any)=> x.id===selected.id ? {...x, pinned_at: upd, pinnedAt: upd, updatedAt: nowISO } : x)); setSelected(null); }} className="flex-1 h-[42px] rounded-[12px] border bg-white text-[12px]">Pin</button>
               <button onClick={()=> { const nowISO=new Date().toISOString(); const next={...selected, archived_at: nowISO, archivedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser}; try{ hardPersistNote(next,'update'); }catch{}; setNotes((p:any)=> p.map((x:any)=> x.id===selected.id ? {...x, archived_at: nowISO, archivedAt: nowISO, updatedAt: nowISO } : x)); setSelected(null); }} className="flex-1 h-[42px] rounded-[12px] border bg-white text-[12px] text-[#7A706A]">Archive</button>
             </div>
-            <button onClick={()=> { const id=selected.id; try{ hardPersistNote({id},'delete'); }catch{}; setNotes((p:any)=> (Array.isArray(p)?p:[]).filter((x:any)=> x.id!==id)); setSelected(null); }} className="w-full h-[42px] rounded-[12px] border border-[#F0C9C9] bg-[#FFF3F3] text-[12px] text-[#B91C1C]">Delete permanently</button>
+            <button onClick={()=> { const id=selected.id; try{ addToDeletedSet(String(id)); }catch{}; try{ hardPersistNote({id},'delete'); }catch{}; setNotes((p:any)=> (Array.isArray(p)?p:[]).filter((x:any)=> x.id!==id)); setSelected(null); }} className="w-full h-[42px] rounded-[12px] border border-[#F0C9C9] bg-[#FFF3F3] text-[12px] text-[#B91C1C]">Delete permanently</button>
           </div>
         )}
       </BottomSheet>

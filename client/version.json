@@ -1,8 +1,8 @@
 {
-  "build": "v198-notes-db-logic-hardened",
-  "builtAt": "2026-08-08T13:08:37Z",
-  "changelog": "notes DB: true-live upsert + queue pruning on delete, drainOps on all paths, explicit permanent delete button, archive moves to data.archived_at, matches shopping/chores true-live pattern",
-  "code": 198,
+  "build": "v199-notes-delete-100pc",
+  "builtAt": "2026-08-08T13:10:51Z",
+  "changelog": "notes delete 100%: tombstone deleted_ids localStorage to hide resurrects on reload until server confirms, prunes queue, matches pattern for reliable delete",
+  "code": 199,
   "mandatory": false,
-  "version": "198.0.0"
+  "version": "199.0.0"
 }

@@ -1,8 +1,8 @@
 {
-  "build": "v217-allow-pull-refresh",
-  "builtAt": "2026-08-08T19:10:00Z",
-  "changelog": "V217 allow native pull-to-refresh: revert overscroll-behavior contain to auto and touch-action pan-y to auto, tab persistence via LS+URL keeps current tab on reload, nav stays fixed centered",
-  "code": 217,
+  "build": "v218-pull-refresh-native",
+  "builtAt": "2026-08-08T19:18:00Z",
+  "changelog": "V218 fix drag to refresh: remove nested overflow-hidden on standalone to allow window scroll, add custom pull-to-refresh touch handler for PWA standalone where native is disabled, keeps tab persistence LS+?tab and fixed centered nav",
+  "code": 218,
   "mandatory": false,
-  "version": "217.0.0"
+  "version": "218.0.0"
 }

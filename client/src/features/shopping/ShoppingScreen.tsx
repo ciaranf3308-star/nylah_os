@@ -266,8 +266,8 @@ export function ShoppingScreen(props: any) {
   function bulkAddFromText(text: string) {
     const raw = text.trim();
     if (!raw) return;
-    // split on comma or newline — ignore empties, limit 12 to avoid spam
-    const parts = raw.split(/[,\\n]+/).map(s => s.trim()).filter(Boolean).slice(0, 12);
+    // split on comma or newline only — keep spaces inside phrases like "chicken nuggets"
+    const parts = raw.split(/[,\n]+/).map(s => s.trim()).filter(Boolean).slice(0, 12);
     if (parts.length === 0) return;
     const nowISO = new Date().toISOString();
     const newItems = parts.map(p => ({

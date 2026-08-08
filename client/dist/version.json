@@ -1,8 +1,8 @@
 {
-  "build": "v222-football-worldclass",
-  "builtAt": "2026-08-08T19:48:00Z",
-  "changelog": "V222 world-class football: spherical construction 72° rhythm, letterpress double rim, tapered curved seams, 11 o'clock paper crescent, true penta grain, no dasharray, sync scroll rescue kept",
-  "code": 222,
+  "build": "v223-phosphor-full-pack",
+  "builtAt": "2026-08-08T19:55:00Z",
+  "changelog": "V223 full SVG pack: replace boutique custom with Phosphor MIT regular pack – heart, airplane, soccer-ball, golf, barbell, run, flag, rugby football, music-notes, calendar-check, cake, bell, house-line, users, house, star – all planner kinds covered, football now proper stitched icosahedron, scroll rescue kept",
+  "code": 223,
   "mandatory": false,
-  "version": "222.0.0"
+  "version": "223.0.0"
 }

@@ -1,8 +1,8 @@
 {
-  "build": "v223-phosphor-full-pack",
-  "builtAt": "2026-08-08T19:55:00Z",
-  "changelog": "V223 full SVG pack: replace boutique custom with Phosphor MIT regular pack – heart, airplane, soccer-ball, golf, barbell, run, flag, rugby football, music-notes, calendar-check, cake, bell, house-line, users, house, star – all planner kinds covered, football now proper stitched icosahedron, scroll rescue kept",
-  "code": 223,
+  "build": "v224-icons-much-bigger",
+  "builtAt": "2026-08-08T20:08:00Z",
+  "changelog": "V224 icons much bigger – goal image: bump default bubble 36→52, agenda 24→38, upcoming 32→52, picker 18→28, inline 16→24, watermark 118→164 with scale s/38 (was /64) so 95px icon in 164 card, base phosphor 22→26 for chunky Habit Tracking / Hume boutique feel, opacity 0.34 boutique, shadow richer",
+  "code": 224,
   "mandatory": false,
-  "version": "223.0.0"
+  "version": "224.0.0"
 }

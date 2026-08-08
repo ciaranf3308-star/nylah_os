@@ -141,7 +141,7 @@ export function AddEventForm({ onAdd, currentUser, selectedDate, initialEvent }:
                 borderColor: active ? pal.fg+"44" : "var(--border)",
                 boxShadow: active ? `0 1px 8px ${pal.bg}` : undefined
               }}>
-              <span className="grid place-items-center"><EventIcon kind={kd.id} size={18} theme={isDark?"dark":"light"} /></span>
+              <span className="grid place-items-center"><EventIcon kind={kd.id} size={28} theme={isDark?"dark":"light"} /></span>
               <span>{kd.label}</span>
             </button>
           )

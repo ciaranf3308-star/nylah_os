@@ -8,8 +8,8 @@ export const BUILD_CHANNEL = "beta" as const;
 export const BUILD_META = {
   tz: HOUSEHOLD_TZ,
   channel: BUILD_CHANNEL,
-  build: "v223-phosphor-full-pack",
-  code: 223,
+  build: "v224-icons-much-bigger",
+  code: 224,
 } as const;
 export const HOUSEHOLD_ID: string | null = null;
 export const HOUSEHOLD_ROW_ID: string | null = null;

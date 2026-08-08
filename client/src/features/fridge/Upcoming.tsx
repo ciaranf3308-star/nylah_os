@@ -87,7 +87,7 @@ export default function Upcoming({ currentUser, calendar, chores, shopping, nowM
                   borderColor:"rgba(0,0,0,0.06)",
                   boxShadow:"0 2px 10px rgba(60,30,10,0.10), inset 0 1px 0 white"
                 }}>
-                <EventIcon kind={bubble.kind} title={ev.title} size={32} theme="light" />
+                <EventIcon kind={bubble.kind} title={ev.title} size={52} theme="light" />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="text-[15px] font-[650] text-[#19140F] truncate" style={{ fontFamily:"Fraunces, serif", letterSpacing:"-0.015em" }}>{ev.title}</div>

@@ -73,7 +73,7 @@ export default function Countdowns({ calendar, nowMs, todayDateStr, setTab }: Pr
 
               <div className="mt-1 text-[15.5px] font-[700] text-[#191410] truncate pr-[124px] relative z-[2]" style={{fontFamily:'Fraunces, serif', letterSpacing:"-0.015em"}}>{ev.title}</div>
               <div className="mt-0.5 text-[12.5px] font-[500] text-[#8E867F] pr-[124px] relative z-[2] flex items-center gap-1.5">
-                <EventIcon kind={def.id} title={ev.title} size={16} theme="light" variant="inline" />
+                <EventIcon kind={def.id} title={ev.title} size={24} theme="light" variant="inline" />
                 {fmtDay(ev.dueAt)}{(ev as any).location ? ` • ${(ev as any).location}` : ""}
               </div>
 
@@ -84,7 +84,7 @@ export default function Countdowns({ calendar, nowMs, todayDateStr, setTab }: Pr
                   <div className="absolute inset-[14px] rounded-[32px] rotate-[8deg]" style={{ background:`radial-gradient(120% 90% at 35% 30%, white 0%, ${pal.bg} 48%, ${pal.chipBg||pal.bg} 82%)`, opacity:0.88, filter:"blur(0.2px)" }} />
                   {/* illustration */}
                   <div className="relative w-full h-full grid place-items-center" style={{ filter:"drop-shadow(0 14px 22px rgba(80,45,18,0.14)) drop-shadow(0 2px 6px rgba(80,45,18,0.08))" }}>
-                    <EventIcon kind={def.id} title={ev.title} size={120} variant="watermark" theme="light" />
+                    <EventIcon kind={def.id} title={ev.title} size={164} variant="watermark" theme="light" />
                   </div>
                 </div>
               </div>

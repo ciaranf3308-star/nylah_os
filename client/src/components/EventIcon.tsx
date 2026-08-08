@@ -15,7 +15,7 @@ type Props = {
 // Downloaded from phosphor-icons/core (MIT) — no attribution required
 // Using 256 viewBox, fill currentColor, scales clean to 22px and 118px watermark
 
-function PIcon({d, size=22, stroke}:{d:string; size?:number; stroke:string}) {
+function PIcon({d, size=26, stroke}:{d:string; size?:number; stroke:string}) {
   return (
     <svg width={size} height={size} viewBox="0 0 256 256" fill="currentColor" style={{color: stroke}} xmlns="http://www.w3.org/2000/svg">
       <path d={d}/>
@@ -59,7 +59,7 @@ function getSportsVariant(title?: string): "football"|"golf"|"gym"|"run"|"gaa"|"
 type IconFn = (p:{stroke:string, title?: string})=>React.ReactNode;
 
 function wrap(d:string): IconFn {
-  return ({stroke}) => <PIcon d={d} stroke={stroke} size={22}/>;
+  return ({stroke}) => <PIcon d={d} stroke={stroke} size={26}/>;
 }
 
 const ICON_MAP: Record<string, IconFn> = {
@@ -85,18 +85,18 @@ const ICON_MAP: Record<string, IconFn> = {
   other: wrap(D.star),
 };
 
-export default function EventIcon({kind="other", title, size=36, variant="bubble", theme="light", className="", style}: Props) {
+export default function EventIcon({kind="other", title, size=52, variant="bubble", theme="light", className="", style}: Props) {
   const def = getKindDef(kind);
   const isDark = theme === "dark" || (theme === "auto" && typeof document !== "undefined" && document.documentElement.getAttribute("data-theme")==="ink");
   const pal = isDark ? def.dark : def.light;
 
   if (variant === "watermark") {
-    const s = size || 96;
+    const s = size || 164;
     const iconFn = ICON_MAP[def.id] || ICON_MAP.other;
     const isFootball = def.id === "sports" && getSportsVariant(title) === "football";
     return (
-      <div className={className} style={{ width: s, height: s, display:"grid", placeItems:"center", opacity: isFootball ? 0.86 : isDark ? 0.36 : 0.30, pointerEvents:"none", ...style }}>
-        <div style={{ transform: `scale(${s/64})`, transformOrigin:"center", filter: isDark ? "drop-shadow(0 6px 18px rgba(0,0,0,0.32))" : "drop-shadow(0 10px 20px rgba(80,45,18,0.14))" }}>
+      <div className={className} style={{ width: s, height: s, display:"grid", placeItems:"center", opacity: isFootball ? 0.86 : isDark ? 0.42 : 0.34, pointerEvents:"none", ...style }}>
+        <div style={{ transform: `scale(${s/38})`, transformOrigin:"center", filter: isDark ? "drop-shadow(0 8px 22px rgba(0,0,0,0.36))" : "drop-shadow(0 14px 26px rgba(80,45,18,0.16))" }}>
           {iconFn({ stroke: pal.fg, title })}
         </div>
       </div>

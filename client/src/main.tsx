@@ -13,16 +13,23 @@ try{
       const arr = JSON.parse(raw);
       if(Array.isArray(arr) && arr.length>0){
         let dirty = false;
+        let reason = '';
         for(const o of arr){
           if(!o) continue;
-          if((o.retries||0)>=3){ dirty = true; break; }
+          if((o.retries||0)>=2){ dirty = true; reason='retries>=2'; break; }
           // old bug: top-level column mismatch caused PGRST204 - those rows had no household_id or missing id
-          if(!o.id || !o.household_id){ dirty = true; break; }
+          if(!o.id || !o.household_id){ dirty = true; reason='missing id/hid'; break; }
+          // FK unrecoverable: household like nylah-% that never got created due to RPC/RLS bug (23503) blocks queue
+          // If we have a last_push_err containing FK, wipe queue so fresh saves can proceed (server is source of truth)
+          try{
+            const lastErr = localStorage.getItem('couple_v1_last_push_err') || '';
+            if(lastErr && (lastErr.toLowerCase().includes('foreign key') || lastErr.includes('23503') || lastErr.includes('households'))){ dirty=true; reason='FK '+lastErr.slice(0,80); break; }
+          }catch{}
           // old v172-v173 stored cleanRow with bad columns like deletedAt at top-level (not inside data) - those would have been at o.payload.deletedAt with retries
           // but we no longer treat payload camelCase inside data as dirty because data blob is jsonb
         }
         if(dirty){
-          console.log('[beirt v181 self-heal] clearing stuck queue', arr.length);
+          console.log('[beirt v182 self-heal] clearing stuck queue', arr.length, reason);
           // keep household safe, just wipe queue - server will be source of truth on next load
           try{ localStorage.removeItem('idb_mutation_queue'); }catch{}
           try{ localStorage.removeItem('couple_v1_queue_count'); }catch{}

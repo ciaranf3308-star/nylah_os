@@ -257,6 +257,17 @@ export async function drainOps(sb: SupaLike): Promise<boolean> {
       await persistQueue(q)
       // continue same idx (now next entry)
     } else {
+      // failed after retries – check if unrecoverable FK (household missing) → drop so it doesn't block others
+      const errCode = String((lastErr as any)?.code || '')
+      const errMsg = String((lastErr as any)?.message || lastErr || '').toLowerCase()
+      const isFkBlock = errCode === '23503' || errMsg.includes('foreign key') || errMsg.includes('violates foreign key') || errMsg.includes('households')
+      if (isFkBlock) {
+        console.warn(`[offlineQueue] dropping unrecoverable FK op ${op.kind}:${op.id} hid=${op.household_id}`, lastErr?.message || lastErr)
+        q.splice(idx, 1)
+        await persistQueue(q)
+        // keep draining next ops rather than stalling whole queue
+        continue
+      }
       // failed after retries
       op.retries = (op.retries || 0) + 1
       await persistQueue(q)

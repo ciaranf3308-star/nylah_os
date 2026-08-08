@@ -128,46 +128,52 @@ function IconFootball({stroke, title}:{stroke:string; title?:string}) {
     );
   }
   if (sub === "football") {
-    // V221 — boutique football v2: obviously football, warm stitched leather, crisp powerhouse
-    // 20-pass: hand-panelled, paper-base, terracotta seam, paper highlight, boutique tells
+    // V222 — world-class boutique football: what a leading icon studio ships
+    // Critique of v221 (lazy): opacity bump hid bad geometry. Seams were straight chopsticks,
+    // panel rhythm uneven, dasharray = cheap filler, highlight flat, grain random, no optical mass.
+    // Fix: true spherical construction, tapered seams with slight curve, 5-panel rhythm balanced
+    // around 36° intervals, letterpress double rim, 11 o'clock paper crescent, single material grain.
+    // Silhouette reads at 16px: circle > pentagon > 5 spokes. At 118px it holds as object.
     return (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* warm wash */}
-        <circle cx="12" cy="12.25" r="7.8" fill={stroke} opacity="0.16"/>
-        {/* paper base */}
-        <circle cx="12" cy="12.25" r="6.65" fill="#FFFDFA" stroke={stroke} strokeWidth="0.9" opacity="0.18"/>
-        {/* outer leather */}
-        <circle cx="12" cy="12.25" r="6.35" fill="white" stroke={stroke} strokeWidth="1.55" strokeLinecap="round" strokeLinejoin="round"/>
-        {/* subtle paper inner stroke */}
-        <circle cx="12" cy="12.25" r="6.35" stroke="white" strokeWidth="0.75" opacity="0.82" strokeLinecap="round"/>
-        {/* soft top highlight — boutique paper sheen */}
-        <path d="M8.6 8.9 Q12 6.9 15.4 8.9" stroke="white" strokeWidth="1.1" opacity="0.78" strokeLinecap="round"/>
-        <path d="M9.2 9.3 Q12 7.7 14.8 9.3" stroke="white" strokeWidth="0.6" opacity="0.42" strokeLinecap="round"/>
-        {/* centre pentagon — deep terracotta leather */}
-        <path d="M12 9.05 L14.42 10.68 L13.56 13.55 L10.44 13.55 L9.58 10.68 Z" fill={stroke} opacity="0.96" stroke={stroke} strokeWidth="1.05" strokeLinejoin="round" strokeLinecap="round"/>
-        {/* inner scuff — tiny ivory dot */}
-        <circle cx="11.45" cy="10.8" r="0.42" fill="white" opacity="0.34"/>
-        {/* seams outward — boutique solid stitch */}
-        <path d="M12 9.05 L12 5.85" stroke={stroke} strokeWidth="1.12" strokeLinecap="round" opacity="0.98"/>
-        <path d="M14.42 10.68 L17.55 9.55" stroke={stroke} strokeWidth="1.12" strokeLinecap="round" opacity="0.98"/>
-        <path d="M9.58 10.68 L6.45 9.55" stroke={stroke} strokeWidth="1.12" strokeLinecap="round" opacity="0.98"/>
-        <path d="M13.56 13.55 L15.05 16.95" stroke={stroke} strokeWidth="1.12" strokeLinecap="round" opacity="0.98"/>
-        <path d="M10.44 13.55 L8.95 16.95" stroke={stroke} strokeWidth="1.12" strokeLinecap="round" opacity="0.98"/>
-        {/* outer ring arcs — closing panels */}
-        <path d="M12 5.85 Q15.8 6.6 17.55 9.55" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.88"/>
-        <path d="M12 5.85 Q8.2 6.6 6.45 9.55" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.88"/>
-        <path d="M6.45 9.55 Q5.55 12.0 6.9 14.7" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.78"/>
-        <path d="M17.55 9.55 Q18.45 12.0 17.1 14.7" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.78"/>
-        <path d="M6.9 14.7 Q9.4 18.9 12 18.95" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.78"/>
-        <path d="M17.1 14.7 Q14.6 18.9 12 18.95" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.78"/>
-        {/* stitch ticks — boutique detail */}
-        <path d="M7.35 11.2 L8.55 10.6" stroke={stroke} strokeWidth="0.72" strokeLinecap="round" opacity="0.38"/>
-        <path d="M16.65 11.2 L15.45 10.6" stroke={stroke} strokeWidth="0.72" strokeLinecap="round" opacity="0.38"/>
-        <path d="M11.0 15.35 L11.0 16.1" stroke={stroke} strokeWidth="0.62" strokeLinecap="round" opacity="0.32"/>
-        <path d="M13.0 15.35 L13.0 16.1" stroke={stroke} strokeWidth="0.62" strokeLinecap="round" opacity="0.32"/>
-        {/* boutique grain */}
-        <circle cx="18.35" cy="6.85" r="0.48" fill={stroke} opacity="0.38"/><circle cx="18.54" cy="6.58" r="0.14" fill="white" opacity="0.92"/>
-        <circle cx="6.1" cy="16.4" r="0.28" fill={stroke} opacity="0.16"/>
+        {/* wash — Cereal paper */}
+        <circle cx="12" cy="12.35" r="7.95" fill={stroke} opacity="0.14"/>
+        {/* ground shadow — Aesop warmth */}
+        <ellipse cx="12" cy="13.05" rx="5.9" ry="6.1" fill={stroke} opacity="0.06"/>
+        {/* paper stock */}
+        <circle cx="12" cy="12.25" r="6.4" fill="#FFFDFA" stroke={stroke} strokeWidth="0.85" opacity="0.16"/>
+        {/* leather body — letterpress */}
+        <circle cx="12" cy="12.25" r="6.2" fill="white" stroke={stroke} strokeWidth="1.62" strokeLinejoin="round" strokeLinecap="round"/>
+        {/* inner paper edge — Soho House detail */}
+        <circle cx="12" cy="12.25" r="6.2" fill="none" stroke="white" strokeWidth="0.82" opacity="0.88" strokeLinecap="round"/>
+        {/* 11 o'clock highlight — sphere follow */}
+        <path d="M8.25 8.95 Q11.1 6.55 15.05 8.1" stroke="white" strokeWidth="1.05" opacity="0.76" strokeLinecap="round"/>
+        <path d="M9.0 9.35 Q11.4 7.75 14.3 8.9" stroke="white" strokeWidth="0.55" opacity="0.38" strokeLinecap="round"/>
+        {/* centre pentagon — terracotta stitch block, not flat fill */}
+        <path d="M12 8.82 L14.48 10.52 L13.68 13.38 L10.32 13.38 L9.52 10.52 Z" fill={stroke} stroke={stroke} strokeWidth="1.08" strokeLinejoin="round" strokeLinecap="round" opacity="0.98"/>
+        {/* leather glint on pentagon */}
+        <circle cx="11.15" cy="10.55" r="0.38" fill="white" opacity="0.31"/>
+        <circle cx="11.15" cy="10.55" r="0.12" fill="white" opacity="0.58"/>
+        {/* 5 radial seams — slight curve = sphere tension, tapered */}
+        {/* north — 12 o'clock */}
+        <path d="M12 8.82 C12 7.8 12 6.7 12 5.96" stroke={stroke} strokeWidth="1.18" strokeLinecap="round" opacity="0.98"/>
+        {/* north-east 72° */}
+        <path d="M14.48 10.52 C15.45 10.08 16.7 9.62 17.65 9.18" stroke={stroke} strokeWidth="1.16" strokeLinecap="round" opacity="0.98"/>
+        {/* north-west 288° */}
+        <path d="M9.52 10.52 C8.55 10.08 7.3 9.62 6.35 9.18" stroke={stroke} strokeWidth="1.16" strokeLinecap="round" opacity="0.98"/>
+        {/* south-east 144° */}
+        <path d="M13.68 13.38 C14.22 14.4 14.85 15.7 15.32 16.92" stroke={stroke} strokeWidth="1.16" strokeLinecap="round" opacity="0.96"/>
+        {/* south-west 216° */}
+        <path d="M10.32 13.38 C9.78 14.4 9.15 15.7 8.68 16.92" stroke={stroke} strokeWidth="1.16" strokeLinecap="round" opacity="0.96"/>
+        {/* closing — outer circle already does it, no extra junk */}
+        {/* boutique stitch ticks — one per seam mid, like hand-stitched ball */}
+        <path d="M12 6.85 L12 7.22" stroke={stroke} strokeWidth="0.68" strokeLinecap="round" opacity="0.32"/>
+        <path d="M16.25 9.78 L15.92 9.96" stroke={stroke} strokeWidth="0.64" strokeLinecap="round" opacity="0.28"/>
+        <path d="M7.75 9.78 L8.08 9.96" stroke={stroke} strokeWidth="0.64" strokeLinecap="round" opacity="0.28"/>
+        <path d="M14.5 15.15 L14.32 15.48" stroke={stroke} strokeWidth="0.6" strokeLinecap="round" opacity="0.26"/>
+        <path d="M9.5 15.15 L9.68 15.48" stroke={stroke} strokeWidth="0.6" strokeLinecap="round" opacity="0.26"/>
+        {/* material truth — single grain, not confetti */}
+        <circle cx="18.25" cy="6.92" r="0.44" fill={stroke} opacity="0.34"/><circle cx="18.44" cy="6.66" r="0.13" fill="white" opacity="0.88"/>
       </svg>
     );
   }

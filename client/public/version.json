@@ -1,8 +1,8 @@
 {
-  "build": "v224-icons-much-bigger",
-  "builtAt": "2026-08-08T20:08:00Z",
-  "changelog": "V224 icons much bigger – goal image: bump default bubble 36→52, agenda 24→38, upcoming 32→52, picker 18→28, inline 16→24, watermark 118→164 with scale s/38 (was /64) so 95px icon in 164 card, base phosphor 22→26 for chunky Habit Tracking / Hume boutique feel, opacity 0.34 boutique, shadow richer",
-  "code": 224,
+  "build": "v225-cropped-huge-watermark",
+  "builtAt": "2026-08-08T20:12:00Z",
+  "changelog": "V225 cropped huge: watermark 164→252, right -36 bottom -38 rotate -8deg, 252 boxed spills beyond card rounded overflow so clipped — bigger than box but inside so cut off as goal image, shadow 18px/28 richer, wash opacity 0.92",
+  "code": 225,
   "mandatory": false,
-  "version": "224.0.0"
+  "version": "225.0.0"
 }

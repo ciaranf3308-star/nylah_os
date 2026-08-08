@@ -39,11 +39,11 @@ function PinnedCalendarCard({ ev, nowMs, onClear, onTap, tz }: { ev:any, nowMs:n
         <span className="inline-flex h-[22px] items-center rounded-full px-2.5 text-[10.5px] font-[700] border" style={{background:pal.bg, color:pal.fg, borderColor:"rgba(0,0,0,0.06)"}}>{kindDef.label}</span>
         <span>{dateKey} {ev.location ? `• ${ev.location}` : ""}</span>
       </div>
-      <div className="pointer-events-none absolute right-[-12px] bottom-[-14px] rotate-[-5deg] group-hover:rotate-[-3deg] group-hover:scale-[1.03] transition-transform duration-500">
-        <div className="relative" style={{ width:164, height:164 }}>
-          <div className="absolute inset-[12px] rounded-[28px] rotate-[8deg]" style={{ background:`radial-gradient(115% 90% at 32% 28%, white 0%, ${pal.bg} 48%, ${pal.chipBg||pal.bg} 82%)`, opacity:0.88 }} />
-          <div className="relative w-full h-full grid place-items-center" style={{filter:"drop-shadow(0 14px 22px rgba(80,45,18,0.14))"}}>
-            <EventIcon kind={kind} title={title} size={164} variant="watermark" theme="light"/>
+      <div className="pointer-events-none absolute right-[-36px] bottom-[-38px] rotate-[-8deg] group-hover:rotate-[-5deg] group-hover:scale-[1.02] transition-transform duration-500">
+        <div className="relative" style={{ width:252, height:252 }}>
+          <div className="absolute inset-[18px] rounded-[42px] rotate-[8deg]" style={{ background:`radial-gradient(115% 90% at 32% 28%, white 0%, ${pal.bg} 48%, ${pal.chipBg||pal.bg} 82%)`, opacity:0.92 }} />
+          <div className="relative w-full h-full grid place-items-center" style={{filter:"drop-shadow(0 18px 28px rgba(80,45,18,0.18)) drop-shadow(0 3px 8px rgba(80,45,18,0.10))"}}>
+            <EventIcon kind={kind} title={title} size={252} variant="watermark" theme="light"/>
           </div>
         </div>
       </div>

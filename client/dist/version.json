@@ -1,8 +1,8 @@
 {
-  "build": "v208-curated-event-icons",
-  "builtAt": "2026-08-08T14:18:22Z",
-  "changelog": "curated 1by1 boutique event icons — each kind has distinct illustration, sports sub-variants golf/gym/run/gaa/rugby/football + generic whistle not soccer ball always, title-aware, warm pastel Habit + Hume",
-  "code": 208,
+  "build": "v209-boutique-svg-20pass",
+  "builtAt": "2026-08-08T15:10:00Z",
+  "changelog": "20-pass SVG polish: hand-drawn watercolor beds 10-14%, boutique sparkles/scallops/wax seals, sports 7 variants (golf green+flag, kettlebell, trail dust, hurl grain, rugby stitch, crest, whistle laurel generic NOT soccer), date love-letter wax, travel vintage tag, music vinyl sleeve, all cut 25% grain, Fraunces label, watermark 118-120 crisp breakout",
+  "code": 209,
   "mandatory": false,
-  "version": "208.0.0"
+  "version": "209.0.0"
 }

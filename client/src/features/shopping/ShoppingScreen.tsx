@@ -208,19 +208,6 @@ export function ShoppingScreen(props: any) {
         @keyframes sheetIn{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
       `}</style>
 
-      {/* header */}
-      <div className="w-full px-5 pt-6 max-w-[560px] mx-auto">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-[38px] leading-[0.9] tracking-[-0.02em] font-[700]" style={{ fontFamily: "Fraunces, serif" }}>Shop</h1>
-            <div className="mt-1.5 text-[13.5px] text-[#6B5D55]/80" style={{ fontFamily: "Instrument Sans" }}>Shared shopping for our home</div>
-          </div>
-          <div className="grid h-11 w-11 place-items-center rounded-full bg-[#F8DCC7] text-[#4B3A33] text-[16px] font-bold" style={{ fontFamily: "Fraunces" }}>
-            { (currentUser==="aisling" ? "A" : "C") }
-          </div>
-        </div>
-      </div>
-
       {/* NEXT RUN card */}
       <div className="w-full px-4 pt-5 max-w-[560px] mx-auto">
         <div className="relative overflow-hidden rounded-[22px] px-5 pt-4 pb-4 border border-[#F4D8BF]/60" style={{ background:"linear-gradient(180deg,#FFE8D3 0%,#FFF1E5 100%)", boxShadow:"0 6px 24px rgba(0,0,0,0.05)" }}>

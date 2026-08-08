@@ -1,8 +1,8 @@
 {
-  "build": "v191-shop-boutique-lift",
-  "builtAt": "2026-08-08T12:20:02Z",
-  "changelog": "shop boutique lift: next-run peach card + progress, grocery pill + plus, filter chips black/orange/blue/green, to-buy 14px Fraunces, buy-again + bought accordion, shop mode, visual parity with fridge",
-  "code": 191,
+  "build": "v192-shop-nodupe-header",
+  "builtAt": "2026-08-08T12:22:52Z",
+  "changelog": "shop: remove duplicate inner Shop header (shell already renders title), keep single Next Run boutique card \u2014 matches mock",
+  "code": 192,
   "mandatory": false,
-  "version": "191.0.0"
+  "version": "192.0.0"
 }

@@ -132,6 +132,7 @@ export default function ChoresScreen(props: any) {
   const [addBonus, setAddBonus] = useState(false);
   const [addFreq, setAddFreq] = useState<ChoreV2["frequency"]>("once");
   const [addWeekdays, setAddWeekdays] = useState<boolean[]>(()=>[false,false,false,false,false,false,false]);
+  const [addMonthlyDay, setAddMonthlyDay] = useState<number>(1);
   const [addType, setAddType] = useState<"one-off"|"repeat">("one-off");
   const [showRules, setShowRules] = useState(false);
   const [reactionMap, setReactionMap] = useState<Record<string,string[]>>(()=>{ try{ const r=localStorage.getItem("couple_v1_chore_reactions"); return r?JSON.parse(r):{} }catch{return {}} });
@@ -259,6 +260,16 @@ export default function ChoresScreen(props: any) {
         o.start(); o.stop(ctx.currentTime+0.12);
       }catch{}
     }
+  }
+
+  // Core delete — now primary action, not admin-only
+  function deleteChore(id:string){
+    const nowISO=new Date().toISOString();
+    setChores((p:any)=> (p as any[]).map((x:any)=> x.id===id ? {...x, deletedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser } : x));
+    try{ hardPersistChore({id, deletedAt:nowISO, updatedAt:nowISO} as any,'delete'); }catch{}
+    setToast("Deleted");
+    setTimeout(()=>setToast(null),2000);
+    try{ localStorage.setItem("couple_v1_last_local_write", nowISO);}catch{}
   }
 
   function confettiByPoints(pts:number, el?: any){
@@ -488,16 +499,16 @@ export default function ChoresScreen(props: any) {
               <button onClick={()=> setShowAdd(true)} className="mt-3 h-[44px] rounded-full bg-[#0A0A0A] px-5 text-[12px] text-white active:scale-[0.96]" style={{minHeight:44}}>Add a chore you hate</button>
             </div>
           ) : tab==="mine" ? (
-            <ChoreMine list={listForFilter as any} nowMs={nowMs} currentUser={currentUser} onDetail={onDetail} onComplete={onComplete} onSnooze={onSnooze} onSwap={onSwap} triggerPop={triggerPointsPop} confetti={confettiByPoints} setChores={setChores} setToast={setToast as any} monthKey={monthKey} />
+            <ChoreMine list={listForFilter as any} nowMs={nowMs} currentUser={currentUser} onDetail={onDetail} onComplete={onComplete} onSnooze={onSnooze} onSwap={onSwap} onDelete={deleteChore} triggerPop={triggerPointsPop} confetti={confettiByPoints} setChores={setChores} setToast={setToast as any} monthKey={monthKey} />
           ) : tab==="open" ? (
-            <ChoreOpen list={listForFilter as any} nowMs={nowMs} currentUser={currentUser} onDetail={onDetail} onComplete={onComplete} setChores={setChores} setToast={setToast as any} monthKey={monthKey} />
+            <ChoreOpen list={listForFilter as any} nowMs={nowMs} currentUser={currentUser} onDetail={onDetail} onComplete={onComplete} onDelete={deleteChore} setChores={setChores} setToast={setToast as any} monthKey={monthKey} />
           ) : tab==="done" ? (
             <>
               <ChoreDone list={listForFilter as any} nowMs={nowMs} />
               <ChoreHistory done={done as any} nowMs={nowMs} />
             </>
           ) : (
-            <ChoreMine list={listForFilter as any} nowMs={nowMs} currentUser={currentUser} onDetail={onDetail} onComplete={onComplete} onSnooze={onSnooze} onSwap={onSwap} triggerPop={triggerPointsPop} confetti={confettiByPoints} setChores={setChores} setToast={setToast as any} monthKey={monthKey} />
+            <ChoreMine list={listForFilter as any} nowMs={nowMs} currentUser={currentUser} onDetail={onDetail} onComplete={onComplete} onSnooze={onSnooze} onSwap={onSwap} onDelete={deleteChore} triggerPop={triggerPointsPop} confetti={confettiByPoints} setChores={setChores} setToast={setToast as any} monthKey={monthKey} />
           )}
           <div className="text-[11px] text-[var(--muted)]/60 px-1 flex items-center justify-between"><span>{monthKey} • {active.length} active</span><span className="tabular-nums">{countdown.d}d {countdown.h}h {countdown.m}m</span></div>
           {(()=>{ const sevenAgo=Date.now()-7*86400000; let aStreak=0; const sorted=done.filter((c:any)=> c.completedAt && new Date(c.completedAt).getTime()>=sevenAgo).sort((aa:any,bb:any)=> new Date(bb.completedAt).getTime()-new Date(aa.completedAt).getTime()); for(const ch of sorted){ if(ch.completedBy===currentUser) aStreak++; else break; } return aStreak>=2 ? <div className="rounded-full bg-[#0A0A0A] text-white px-3 py-1.5 text-[11px] inline-flex gap-1 items-center"><svg width="12" height="12" viewBox="0 0 24 24" fill="#FACC15"><path d="M12 2a7 7 0 00-7 7c0 5 7 11 7 11s7-6 7-11a7 7 0 00-7-7z"/></svg> {aStreak} win streak • keep it</div> : null; })()}
@@ -528,6 +539,8 @@ export default function ChoresScreen(props: any) {
               <button onClick={()=>{ if(!detailChore) return; setDetailChore(null); setTab("admin"); }} className="flex-1 h-[44px] rounded-full border bg-[var(--card-bg)] text-[12px]" style={{borderColor:"var(--border)", minHeight:44}}>Edit • Admin</button>
               <button onClick={()=>{ const nowISO=new Date().toISOString(); const half1={...detailChore, id: uid("chk"), title: detailChore.title+" • A", pain: Math.ceil(detailChore.pain/2), basePoints: Math.ceil(detailChore.basePoints/2), updatedAt:nowISO}; const half2={...detailChore, id: uid("chk"), title: detailChore.title+" • B", pain: Math.floor(detailChore.pain/2)||1, basePoints: Math.floor(detailChore.basePoints/2)||5, updatedAt:nowISO}; setChores((p:any)=> [half1, half2, ...p.filter((x:any)=> x.id!==detailChore.id)]); setDetailChore(null); setToast("Split into two"); setTimeout(()=>setToast(null),2000); }} className="flex-1 h-[44px] rounded-full border bg-[var(--card-bg)] text-[11px]" style={{borderColor:"var(--border)", minHeight:44}}>Split • Two</button>
             </div>
+            <button onClick={()=>{ if(!detailChore) return; const id=detailChore.id; setDetailChore(null); deleteChore(id); }} className="w-full h-[44px] rounded-full border border-[#FECACA] bg-[#FEF2F2] text-[12px] font-semibold text-[#B91C1C] flex items-center justify-center gap-1.5 active:scale-[0.98]" style={{minHeight:44}}>🗑 Delete chore</button>
+            <div className="text-[10px] text-center text-[var(--muted)]">Deletes for both — can't be undone</div>
           </div>
         )}
       </BottomSheet>
@@ -655,7 +668,16 @@ export default function ChoresScreen(props: any) {
                 );
               })}
             </div>
-            {addType!=="one-off" && (
+            {addType!=="one-off" && addFreq==="monthly" && (
+              <div className="pt-2 flex items-center gap-2">
+                <span className="text-[11px] text-[var(--muted)]">On the</span>
+                <select value={addMonthlyDay} onChange={e=> setAddMonthlyDay(Number(e.target.value))} className="h-[40px] rounded-full border bg-white px-3 pr-8 text-[13px] font-medium appearance-none" style={{borderColor:"#EADFCE", minHeight:40}}>
+                  {Array.from({length:31}, (_,i)=> i+1).map(n=> <option key={n} value={n}>{n}{n===1?'st':n===2?'nd':n===3?'rd':'th'}</option>)}
+                </select>
+                <span className="text-[11px] text-[var(--muted)]">of each month</span>
+              </div>
+            )}
+            {addType!=="one-off" && addFreq!=="monthly" && (
               <div className="flex items-center gap-1.5 pt-1 flex-wrap">
                 {["M","T","W","T","F","S","S"].map((d,i)=> {
                   const long=["Mo","Tu","We","Th","Fr","Sa","Su"][i];
@@ -712,7 +734,7 @@ export default function ChoresScreen(props: any) {
               const pain=Math.min(10, Math.max(1, addPain||5));
               const base=pain*10;
               const mult = addBonus?1.15:1;
-              const fd = addType==="one-off" ? undefined : (addWeekdays.some(Boolean) ? ["Mo","Tu","We","Th","Fr","Sa","Su"].filter((_,i)=>addWeekdays[i]).join(",") : addFreq);
+              const fd = addType==="one-off" ? undefined : addFreq==="monthly" ? String(addMonthlyDay) : (addWeekdays.some(Boolean) ? ["Mo","Tu","We","Th","Fr","Sa","Su"].filter((_,i)=>addWeekdays[i]).join(",") : addFreq);
               const nc:any={ id: uid("chk"), title:el.value.trim(), type:addType, frequency:addFreq, frequencyDetail: fd, createdAt:nowISO, updatedAt:nowISO, pain, basePoints:base, swipes:{aisling:null,ciaran:null}, status:"deck", assignedTo:null, multiplier:mult, timeWindowHours:24, icon: addIcon };
               setChores((p:any)=> [nc, ...p]); try{ hardPersistChore(nc,'create'); }catch{} setShowAdd(false);
               setAddPain(5); setAddBonus(false);

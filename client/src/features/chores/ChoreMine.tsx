@@ -11,6 +11,7 @@ type Props = {
   onComplete: (c:ChoreV2)=>void;
   onSnooze: (c:ChoreV2)=>void;
   onSwap: (c:ChoreV2)=>void;
+  onDelete?: (id:string)=>void;
   triggerPop: (id:string, pts:number)=>void;
   confetti: (pts:number)=>void;
   setChores: any;
@@ -18,7 +19,7 @@ type Props = {
   monthKey: string;
 };
 
-export function ChoreMine({ list, nowMs, currentUser, onDetail, onComplete, onSnooze, onSwap, setChores, setToast, monthKey }: Props) {
+export function ChoreMine({ list, nowMs, currentUser, onDetail, onComplete, onSnooze, onSwap, onDelete, setChores, setToast, monthKey }: Props) {
   if (list.length===0) {
     return (
       <div className="rounded-[28px] border border-dashed bg-[var(--card-bg)] px-6 py-10 text-center" style={{borderColor:"var(--border)", background:"linear-gradient(180deg,var(--wash-mid) 0%,var(--card-bg) 100%)"}}>
@@ -44,9 +45,10 @@ export function ChoreMine({ list, nowMs, currentUser, onDetail, onComplete, onSn
             </button>
             <div className="flex flex-col gap-1 shrink-0">
               <button onClick={()=> onComplete(c)} className="h-[36px] rounded-full bg-[#0A0A0A] px-3 text-[11px] text-white active:scale-[0.96] min-w-[52px]" style={{minHeight:36, transition:"transform 180ms cubic-bezier(0.34,1.56,0.64,1)"}}>Done</button>
-              <div className="flex gap-1">
+              <div className="flex gap-1 items-center">
                 <button onClick={()=> onSnooze(c)} className="h-[28px] rounded-full border bg-[var(--card-bg)] px-2 text-[10px]" style={{borderColor:"var(--border)"}}>Snooze</button>
                 <button onClick={()=> onSwap(c)} className="h-[28px] rounded-full border bg-[var(--card-bg)] px-2 text-[10px]" style={{borderColor:"var(--border)"}}>Swap</button>
+                {onDelete && <button onClick={()=> onDelete(c.id)} className="h-[28px] w-[28px] grid place-items-center rounded-full border bg-[#FEF2F2] border-[#FECACA] text-[#B91C1C] text-[11px]" title="Delete" aria-label="Delete chore">✕</button>}
               </div>
             </div>
           </div>

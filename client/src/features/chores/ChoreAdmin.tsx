@@ -67,6 +67,7 @@ export function ChoreAdmin({ active, chores, setChores, currentUser, monthKey, t
   const [editTitle, setEditTitle] = useState("");
   const [editFreq, setEditFreq] = useState<ChoreV2["frequency"]>("once");
   const [editWeekdays, setEditWeekdays] = useState<boolean[]>(()=>[false,false,false,false,false,false,false]);
+  const [editMonthlyDay, setEditMonthlyDay] = useState<number>(1);
   const [editPain, setEditPain] = useState(5);
   const [editBonus, setEditBonus] = useState(false);
   const [editType, setEditType] = useState<"one-off"|"repeat">("one-off");
@@ -90,11 +91,18 @@ export function ChoreAdmin({ active, chores, setChores, currentUser, monthKey, t
     setEditFreq(c.frequency as any || "once");
     setEditType((c.type as any)|| (c.frequency==="once"?"one-off":"repeat"));
     try{
-      const boolArr = (c.frequencyDetail||"").split(",").map((x:any)=> x.trim()).filter(Boolean);
-      const map:any={Mo:0,Tu:1,We:2,Th:3,Fr:4,Sa:5,Su:6};
-      const arr=[false,false,false,false,false,false,false];
-      boolArr.forEach((k:string)=>{ if(map[k]!==undefined) arr[map[k]]=true; });
-      setEditWeekdays(arr);
+      const isMonthly = (c.frequency==="monthly") || /^\d+$/.test(String(c.frequencyDetail||"").trim());
+      if(isMonthly){
+        const dayNum = parseInt(String(c.frequencyDetail||"1"),10);
+        setEditMonthlyDay(isNaN(dayNum)?1: Math.min(31, Math.max(1, dayNum)));
+        setEditWeekdays([false,false,false,false,false,false,false]);
+      } else {
+        const boolArr = (c.frequencyDetail||"").split(",").map((x:any)=> x.trim()).filter(Boolean);
+        const map:any={Mo:0,Tu:1,We:2,Th:3,Fr:4,Sa:5,Su:6};
+        const arr=[false,false,false,false,false,false,false];
+        boolArr.forEach((k:string)=>{ if(map[k]!==undefined) arr[map[k]]=true; });
+        setEditWeekdays(arr);
+      }
     }catch{ setEditWeekdays([false,false,false,false,false,false,false]); }
     setEditPain(c.pain||5);
     setEditBonus(c.multiplier>1.05);
@@ -104,7 +112,7 @@ export function ChoreAdmin({ active, chores, setChores, currentUser, monthKey, t
 
   function saveEdit(){
     if(!editing) return;
-    const freqDetail = editWeekdays.some(Boolean) ? (()=>{
+    const freqDetail = editFreq==="monthly" ? String(editMonthlyDay) : editWeekdays.some(Boolean) ? (()=>{
       const names=["Mo","Tu","We","Th","Fr","Sa","Su"];
       return names.filter((_,i)=> editWeekdays[i]).join(",");
     })() : undefined;
@@ -190,11 +198,21 @@ export function ChoreAdmin({ active, chores, setChores, currentUser, monthKey, t
               <button key={f} onClick={()=>{ setEditType(f==="one-off"?"one-off":"repeat"); setEditFreq(f==="one-off"?"once":f as any); if(navigator.vibrate) try{navigator.vibrate(10)}catch{} }} className={"h-[44px] rounded-[12px] border text-[11px] font-semibold capitalize "+( (f==="one-off" && editType==="one-off") || editFreq===f ? "bg-[#0A0A0A] text-white border-[#0A0A0A]" : "bg-[var(--card-bg)] text-[var(--text-secondary)]")} style={{borderColor:"var(--border)", minHeight:44}}>{f}</button>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-1">
-            {["Mo","Tu","We","Th","Fr","Sa","Su"].map((d,i)=> (
-              <button key={d} onClick={()=> { const a=[...editWeekdays]; a[i]=!a[i]; setEditWeekdays(a); if(navigator.vibrate) try{navigator.vibrate(10)}catch{} }} className={"h-[44px] rounded-full border text-[11px] font-medium "+(editWeekdays[i]?"bg-[#0A0A0A] text-white border-[#0A0A0A]":"bg-[var(--card-bg)]")} style={{borderColor:"var(--border)", minHeight:44}}>{d}</button>
-            ))}
-          </div>
+          {editFreq==="monthly" ? (
+            <div className="flex items-center gap-2 pt-1">
+              <span className="text-[11px] text-[var(--muted)]">On the</span>
+              <select value={editMonthlyDay} onChange={e=> setEditMonthlyDay(Number(e.target.value))} className="h-[40px] rounded-full border bg-white px-3 text-[12px] font-medium" style={{borderColor:"var(--border)", minHeight:40}}>
+                {Array.from({length:31}, (_,i)=> i+1).map(n=> <option key={n} value={n}>{n}{n===1?"st":n===2?"nd":n===3?"rd":"th"}</option>)}
+              </select>
+              <span className="text-[11px] text-[var(--muted)]">of month</span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-7 gap-1">
+              {["Mo","Tu","We","Th","Fr","Sa","Su"].map((d,i)=> (
+                <button key={d} onClick={()=> { const a=[...editWeekdays]; a[i]=!a[i]; setEditWeekdays(a); if(navigator.vibrate) try{navigator.vibrate(10)}catch{} }} className={"h-[44px] rounded-full border text-[11px] font-medium "+(editWeekdays[i]?"bg-[#0A0A0A] text-white border-[#0A0A0A]":"bg-[var(--card-bg)]")} style={{borderColor:"var(--border)", minHeight:44}}>{d}</button>
+              ))}
+            </div>
+          )}
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[11px]"><span>Pain {editPain}/10 base {editPain*10}</span><span className="text-[var(--muted)]">→ {(editPain*10*(editBonus?1.15:1)).toFixed(0)} pts {editBonus?"(1.15× bonus)":""}</span></div>
             <input type="range" min={1} max={10} value={editPain} onChange={e=> { setEditPain(Number(e.target.value)); if(navigator.vibrate) try{navigator.vibrate(10)}catch{} }} className="w-full accent-[#0A0A0A] h-[24px]" />

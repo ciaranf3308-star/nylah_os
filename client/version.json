@@ -1,8 +1,8 @@
 {
-  "build": "v201-fridge-cal-fixes",
-  "builtAt": "2026-08-08T13:21:14Z",
-  "changelog": "fridge note only pinned/unread, pinned only true pinned no fallback, calendar month nav syncs selected, agenda shows selected month events when changing month, day cells colored boxes with half-split for mixed attendees, needs-you awaiting-you fixed to show only awaiting current user with correct label, agenda row awaiting labels",
-  "code": 201,
+  "build": "v202-chores-planner-delete",
+  "builtAt": "2026-08-08T13:23:42Z",
+  "changelog": "chores delete now core (detail + mine/open quick delete), planner grouped by overdue/today/tomorrow/week/later + priority chips + ready-made 3-step plan, monthly picks date dropdown 1-31 not weekdays, admin edit monthly day support",
+  "code": 202,
   "mandatory": false,
-  "version": "201.0.0"
+  "version": "202.0.0"
 }

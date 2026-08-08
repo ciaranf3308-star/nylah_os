@@ -1,1 +1,1 @@
-{"build":"v175-offline-optimistic-delete-persist","code":175,"version":"175.0.0","changelog":"remove hard offline block, attempt upsert/delete even when probe says offline - fixes United revert on reload","mandatory":false,"builtAt":"2026-08-08T00:55:00Z"}
+{"build":"v180-onboarding-big-shapes-no-white","code":180,"version":"180.0.0","changelog":"onboarding use onboarding-photo.png full-width, big peach left + sage right shapes like iPhone ref, remove white gradient banner and flex gap","mandatory":false,"builtAt":"2026-08-08T00:29:00Z"}

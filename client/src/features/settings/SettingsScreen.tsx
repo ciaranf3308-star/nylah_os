@@ -148,7 +148,7 @@ export function SettingsScreen(props: any = {}) {
   const [queueLen, setQueueLen] = useState<number>(0);
   const [online, setOnline] = useState<boolean>(true);
   const [anonPresent, setAnonPresent] = useState<string>("unknown");
-  const [build, setBuild] = useState<string>("v193-onboard-warm-hero");
+  const [build, setBuild] = useState<string>("v194-onboard-tight-crop");
   const [effId, setEffId] = useState<string>(() => {
     try {
       return localStorage.getItem("couple_v1_household_id") || "–";
@@ -190,7 +190,7 @@ export function SettingsScreen(props: any = {}) {
     } catch { setAnonPresent("err"); }
     try { const nid = getEffectiveRowId(); if (nid) setEffId(nid); } catch {}
     try {
-      const v = (localStorage.getItem("couple_v1_build") || (window as any).__NYLAH_VERSION__ || "v193-onboard-warm-hero");
+      const v = (localStorage.getItem("couple_v1_build") || (window as any).__NYLAH_VERSION__ || "v194-onboard-tight-crop");
       setBuild(String(v).slice(0, 24));
     } catch {}
     try { setHouseholdName(localStorage.getItem("couple_v1_household_name") || "Our house"); } catch {}

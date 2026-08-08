@@ -394,95 +394,57 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
 
     if (step==="welcome") {
     return (
-      <div className="absolute inset-0 z-[90] flex min-h-dvh w-full flex-col bg-[#FEF7F0] overflow-hidden">
+      <div className="absolute inset-0 z-[90] flex min-h-dvh w-full flex-col bg-[#FFFBF6] overflow-hidden">
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Instrument+Sans:wght@400;500&display=swap');`}</style>
 
-        {/* Top — logo */}
-        <div className="flex flex-col items-center px-6 pt-[42px] pb-2 shrink-0">
-          <div className="relative flex flex-col items-center">
-            <div className="h-[72px] w-[86px] relative grid place-items-center">
-              <svg width="88" height="80" viewBox="0 0 88 82" fill="none" xmlns="http://www.w3.org/2000/svg" className="overflow-visible">
+        {/* Top */}
+        <div className="flex flex-col items-center px-6 pt-[36px] pb-[18px] shrink-0 bg-[#FFFBF6]">
+          <div className="flex flex-col items-center">
+            <div className="h-[64px] w-[78px] grid place-items-center">
+              <svg width="78" height="70" viewBox="0 0 88 82" fill="none" className="overflow-visible">
                 <path d="M44 4.5L8.5 30.5V30.9L12.2 30.9V68.2C12.2 72.8 16 77 21.2 77H66.8C72 77 75.8 72.8 75.8 68.2V30.9H79.5L44 4.5Z" stroke="#E7C5A3" strokeWidth="4.2" strokeLinejoin="round" strokeLinecap="round" fill="none"/>
                 <path d="M44 7.2L11.8 31.6V67.6C11.8 71.2 15.8 74.6 21.4 74.6H66.6C72.2 74.6 76.2 71.2 76.2 67.6V31.6L44 7.2Z" fill="#FFFEFB"/>
-                <circle cx="30.5" cy="36" r="10.2" fill="#A9C4B5"/>
-                <path d="M18.2 68 C18.2 54.6 24.4 49.6 30.6 49.6 C36.8 49.6 43 54.6 43 68" fill="#A9C4B5"/>
-                <circle cx="55.5" cy="36" r="10.2" fill="#C97A48"/>
-                <path d="M43.2 68 C43.2 54.6 49.6 49.6 55.8 49.6 C62 49.6 68.2 54.6 68.2 68" fill="#C97A48"/>
-                <path d="M44 4.5L8.5 30.5V30.9L12.2 30.9V68.2C12.2 72.8 16 77 21.2 77H66.8C72 77 75.8 72.8 75.8 68.2V30.9H79.5L44 4.5Z" stroke="#E2B994" strokeWidth="4.2" strokeLinejoin="round" strokeLinecap="round" fill="none"/>
+                <circle cx="30.5" cy="36" r="10.2" fill="#A9C4B5"/><path d="M18.2 68 C18.2 54.6 24.4 49.6 30.6 49.6 C36.8 49.6 43 54.6 43 68" fill="#A9C4B5"/>
+                <circle cx="55.5" cy="36" r="10.2" fill="#C97A48"/><path d="M43.2 68 C43.2 54.6 49.6 49.6 55.8 49.6 C62 49.6 68.2 54.6 68.2 68" fill="#C97A48"/>
               </svg>
             </div>
-            <div className="font-display text-[48px] font-bold leading-[0.95] tracking-[-0.03em] text-[#151210] -mt-1" style={{fontFamily:"Fraunces, Georgia, serif"}}>Beirt</div>
-            <div className="mt-1.5 flex items-center gap-2 text-[10.5px] font-semibold tracking-[0.18em] uppercase">
-              <span className="text-[#8AA99B]">HOME</span>
-              <span className="h-[2.5px] w-[2.5px] rounded-full bg-[#8B7357]/60" />
-              <span className="text-[#C97A48]">PEOPLE</span>
-              <span className="h-[2.5px] w-[2.5px] rounded-full bg-[#8B7357]/60" />
-              <span className="text-[#151210]">TOGETHER</span>
+            <div className="text-[42px] font-bold leading-[0.92] tracking-[-0.03em] text-[#16120E]" style={{fontFamily:"Fraunces"}}>Beirt</div>
+            <div className="mt-1 flex items-center gap-2 text-[10px] font-semibold tracking-[0.18em] uppercase">
+              <span className="text-[#8AA99B]">HOME</span><span className="h-[2px] w-[2px] rounded-full bg-[#8B7357]/60" /><span className="text-[#C97A48]">PEOPLE</span><span className="h-[2px] w-[2px] rounded-full bg-[#8B7357]/60" /><span className="text-[#151210]">TOGETHER</span>
             </div>
           </div>
-
-          <h1 className="mt-7 font-display text-[32px] font-bold leading-[0.96] tracking-[-0.03em] text-[#161210] text-center" style={{fontFamily:"Fraunces, Georgia, serif"}}>
-            A home runs<br/>better together
-          </h1>
-          <p className="mt-3 max-w-[312px] text-[13px] leading-[1.55] text-[#6E5F55] text-center" style={{fontFamily:"Instrument Sans"}}>
-            Beirt is your private space for two.<br/>
-            Stay organised, share responsibilities,<br/>
-            and build a stronger home—together.
-          </p>
+          <h1 className="mt-6 text-[30px] font-bold leading-[0.96] tracking-[-0.03em] text-[#16120E] text-center" style={{fontFamily:"Fraunces"}}>A home runs<br/>better together</h1>
+          <p className="mt-2.5 max-w-[300px] text-[12.5px] leading-[1.5] text-[#6E5F55] text-center" style={{fontFamily:"Instrument Sans"}}>Beirt is your private space for two. Stay organised, share responsibilities, and build a stronger home—together.</p>
         </div>
 
-        {/* Hero image — exact file you sent, edge-to-edge, no fake shapes overlaying */}
-        <div className="relative w-full flex-1 min-h-[380px] overflow-hidden">
-          <img
-            src="./onboarding-photo.png"
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover object-center"
-            draggable={false}
-          />
-          {/* soft top fade so headline breathes into image */}
-          <div className="absolute inset-0 pointer-events-none" style={{background:"linear-gradient(180deg,#FEF7F0 0%, rgba(254,247,240,0) 18%)"}} />
-          {/* bottom fade into charcoal card */}
-          <div className="absolute inset-x-0 bottom-0 h-[28%] pointer-events-none" style={{background:"linear-gradient(0deg,#0F1012 0%, rgba(15,16,18,0) 100%)", opacity:0.22}} />
+        {/* Hero — tightly cropped to mugs/table, no huge cream gap, no white stripe */}
+        <div className="relative w-full flex-1 bg-[#FFFBF6] overflow-hidden">
+          <div className="absolute inset-0">
+            <img
+              src="./onboarding-photo.png"
+              alt=""
+              className="w-full h-full object-cover"
+              style={{ objectPosition:"50% 62%" }}
+              draggable={false}
+            />
+            {/* crop top cream, focus lower half */}
+          </div>
+          {/* bottom gradient into card */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[34%] bg-gradient-to-t from-[#0F1012]/28 to-transparent" />
         </div>
 
-        {/* Bottom sheet — charcoal, single */}
-        <div className="w-full px-[18px] pb-[max(18px,env(safe-area-inset-bottom))] pt-[14px] bg-[#FEF7F0] relative z-[3] shrink-0">
-          <div className="mx-auto w-full max-w-[384px] rounded-[26px] bg-[#101214] px-[18px] pt-[14px] pb-[18px] shadow-[0_22px_60px_rgba(0,0,0,0.42),0_2px_0_rgba(255,255,255,0.04)_inset] border border-white/[0.04]">
-            <button
-              onClick={()=> setStep("create_names")}
-              className="group relative w-full h-[54px] rounded-full bg-[#D07A41] text-white font-semibold text-[15.5px] tracking-[-0.01em] active:scale-[0.98] transition-transform flex items-center pr-[6px] pl-6 shadow-[0_4px_18px_rgba(208,122,65,0.28),inset_0_1px_0_rgba(255,255,255,0.3)]"
-            >
+        {/* Bottom sheet — overlaid, single, no white strip */}
+        <div className="relative z-[3] -mt-[86px] w-full px-[14px] pb-[max(14px,env(safe-area-inset-bottom))]">
+          <div className="mx-auto w-full max-w-[388px] rounded-[24px] bg-[#101214] px-[16px] pt-[12px] pb-[14px] border border-white/[0.05]" style={{boxShadow:"0 24px 64px rgba(0,0,0,0.42), 0 2px 0 rgba(255,255,255,0.05) inset"}}>
+            <button onClick={()=> setStep("create_names")} className="w-full h-[50px] rounded-full bg-[#E07A3F] text-white font-semibold text-[14.5px] flex items-center pl-6 pr-[6px] active:scale-[0.98]">
               <span className="flex-1 text-center">Create our space</span>
-              <span className="grid h-[40px] w-[40px] place-items-center rounded-full bg-[#0A0A0A] text-white shadow-[0_2px_8px_rgba(0,0,0,0.24)] group-active:scale-[0.96] transition-transform">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
-              </span>
+              <span className="grid h-[36px] w-[36px] place-items-center rounded-full bg-black text-white">→</span>
             </button>
-
-            <button
-              onClick={startJoin}
-              className="mt-3 w-full h-[52px] rounded-full border border-[#A8C5B5]/75 bg-transparent flex items-center px-[14px] gap-[14px] text-white active:scale-[0.98] transition"
-            >
-              <span className="grid h-[34px] w-[38px] place-items-center rounded-full border border-[#A8C5B5]/55 bg-white/[0.03]">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B9D3C2" strokeWidth="1.5"><rect x="3" y="4" width="9" height="16" rx="2"/><path d="M6 8h3M6 12h3M6 16h3M15 8h4M15 12h4M15 16h4" strokeLinecap="round"/></svg>
-              </span>
-              <span className="flex-1 text-left text-[14.5px] font-medium tracking-[-0.01em]">I have a code</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeOpacity="0.8" strokeWidth="1.6"><path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <button onClick={startJoin} className="mt-2.5 w-full h-[48px] rounded-full border border-[#A8C5B5]/70 flex items-center px-3 gap-3 text-white active:scale-[0.98]">
+              <span className="grid h-[32px] w-[34px] place-items-center rounded-full border border-[#A8C5B5]/40">☰</span>
+              <span className="flex-1 text-left text-[13.5px]">I have a code</span>
+              <span className="pr-2 opacity-70">›</span>
             </button>
-
-            <div className="mt-4 flex items-center gap-3 px-1">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <span className="grid h-[22px] w-[22px] place-items-center rounded-full bg-white/[0.06] border border-white/[0.06]">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#A8C5B5" strokeWidth="1.7"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
-                </span>
-                <span className="text-[11px] leading-[1.32] text-[#A9BFB3] tracking-[-0.01em]">
-                  Your data stays in your own household.<br/>Each code is private.
-                </span>
-              </div>
-              <div className="h-[28px] w-[1px] bg-white/[0.08] shrink-0" />
-              <span className="grid h-[24px] w-[24px] place-items-center rounded-full">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A8C5B5" strokeWidth="1.6"><path d="M12 3l7 3v5c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6l7-3z"/><path d="M9.5 12.5l2 2 4-4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </span>
-            </div>
           </div>
         </div>
       </div>

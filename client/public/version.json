@@ -1,8 +1,8 @@
 {
-  "build": "v193-onboard-warm-hero",
-  "builtAt": "2026-08-08T12:36:45Z",
-  "changelog": "onboarding: use exact warm table scene (mugs + plant + candle) as full-bleed hero, top fade + bottom fade, no fake clipped shapes, single charcoal bottom sheet \u2014 boutique match fridge/shop",
-  "code": 193,
+  "build": "v194-onboard-tight-crop",
+  "builtAt": "2026-08-08T12:39:39Z",
+  "changelog": "onboard: tight crop focus 62% lower image to show mugs/table fully, eliminate huge cream gap, no white stripe, -86mt overlap into image, shelf card single \u2014 matches fridge boutique, fixes not-good screenshot",
+  "code": 194,
   "mandatory": false,
-  "version": "193.0.0"
+  "version": "194.0.0"
 }

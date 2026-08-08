@@ -13,12 +13,12 @@ function hardPersistNote(note:any, op:'create'|'update'|'delete'){
     const sb=getSupabase(); const id=String(note?.id||''); if(!id) return;
     const payload={...note, household_id:hid, updated_at: note?.updatedAt||note?.updated_at||new Date().toISOString(), created_at: note?.createdAt||note?.created_at||new Date().toISOString()};
     if(op==='delete'){
-      (async()=>{ try{ if(sb) await (sb as any).from('notes').delete().eq('id',id).eq('household_id',hid);}catch{} })();
-      import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('note','delete', id, hid, {id, deleted_at:new Date().toISOString()}); }catch{} });
+      (async()=>{ try{ if(sb) await (sb as any).from('notes').delete().eq('id',id).eq('household_id',hid);}catch{} try{ const {getQueue,persistQueue}=await import("../../data/offlineQueue"); const q=await getQueue(); const nxt=q.filter((o:any)=>!(o.id===id && o.kind==='note')); if(nxt.length!==q.length) await persistQueue(nxt as any);}catch{} })();
+      import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('note','delete', id, hid, {id, deleted_at:new Date().toISOString()}); const {getQueue}=await import("../../data/offlineQueue"); const q=await getQueue(); if(q.length){ const {drainOps}=await import("../../data/offlineQueue"); const cli=sb; if(cli) try{ await drainOps(cli as any);}catch{}} }catch{} });
       return;
     }
-    (async()=>{ try{ if(sb){ const row:any={id, household_id:hid, data:payload, updated_at:payload.updated_at, created_at:payload.created_at}; if(payload.deletedAt||payload.deleted_at) row.deleted_at=payload.deletedAt||payload.deleted_at; await (sb as any).from('notes').upsert(row,{onConflict:'id'});} }catch{} })();
-    import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('note', op, id, hid, payload); const {drainOps}=await import("../../data/offlineQueue"); const cli=await import("../../lib/supabase").then(m=>m.getSupabase()); if(cli) try{ await drainOps(cli as any);}catch{} }catch{} });
+    (async()=>{ try{ if(sb){ const row:any={id, household_id:hid, data:payload, updated_at:payload.updated_at, created_at:payload.created_at}; if((payload as any).deletedAt||(payload as any).deleted_at) row.deleted_at=(payload as any).deletedAt||(payload as any).deleted_at; if((payload as any).archivedAt||(payload as any).archived_at) (row.data as any).archived_at=(payload as any).archivedAt||(payload as any).archived_at; await (sb as any).from('notes').upsert(row,{onConflict:'id'});} }catch{} })();
+    import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('note', op, id, hid, payload); const {getQueue}=await import("../../data/offlineQueue"); const q=await getQueue(); if(q.length){ const {drainOps}=await import("../../data/offlineQueue"); const cli=sb; if(cli) try{ await drainOps(cli as any);}catch{}} }catch{} });
   }catch{}
 }
 
@@ -221,8 +221,9 @@ function NotesMemoPage(props: any) {
             <div className="text-[11px] text-[#8B7E77]">{relTime(selected.createdAt, nowMs)}</div>
             <div className="flex gap-2">
               <button onClick={()=> { const nowISO=new Date().toISOString(); const upd=(selected as any).pinned_at || (selected as any).pinnedAt ? null : nowISO; const next={...selected, pinned_at: upd, pinnedAt: upd, updatedAt:nowISO, updatedBy:currentUser}; try{ hardPersistNote(next,'update'); }catch{}; setNotes((p:any)=> p.map((x:any)=> x.id===selected.id ? {...x, pinned_at: upd, pinnedAt: upd, updatedAt: nowISO } : x)); setSelected(null); }} className="flex-1 h-[42px] rounded-[12px] border bg-white text-[12px]">Pin</button>
-              <button onClick={()=> { const nowISO=new Date().toISOString(); const next={...selected, archived_at: nowISO, archivedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser}; try{ hardPersistNote(next,'update'); }catch{}; setNotes((p:any)=> p.map((x:any)=> x.id===selected.id ? {...x, archived_at: nowISO, archivedAt: nowISO, updatedAt: nowISO } : x)); setSelected(null); }} className="flex-1 h-[42px] rounded-[12px] border bg-white text-[12px] text-[#B91C1C]">Archive</button>
+              <button onClick={()=> { const nowISO=new Date().toISOString(); const next={...selected, archived_at: nowISO, archivedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser}; try{ hardPersistNote(next,'update'); }catch{}; setNotes((p:any)=> p.map((x:any)=> x.id===selected.id ? {...x, archived_at: nowISO, archivedAt: nowISO, updatedAt: nowISO } : x)); setSelected(null); }} className="flex-1 h-[42px] rounded-[12px] border bg-white text-[12px] text-[#7A706A]">Archive</button>
             </div>
+            <button onClick={()=> { const id=selected.id; try{ hardPersistNote({id},'delete'); }catch{}; setNotes((p:any)=> (Array.isArray(p)?p:[]).filter((x:any)=> x.id!==id)); setSelected(null); }} className="w-full h-[42px] rounded-[12px] border border-[#F0C9C9] bg-[#FFF3F3] text-[12px] text-[#B91C1C]">Delete permanently</button>
           </div>
         )}
       </BottomSheet>

@@ -1,8 +1,8 @@
 {
-  "build": "v197-notes-fix-dupe-and-arch",
-  "builtAt": "2026-08-08T12:52:15Z",
-  "changelog": "notes fix: remove dupe Notes header, lined paper behind not over, no pin emoji clipping, arches subtle behind (0.4 opacity no covering), tighten older rows",
-  "code": 197,
+  "build": "v198-notes-db-logic-hardened",
+  "builtAt": "2026-08-08T13:08:37Z",
+  "changelog": "notes DB: true-live upsert + queue pruning on delete, drainOps on all paths, explicit permanent delete button, archive moves to data.archived_at, matches shopping/chores true-live pattern",
+  "code": 198,
   "mandatory": false,
-  "version": "197.0.0"
+  "version": "198.0.0"
 }

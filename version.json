@@ -1,1 +1,8 @@
-{"build":"v180-onboarding-big-shapes-no-white","code":180,"version":"180.0.0","changelog":"onboarding use onboarding-photo.png full-width, big peach left + sage right shapes like iPhone ref, remove white gradient banner and flex gap","mandatory":false,"builtAt":"2026-08-08T00:29:00Z"}
+{
+  "build": "v184-calendar-boutique",
+  "code": 184,
+  "version": "184.0.0",
+  "changelog": "calendar pinned boutique card 164px crisp illustration 60% wash tangerine pill large 54px, grouping What\u2019s ahead + Today/Tomorrow/Later timeline + Pending 44px kind chip peach/sage/tan, fridge countdown 172px same card, dark polished, previous v183 shopping phrase fix",
+  "mandatory": false,
+  "builtAt": "2026-08-08T11:17:32Z"
+}

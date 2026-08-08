@@ -7,7 +7,48 @@ import { uid } from "../../shared/utils/helpers";
 import { expandTemplateForMonthDublin, getDublinHourMinuteFromIso, shouldSuppressGeneratedOccurrence } from "../../lib/recurrence";
 import { upsertCalendarSeries, upsertCalendarOverride } from "../../lib/normalized";
 import { AddEventForm } from "./EventEditor";
+import { inferKindFromTitle, EVENT_KINDS } from "../../lib/eventTypes";
 
+function PinnedCalendarCard({ ev, nowMs, onClear, onTap, tz }: { ev:any, nowMs:number, onClear:()=>void, onTap:()=>void, tz:string }){
+  const title = ev.title || "Pinned";
+  const iso = ev.start || ev.dueAt;
+  const kind = (ev.kind || ev.eventKind || inferKindFromTitle(title) || "sports") as string;
+  const kindDef = (EVENT_KINDS as any)[kind] || EVENT_KINDS.other;
+  const diffMs = iso ? new Date(iso).getTime() - nowMs : 0;
+  const daysLeft = Math.max(0, Math.ceil(diffMs/86400000));
+  const hoursLeft = Math.max(0, Math.floor(diffMs/3600000));
+  const minsLeft = Math.max(0, Math.floor((diffMs%3600000)/60000));
+  const dateKey = (()=>{ try{ return iso ? new Date(iso).toLocaleDateString("en-GB",{timeZone:tz, month:"short", day:"numeric"}) : "" }catch{return ""}})();
+  const isSports = kind==="sports" || /united/i.test(title);
+  return (
+    <button onClick={onTap} className="group w-full text-left rounded-[22px] border bg-[#FFFEFB] px-5 pt-4 pb-5 min-h-[172px] relative overflow-hidden shadow-[0_12px_30px_rgba(60,40,20,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] hover:shadow-[0_16px_40px_rgba(60,40,20,0.14)] transition text-left" style={{borderColor:"#EDE2D6"}}>
+      <div className="flex items-start justify-between relative z-[2]">
+        <span className="inline-flex h-[28px] items-center rounded-full bg-[#FCE3D8] px-3.5 text-[12px] font-[700] text-[#C06A32] tracking-[-0.01em] border border-[#F1CAB0] shadow-[0_1px_0_rgba(255,255,255,0.7)_inset]">{diffMs<=0 ? "today" : `${daysLeft}d left`}</span>
+        <span className="flex items-center gap-2">
+          <span className="h-[8px] w-[8px] rounded-full bg-[#F59E4B] shadow-[0_0_0_4px_rgba(245,158,75,0.18)]" />
+          <span onClick={(e)=>{ e.stopPropagation(); onClear(); }} className="h-[28px] w-[28px] grid place-items-center rounded-full bg-white border border-[#EDE2D6] text-[12px] hover:bg-[#FFF4EC]">✕</span>
+        </span>
+      </div>
+      <div className="mt-3 flex items-baseline gap-2 relative z-[2]">
+        <span className="text-[52px] font-[850] tracking-[-0.04em] text-[#12100E]" style={{fontFamily:'Fraunces, serif', lineHeight:0.9}}>{diffMs<=0 ? "0" : daysLeft}</span>
+        <span className="text-[12.5px] font-[600] text-[#7C756E] px-2 py-0.5 rounded-full bg-white border border-[#F0E5D8]">{diffMs<=0 ? "today" : daysLeft>1 ? `${daysLeft} days` : `${hoursLeft}h ${minsLeft}m`}</span>
+      </div>
+      <div className="mt-1 text-[14.5px] font-[700] text-[#191410] truncate pr-[116px] relative z-[2]" style={{fontFamily:'Fraunces, serif'}}>{title}</div>
+      <div className="mt-0.5 text-[12px] text-[#8E867F] pr-[116px] relative z-[2] flex items-center gap-1.5">
+        <span className="inline-flex h-[22px] items-center rounded-full px-2 text-[10.5px] font-[700] border" style={{background:kindDef.light.bg, color:kindDef.light.fg, borderColor:kindDef.light.bg}}>{kindDef.label}</span>
+        <span>{dateKey} {ev.location ? `• ${ev.location}` : ""}</span>
+      </div>
+      <div className="pointer-events-none absolute right-[-10px] bottom-[-10px] rotate-[-6deg]">
+        <div className="relative" style={{ width:164, height:164, filter:"drop-shadow(0 14px 20px rgba(100,60,20,0.10))" }}>
+          <div className="absolute inset-[12px] rounded-full" style={{ background:"radial-gradient(115% 90% at 32% 28%, #FFF8F0 0%, #FBE7CF 44%, #F7D9B6 78%)", opacity:0.78 }} />
+          <div className="relative w-full h-full grid place-items-center">
+            {isSports ? <svg width="128" height="128" viewBox="0 0 24 24" fill="none" stroke="#D9A88B" strokeWidth="0.95" opacity={0.54}><circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="2.2"/><path d="M12 3.4v2.8M20.6 12H17.8M12 20.6v-2.8M3.4 12h2.8M6.1 6.1l2 2M17.9 6.1l-2 2M17.9 17.9l-2-2M6.1 17.9l2-2"/></svg> : <svg width="112" height="112" viewBox="0 0 24 24" fill="none" stroke="#D9A88B" strokeWidth="1.05" opacity={0.48}><circle cx="12" cy="12" r="7.5"/><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="2.8" opacity={0.35}/></svg>}
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
 function BottomSheet({ open, onClose, title, children }: { open: boolean; onClose:()=>void; title?: any; children:any }){
   if(!open) return null;
   return (
@@ -474,21 +515,9 @@ function CalendarPageV2(props: any) {
 
   return (
     <div className="space-y-3">
-      {/* Minimal pinned countdown (kept, adapted) */}
+      {/* Boutique pinned countdown – matches Fridge, large crisp illustration */}
       {pinnedEvent && (
-        <div className="rounded-[14px] border bg-[var(--card-bg)] px-3 py-2 flex items-center justify-between" style={{borderColor:"var(--border)"}}>
-          <div className="min-w-0 flex items-center gap-2">
-            <span className="h-6 w-6 grid place-items-center rounded-full bg-[#0A0A0A] text-white"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8"><path d="M12 3v14"/><path d="M5 11l7-8 7 8"/><path d="M5 21h14"/></svg></span>
-            <div className="min-w-0">
-              <div className="text-[11px] font-medium truncate">{pinnedEvent.title}</div>
-              <div className="text-[11px] text-[var(--muted)] truncate">{toLocalKeyDublin(pinnedEvent.start||pinnedEvent.dueAt||"", tz)?.slice(5)} {(pinnedEvent as any).location ? " • "+(pinnedEvent as any).location : ""}</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {(()=>{ const cd=countdownFor(pinnedEvent.start||pinnedEvent.dueAt); return cd ? <span className="rounded-full bg-[#0A0A0A] text-white px-2.5 py-1 text-[11px] font-medium min-h-[28px] grid place-items-center">{cd.past ? "today" : cd.days>0 ? `${cd.days}d ${cd.hours}h` : `${cd.hours}h ${cd.mins}m`}</span> : null})()}
-            <button onClick={()=> togglePin(pinnedEvent)} className="h-[32px] w-[32px] grid place-items-center rounded-full border bg-[var(--card-bg)] text-[11px]" style={{borderColor:"var(--border)"}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-          </div>
-        </div>
+        <PinnedCalendarCard ev={pinnedEvent} nowMs={nowMs||Date.now()} tz={tz} onClear={()=> togglePin(pinnedEvent)} onTap={()=> setActiveEvent(pinnedEvent)} />
       )}
 
       {/* Header: ‹ August 2026 › Today — tappable month opens picker, no Europe/Dublin badge */}
@@ -655,74 +684,92 @@ function CalendarPageV2(props: any) {
           </div>
         </>
       ) : (
-        // --- AGENDA MODE ---
-        <div className="space-y-4">
-          {/* Counts row (inside Agenda, not top hero) */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-[12px] border bg-[var(--card-bg)] px-3 py-2.5" style={{borderColor:"var(--border)"}}>
-              <div className="text-[11px] uppercase tracking-wide text-[var(--muted)]">Scheduled • {scheduledAhead.length}</div>
-              <div className="mt-1 text-[11px] font-medium">{scheduledAhead.length===0 ? <span className="text-[var(--muted)] font-normal">No agreed dates ahead</span> : `${scheduledAhead[0].title} • ${toLocalKeyDublin(scheduledAhead[0].start||scheduledAhead[0].dueAt,"")?.slice(5)}`}</div>
+        // --- AGENDA MODE - boutique grouped ---
+        <div className="space-y-5">
+          {/* Single summary – replaces 2-col counts */}
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[16px] font-[700] tracking-tight" style={{fontFamily:'Fraunces, serif'}}>What’s ahead</span>
+            <div className="flex items-center gap-1.5">
+              <span className="inline-flex h-[24px] items-center rounded-full px-2.5 text-[10.5px] font-[700] border bg-[#FEF1E2] text-[#A06A44] border-[#F4E1C9]">{scheduledAhead.length} ready</span>
+              <span className="inline-flex h-[24px] items-center rounded-full px-2.5 text-[10.5px] font-[700] border bg-[#E8F1E8] text-[#5A7A64] border-[#CBE0CC]">{proposedAhead.length} needs you</span>
             </div>
-            <div className="rounded-[12px] border bg-[var(--chip-bg)] px-3 py-2.5" style={{borderColor:"var(--border)"}}>
-              <div className="text-[11px] uppercase tracking-wide text-[var(--muted)]">Proposed • {proposedAhead.length}</div>
-              <div className="mt-1 text-[11px]">{proposedAhead.length===0 ? <span className="text-[var(--muted)]">Nothing waiting</span> : <span className="truncate">{proposedAhead[0].title} • needs you</span>}</div>
+          </div>
+
+          <div className="rounded-[18px] border bg-[var(--card-bg)] px-3 py-3 flex items-center justify-between" style={{borderColor:"var(--border)"}}>
+            <div className="flex items-center gap-2">
+              <span className="grid h-[32px] w-[32px] place-items-center rounded-full border" style={{background:"#F9DCC0", borderColor:"#E8C5A6"}}>✦</span>
+              <div>
+                <div className="text-[12px] font-[650]">Today is {todayKeyStr.slice(5)}</div>
+                <div className="text-[11px] text-[var(--muted)]">{todayEvents.length ? `${todayEvents.length} plans` : "Clear – want to add something?"}</div>
+              </div>
             </div>
+            <button onClick={()=> setShowAdd(true)} className="h-[36px] px-3.5 rounded-full bg-[#121214] text-white text-[11px] font-medium">+ Add</button>
           </div>
 
           {/* Today */}
-          <div>
-            <div className="px-1 flex items-center justify-between mb-1">
-              <span className="font-display text-[13px]">Today • {todayKeyStr.slice(5)}</span>
-              <span className="text-[11px] rounded-full bg-[#0A0A0A] text-white px-2 py-0.5">{todayEvents.length}</span>
+          <div className="space-y-1.5">
+            <div className="px-1 flex items-center justify-between">
+              <span className="font-display text-[13px] flex items-center gap-2"><span className="h-[6px] w-[6px] rounded-full bg-[#FF6B26]" />Today • {todayKeyStr.slice(5)}</span>
+              <span className="text-[11px] rounded-full bg-[#121214] text-white px-2 py-0.5 min-w-[22px] text-center">{todayEvents.length}</span>
             </div>
             <div className="space-y-1.5">
-              {todayEvents.length===0 ? <div className="text-[11px] text-[var(--muted)] px-1">No plans today</div> : todayEvents.map(ev=> <AgendaRow key={ev.id} ev={ev} dateKey={todayKeyStr} />)}
+              {todayEvents.length===0 ? <div className="rounded-[14px] border border-dashed bg-[var(--card-bg)] px-4 py-4 text-center text-[11px] text-[var(--muted)]">No plans today – enjoy the breather</div> : todayEvents.map(ev=> <AgendaRow key={ev.id} ev={ev} dateKey={todayKeyStr} />)}
             </div>
           </div>
 
-          <div>
-            <div className="px-1 flex items-center justify-between mb-1"><span className="font-display text-[13px]">Tomorrow • {tomorrowKeyStr.slice(5)}</span><span className="text-[11px] text-[var(--muted)] border rounded-full px-2 py-0.5">{tomorrowEvents.length}</span></div>
+          <div className="space-y-1.5">
+            <div className="px-1 flex items-center justify-between"><span className="font-display text-[13px] flex items-center gap-2"><span className="h-[6px] w-[6px] rounded-full bg-[#A89FDA]" />Tomorrow • {tomorrowKeyStr.slice(5)}</span><span className="text-[11px] text-[var(--muted)] border rounded-full px-2 py-0.5">{tomorrowEvents.length}</span></div>
             <div className="space-y-1.5">
-              {tomorrowEvents.length===0 ? <div className="text-[11px] text-[var(--muted)] px-1">Free</div> : tomorrowEvents.map(ev=> <AgendaRow key={ev.id} ev={ev} dateKey={tomorrowKeyStr} />)}
+              {tomorrowEvents.length===0 ? <div className="text-[11px] text-[var(--muted)] px-1 py-1">Free – nothing queued</div> : tomorrowEvents.map(ev=> <AgendaRow key={ev.id} ev={ev} dateKey={tomorrowKeyStr} />)}
             </div>
           </div>
 
-          <div>
-            <div className="px-1 mb-1"><span className="font-display text-[13px]">Later this week</span><span className="ml-2 text-[11px] text-[var(--muted)]">{laterEventsFlat.length} upcoming</span></div>
+          <div className="space-y-1.5">
+            <div className="px-1"><span className="font-display text-[13px] flex items-center gap-2"><span className="h-[6px] w-[6px] rounded-full bg-[#8B7357]" />Later this week</span><span className="ml-3 text-[11px] text-[var(--muted)]">{laterEventsFlat.length} upcoming</span></div>
             <div className="space-y-1.5">
-              {laterEventsFlat.length===0 ? <div className="text-[11px] text-[var(--muted)] px-1">Nothing else this week</div> : laterEventsFlat.slice(0,10).map(({key,ev})=> <AgendaRow key={ev.id+"-"+key} ev={ev} dateKey={key} />)}
+              {laterEventsFlat.length===0 ? <div className="text-[11px] text-[var(--muted)] px-1">Nothing else this week</div> : laterEventsFlat.slice(0,8).map(({key,ev})=> <AgendaRow key={ev.id+"-"+key} ev={ev} dateKey={key} />)}
+              {laterEventsFlat.length>8 && <div className="px-1 text-[11px] text-[var(--muted)]">+{laterEventsFlat.length-8} more in {viewMonth.toLocaleDateString("en-GB",{month:"long"})} </div>}
             </div>
           </div>
 
-          {/* Pending decisions */}
-          <div className="rounded-[14px] border bg-[var(--card-bg)] p-2.5" style={{borderColor:"var(--border)"}}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] uppercase tracking-wide text-[var(--muted)]">Pending decisions • {proposedAhead.length}</span>
-              <button onClick={()=> setShowHistory(v=>!v)} className="text-[11px] underline text-[var(--muted)]">{showHistory ? "Hide history" : "History"}</button>
+          {/* Pending – boutique list with 44px kind chip */}
+          <div className="rounded-[18px] border bg-[#FFFEFB] p-3 shadow-[0_4px_14px_rgba(0,0,0,0.04)]" style={{borderColor:"#EDE2D6"}}>
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-[12px] font-[700] uppercase tracking-[0.08em] text-[#6B5A4E] flex items-center gap-1.5"><span className="h-[5px] w-[5px] rounded-full bg-[#FF6B26]" />Pending decisions • {proposedAhead.length}</span>
+              <button onClick={()=> setShowHistory(v=>!v)} className="text-[11px] rounded-full border bg-white px-2.5 py-1 hover:bg-[#FFF4EC]" style={{borderColor:"#EDE2D6"}}>{showHistory ? "Hide" : "History"}</button>
             </div>
             {proposedAhead.length===0 ? (
-              <div className="text-[11px] text-[var(--muted)]">Nothing waiting</div>
+              <div className="rounded-[12px] bg-[#FAF5EF] px-3 py-4 text-center text-[11px] text-[#8A7E74]">All caught up – nothing waiting</div>
             ) : (
-              <div className="space-y-1.5 max-h-[240px] overflow-auto no-scrollbar">
-                {proposedAhead.slice(0,8).map(ev=> (
-                  <button key={ev.id} onClick={()=> setActiveEvent(ev)} className="w-full text-left flex items-center justify-between gap-2 rounded-[10px] bg-[var(--chip-bg)] px-3 py-2 min-h-[44px]">
-                    <span className="text-[11px] truncate font-medium">{ev.title}</span>
-                    <span className="text-[11px] rounded-full bg-[#0A0A0A] text-white px-1.5 py-0.5 shrink-0">{(ev.status||"").startsWith("awaiting")? "needs you" : "proposed"}</span>
-                  </button>
-                ))}
+              <div className="space-y-2 max-h-[320px] overflow-auto no-scrollbar pr-0.5">
+                {proposedAhead.slice(0,8).map(ev=> {
+                  const kind = (ev as any).kind || (ev as any).eventKind || inferKindFromTitle(ev.title||"") || "other";
+                  const kdef = (EVENT_KINDS as any)[kind] || EVENT_KINDS.other;
+                  return (
+                    <button key={ev.id} onClick={()=> setActiveEvent(ev)} className="w-full text-left flex items-center gap-3 rounded-[14px] border bg-white px-2.5 py-2.5 hover:bg-[#FFFEFB] transition min-h-[54px] group" style={{borderColor:"#F0E5D9"}}>
+                      <span className="h-[44px] w-[44px] grid place-items-center rounded-full border shrink-0 text-[12px] font-[700]" style={{background:kdef.light.bg, borderColor:kdef.light.bg, color:kdef.light.fg}}>{kdef.label.slice(0,1)}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[12.5px] font-[600] truncate group-hover:text-[#12100E]" style={{fontFamily:'Fraunces, serif'}}>{ev.title}</span>
+                        <span className="block text-[11px] text-[#8E867F] truncate">{toLocalKeyDublin(ev.start||ev.dueAt,"")?.slice(5)} • {(ev as any).location || kdef.label}</span>
+                      </span>
+                      <span className="shrink-0 flex items-center gap-1.5"><span className="h-[6px] w-[6px] rounded-full bg-[#FF6B26] animate-pulse"/><span className="text-[10.5px] rounded-full bg-[#121214] text-white px-2 py-1 font-medium">{(ev.status||"").startsWith("awaiting")? "needs you" : "new"}</span></span>
+                    </button>
+                  );
+                })}
               </div>
             )}
             {showHistory && (
-              <div className="mt-2 pt-2 border-t" style={{borderColor:"var(--border)"}}>
-                <div className="text-[11px] text-[var(--muted)] mb-1">Declined / Cancelled (history)</div>
+              <div className="mt-3 pt-3 border-t" style={{borderColor:"#F0E5D9"}}>
+                <div className="text-[11px] font-medium text-[#8A7E74] mb-1.5">History – declined / cancelled</div>
                 <div className="flex flex-wrap gap-1.5">
-                  {(events as any[]).filter(ev=> !ev.deletedAt && ["declined","cancelled"].includes(ev.status)).slice(0,8).map(ev=> <span key={ev.id} className="rounded-full border bg-[var(--card-bg)] px-2.5 py-1 text-[11px] line-through" style={{borderColor:"var(--border)"}}>{ev.title}</span>)}
+                  {(events as any[]).filter(ev=> !ev.deletedAt && ["declined","cancelled"].includes(ev.status)).slice(0,10).map(ev=> <span key={ev.id} className="rounded-full border bg-white px-2.5 py-1 text-[11px] line-through opacity-70" style={{borderColor:"#EDE2D6"}}>{ev.title}</span>)}
+                  {(events as any[]).filter(ev=> !ev.deletedAt && ["declined","cancelled"].includes(ev.status)).length===0 && <span className="text-[11px] text-[#9E968E]">No history yet</span>}
                 </div>
               </div>
             )}
           </div>
 
-          <button onClick={()=> setShowAdd(true)} className="w-full h-[44px] rounded-full bg-[#0A0A0A] text-white text-[12px] font-medium">+ Add event</button>
+          <button onClick={()=> setShowAdd(true)} className="w-full h-[48px] rounded-full bg-[#121214] text-white text-[13px] font-[600] shadow-[0_8px_20px_rgba(0,0,0,0.16)] hover:shadow-[0_10px_24px_rgba(0,0,0,0.20)] transition">+ Add event • Dublin</button>
         </div>
       )}
 

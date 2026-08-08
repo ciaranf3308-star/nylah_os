@@ -1,1 +1,8 @@
-{"build":"v181-save-fix","builtAt":"2026-08-08T01:05:00Z","changelog":"fix save persists - normalized tables use data jsonb column not title/start, safeUpsert fallback insert/update (no unique constraint on id), unwrap data blob, legacy+normalized merge for ash-ciaran-2026, queue self-heal no longer wipes camelCase payload, calendar hero mugs + onboarding big shapes retained","code":181,"mandatory":false,"version":"181.0.0"}
+{
+  "build": "v184-calendar-boutique",
+  "builtAt": "2026-08-08T11:17:32Z",
+  "changelog": "calendar pinned boutique card 164px crisp illustration 60% wash tangerine pill large 54px, grouping What\u2019s ahead + Today/Tomorrow/Later timeline + Pending 44px kind chip peach/sage/tan, fridge countdown 172px same card, dark polished, previous v183 shopping phrase fix",
+  "code": 184,
+  "mandatory": false,
+  "version": "184.0.0"
+}

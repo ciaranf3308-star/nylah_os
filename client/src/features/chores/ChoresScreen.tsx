@@ -158,7 +158,8 @@ export default function ChoresScreen(props: any) {
   },[]);
   const deck = useMemo(()=> active.filter(c=> c.status==="deck"), [active]);
   const mine = useMemo(()=> active.filter(c=> c.assignedTo===currentUser && c.status!=="done"), [active, currentUser]);
-  const open = useMemo(()=> active.filter(c=> c.status==="open" || c.status==="race" || (c.status==="assigned" && c.assignedTo!==currentUser)), [active, currentUser]);
+  // V212 clarity: duel tab is ONLY when both claim (open/race). Partner's solo claims stay in their Mine only — no longer confusingly in your Open.
+  const open = useMemo(()=> active.filter(c=> c.status==="open" || c.status==="race"), [active]);
   const done = useMemo(()=> active.filter(c=> c.status==="done"), [active]);
   const listForFilter = useMemo(()=>{
     let base: ChoreV2[] = [];
@@ -336,7 +337,8 @@ export default function ChoresScreen(props: any) {
         setToast("RACE • first to do wins 1.15× bonus — duel!");
       } else {
         setLastSwipeToast({dir:"right", title: currentCard.title});
-        setToast(`${PERSONS[me].name} claimed ${currentCard.title} • ${currentCard.basePoints} pts — undo?`);
+        // V212 clarity: explain where it went — partner won't see it unless race
+        setToast(`${PERSONS[me].name} got ${currentCard.title} • ${currentCard.basePoints} pts in Mine — partner won't see it`);
       }
       setChores((prev:any)=> prev.map((x:any)=> x.id===currentCard.id ? {...x, swipes: nextSwipes, status: nextStatus, assignedTo: assigned, updatedAt: nowISO, updatedBy: me, seen: true} : x));
       try{ hardPersistChore({...currentCard, swipes:nextSwipes, status:nextStatus, assignedTo:assigned, updatedAt:nowISO, updatedBy:me, seen:true},'update'); }catch{}
@@ -464,7 +466,7 @@ export default function ChoresScreen(props: any) {
         <div className="inline-flex rounded-full border p-1 gap-1" style={{borderColor:"var(--border)", background:"linear-gradient(180deg,var(--wash-mid) 0%,var(--card-bg) 100%)", boxShadow:"0 8px 24px rgba(0,0,0,0.06)"}}>
           {(["deck","mine","open","done","admin"] as const).map(t=> (
             <button key={t} onClick={()=> setTab(t)} className={"h-[44px] rounded-full px-4 text-[11px] font-semibold capitalize transition flex items-center gap-1 min-w-[52px] "+(tab===t?"bg-[#0A0A0A] text-white shadow-sm":"text-[var(--text-secondary)] hover:bg-[var(--card-bg)]")} style={{ minHeight:44, transition:"transform 180ms cubic-bezier(0.34,1.56,0.64,1)"}}>
-              {t==="admin" ? <span className="flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 01-2.8 2.8l-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5V21a2 2 0 01-4 0v-.2a1.6 1.6 0 00-1-1.5 1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 01-2.8-2.8l.1-.1a1.6 1.6 0 00.3-1.8 1.6 1.6 0 00-1.5-1H3a2 2 0 010-4h.2a1.6 1.6 0 001.5-1 1.6 1.6 0 00-.3-1.8l-.1-.1a2 2 0 012.8-2.8l.1.1a1.6 1.6 0 001.8.3h.1a1.6 1.6 0 001-1.5V3a2 2 0 014 0v.2a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1a2 2 0 012.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8v.1a1.6 1.6 0 001.5 1H21a2 2 0 010 4h-.2a1.6 1.6 0 00-1.5 1z"/></svg> Admin</span> : <span>{t} {t==="deck"?"•"+deckCount:t==="mine"? "•"+mine.length:t==="open"? "•"+open.length:""}</span>}
+              {t==="admin" ? <span className="flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 01-2.8 2.8l-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5V21a2 2 0 01-4 0v-.2a1.6 1.6 0 00-1-1.5 1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 01-2.8-2.8l.1-.1a1.6 1.6 0 00.3-1.8 1.6 1.6 0 00-1.5-1H3a2 2 0 010-4h.2a1.6 1.6 0 001.5-1 1.6 1.6 0 00-.3-1.8l-.1-.1a2 2 0 012.8-2.8l.1.1a1.6 1.6 0 001.8.3h.1a1.6 1.6 0 001-1.5V3a2 2 0 014 0v.2a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1a2 2 0 012.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8v.1a1.6 1.6 0 001.5 1H21a2 2 0 010 4h-.2a1.6 1.6 0 00-1.5 1z"/></svg> Admin</span> : <span>{t==="open"? "duel" : t} {t==="deck"?"•"+deckCount:t==="mine"? "•"+mine.length:t==="open"? "•"+open.length:""}</span>}
             </button>
           ))}
         </div>
@@ -601,10 +603,10 @@ export default function ChoresScreen(props: any) {
             <div>Every chore lives in the Deck. You both swipe through the same deck. Right = you claim it, Left = you pass it on.</div>
           </div>
           <div className="space-y-2 text-[12px]">
-            <div className="flex gap-2"><span className="h-6 w-6 grid place-items-center rounded-full bg-[#0A0A0A] text-white text-[10px] shrink-0">R</span><span><b>Swipe Right = I'll do it</b> — moves to your Mine. You own it. If you finish it, you get the points.</span></div>
-            <div className="flex gap-2"><span className="h-6 w-6 grid place-items-center rounded-full bg-[var(--card-bg)] border text-[10px] shrink-0">L</span><span><b>Swipe Left = Pass</b> — you don't want it, rotates to your partner. If you both pass, it goes back to deck (24h snooze).</span></div>
-            <div className="flex gap-2"><span className="h-6 w-6 grid place-items-center rounded-full bg-[var(--card-bg)] border-[#FCA5A5] border text-[10px] shrink-0">⚡</span><span><b>Both right = Race</b> — you both claimed it → it becomes Open + 1.15× bonus (15% extra). First to complete wins the boosted points.</span></div>
-            <div className="flex gap-2"><span className="h-6 w-6 grid place-items-center rounded-full bg-[var(--wash-mid)] text-[10px] shrink-0">↔</span><span><b>Steal / Swap</b> — Mine items stuck &gt;3h or overdue can be stolen by partner. Anyone can swap owner.</span></div>
+            <div className="flex gap-2"><span className="h-6 w-6 grid place-items-center rounded-full bg-[#0A0A0A] text-white text-[10px] shrink-0">R</span><span><b>Swipe Right = I'll do it</b> — moves to your Mine only. Partner won't see it anymore. You score when you finish.</span></div>
+            <div className="flex gap-2"><span className="h-6 w-6 grid place-items-center rounded-full bg-[var(--card-bg)] border text-[10px] shrink-0">L</span><span><b>Swipe Left = Pass</b> — goes to bottom of deck, you won't see it for 24h. If you both pass, it snoozes.</span></div>
+            <div className="flex gap-2"><span className="h-6 w-6 grid place-items-center rounded-full bg-[var(--card-bg)] border-[#FCA5A5] border text-[10px] shrink-0">⚡</span><span><b>Both right = Duel</b> — rare — both want same chore → it goes to Duel tab with 1.15× bonus. First to complete wins boosted points.</span></div>
+            <div className="flex gap-2"><span className="h-6 w-6 grid place-items-center rounded-full bg-[var(--wash-mid)] text-[10px] shrink-0">↔</span><span><b>Steal / Swap</b> — Duel tasks can be claimed first. Mine tasks are yours only.</span></div>
           </div>
           <div className="rounded-[16px] border bg-[var(--card-bg)] p-3 text-[12px] space-y-1.5" style={{borderColor:"var(--border)"}}>
             <div className="font-semibold text-[13px]">Points = pain × 10</div>

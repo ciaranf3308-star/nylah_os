@@ -1,8 +1,1 @@
-{
-  "build": "v209-boutique-svg-20pass",
-  "builtAt": "2026-08-08T15:10:00Z",
-  "changelog": "20-pass SVG polish: hand-drawn watercolor beds 10-14%, boutique sparkles/scallops/wax seals, sports 7 variants (golf green+flag, kettlebell, trail dust, hurl grain, rugby stitch, crest, whistle laurel generic NOT soccer), date love-letter wax, travel vintage tag, music vinyl sleeve, all cut 25% grain, Fraunces label, watermark 118-120 crisp breakout",
-  "code": 209,
-  "mandatory": false,
-  "version": "209.0.0"
-}
+{"build":"v211-game-arena","builtAt":"2026-08-08T16:48:00Z","changelog":"V211 game arena: deck arena stack depth x2, velocity runway, double-tap insta-claim, keys ←/→, z undo, combo flame HUD, undo 8 deep toast, coach tutorial 10s, empty 🎉 celebration, mine quest-log urgency bars, championship compact duel HUD live dot cap rail collapsible seasons, juicier haptics + WebAudio gain ramp — way more fun & user-focused","code":211,"mandatory":false,"version":"211.0.0"}

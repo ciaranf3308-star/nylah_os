@@ -1,8 +1,8 @@
 {
-  "build": "v210-boutique-svg-soccer",
-  "builtAt": "2026-08-08T15:55:00Z",
-  "changelog": "V210 boutique: soccer ball proper for football (hand-stitched boutique ball, seams, highlight), chores + calendar picker SVGs curated 1by1 boutique (washes 8-12%, 1.45px optical, scallops/seed pearls, double paper edge, 25% grain cut) — disgrace fixed, generic sports stays whistle+laurel distinct",
-  "code": 210,
+  "build": "v212-game-clarity",
+  "builtAt": "2026-08-08T18:30:00Z",
+  "changelog": "V212 game clarity: fix Ash claim → your Open confusion — solo claims now Mine-only, partner never sees it; Open renamed Duel (only both-right race 1.15×); clearer toasts and rules, no steal spam — makes game understandable",
+  "code": 212,
   "mandatory": false,
-  "version": "210.0.0"
+  "version": "212.0.0"
 }

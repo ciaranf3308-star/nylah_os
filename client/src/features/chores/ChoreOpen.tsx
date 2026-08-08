@@ -62,9 +62,9 @@ export function ChoreOpen({ list, nowMs, currentUser, onDetail, onComplete, onDe
   if (list.length===0) {
     return (
       <div className="rounded-[28px] border border-dashed bg-[var(--card-bg)] px-6 py-10 text-center" style={{borderColor:"var(--border)"}}>
-        <div className="font-display text-[16px]" style={{fontFamily:"Fraunces"}}>No open chores</div>
-        <div className="text-[12px] text-[var(--muted)] mt-1">All caught up • deck is clear</div>
-        <div className="mt-3 text-[11px] text-[var(--muted)]">Race 1.15× when both claim • Planner shows what to do when</div>
+        <div className="font-display text-[16px]" style={{fontFamily:"Fraunces"}}>No duels</div>
+        <div className="text-[12px] text-[var(--muted)] mt-1">When you both claim the same chore, it lands here for 1.15× bonus — first to finish wins</div>
+        <div className="mt-3 text-[11px] text-[var(--muted)]">Solo claims go to your own Mine only, they don't clutter your partner's list</div>
       </div>
     );
   }

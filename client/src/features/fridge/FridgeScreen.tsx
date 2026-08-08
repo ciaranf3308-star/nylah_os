@@ -145,9 +145,14 @@ function FridgePage(props: FridgeProps | any) {
 
   const hasToday = todayCalsForHasToday.length > 0 || todayChoresMineForHasToday.length > 0 || !!shoppingSummaryForHasToday;
 
+  // v227 second path — friends vs couple wording but same PEOPLE engine
+  const connectionType = (()=>{ try{ const ct = localStorage.getItem("couple_v1_connection_type") || localStorage.getItem(`couple_v1_household_connection_${(localStorage.getItem("couple_v1_household_id")||"")}`); if(ct==="friends") return "friends"; if(ct==="couple") return "couple"; const d=document.documentElement.getAttribute("data-connection"); return d==="friends"?"friends":"couple"; }catch{return "couple";}})() as "couple"|"friends";
+  const isFriends = connectionType==="friends";
   // boutique pastel hero – matches reference left
   const currentName = (PERSONS as any)[currentUser]?.name || currentUser || "You";
   const partnerName = (PERSONS as any)[partner]?.name || partner;
+  const withLabel = isFriends ? "with" : "with"; // both use "with" but friend track uses softer copy elsewhere
+  const partnerOrFlat = isFriends ? "flatmate" : "partner";
 
   return (
     <div className="w-full space-y-5">

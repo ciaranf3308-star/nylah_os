@@ -1,5 +1,6 @@
-// Robust scalable onboarding — no hard-coded household, no Aisling/Ciaran, server-side PINs only
-// Full data security via Supabase: households registry, invites, pins hashed pgcrypto, couple_data RLS nylah-%
+// Scalable onboarding v227 — supports couple + friends/roommates second path
+// No hard-coded household, no Aisling/Ciaran copy, server PINs only, boutique flow
+// Dean fork pattern re-implemented clean (no code copy): connectionType couple|friends → LS + html data-connection + meta
 
 import { useEffect, useState } from "react";
 import { getSupabase, TABLE as SB_TABLE } from "../../lib/supabase";
@@ -13,10 +14,12 @@ function generateInviteCode(): string {
   return code;
 }
 
+type ConnectionType = "couple" | "friends";
 type OnboardingProps = { onComplete: (hid:string)=>void };
 
 export function OnboardingFlow({ onComplete }: OnboardingProps) {
-  const [step, setStep] = useState<"welcome"|"create_names"|"create_email"|"create_pins"|"creating"|"share"|"join_code"|"join_pick"|"join_pin"|"joining"|"recover_email">("welcome");
+  const [step, setStep] = useState<"welcome"|"connection"|"create_names"|"create_email"|"create_pins"|"creating"|"share"|"join_code"|"join_pick"|"join_pin"|"joining"|"recover_email">("welcome");
+  const [connectionType, setConnectionType] = useState<ConnectionType>("couple");
   const [youName, setYouName] = useState("");
   const [partnerName, setPartnerName] = useState("");
   const [youPin, setYouPin] = useState("");
@@ -43,8 +46,16 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
         setJoinCode(clean);
         setStep(s => s==="welcome" ? "join_code" : s);
       }
+      // hydrate connection if already picked this session
+      const ct = localStorage.getItem("couple_v1_connection_type") as ConnectionType|null;
+      if (ct === "couple" || ct === "friends") setConnectionType(ct);
     } catch {}
   }, []);
+
+  // keep html attr in sync — lets CSS theme per connection if we want
+  useEffect(()=>{
+    try { document.documentElement.setAttribute("data-connection", connectionType); localStorage.setItem("couple_v1_connection_type", connectionType); } catch {}
+  }, [connectionType]);
 
   const canContinueNames = youName.trim().length>=1 && partnerName.trim().length>=1;
   const isValidEmail = (s:string)=> /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
@@ -62,7 +73,6 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
         if (hid==='ash-ciaran-2026') {
           return [{key:"aisling",name:a,initial:a.slice(0,1).toUpperCase()},{key:"ciaran",name:b,initial:b.slice(0,1).toUpperCase()}];
         }
-        // detect legacy pins: if hid is ash-ciaran keep legacy keys else person_1/2
         const keys = hid==='ash-ciaran-2026' ? ["aisling","ciaran"] : ["person_1","person_2"];
         return [
           {key:keys[0],name:a,initial:a.slice(0,1).toUpperCase()},
@@ -70,7 +80,6 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
         ];
       }
     }
-    // fix legacy key mapping: if hid is ash-ciaran but keys are person_1/2, map back
     if (hid==='ash-ciaran-2026') {
       return persons.map((p:any,i:number)=>{
         const realKey = i===0?"aisling":"ciaran";
@@ -105,48 +114,49 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
         { key:"person_1", name: youName.trim(), initial: youName.trim().slice(0,1).toUpperCase() },
         { key:"person_2", name: partnerName.trim(), initial: partnerName.trim().slice(0,1).toUpperCase() },
       ];
-      // Local optimistic store — never stores PINs plain, only household metadata
       try {
         localStorage.setItem("couple_v1_household_id", hid);
         localStorage.setItem("couple_v1_household_code", code);
         localStorage.setItem("couple_v1_household_name", `${youName.trim()} & ${partnerName.trim()}`);
         localStorage.setItem(`couple_v1_household_persons_${hid}`, JSON.stringify(persons));
         localStorage.setItem(`couple_v1_household_persons`, JSON.stringify(persons));
+        localStorage.setItem("couple_v1_connection_type", connectionType);
+        localStorage.setItem(`couple_v1_household_connection_${hid}`, connectionType);
+        document.documentElement.setAttribute("data-connection", connectionType);
         try { localStorage.removeItem(`couple_v1_household_pins_${hid}`); localStorage.removeItem(`couple_v1_household_pins_plain_${hid}`);} catch {}
         try { localStorage.setItem("couple_v1_onboarded_at", new Date().toISOString()); } catch {}
       } catch {}
 
       const sb = getSupabase();
       if (sb) {
-        // Create household registry + invite — server-side via RPC (security definer, bypasses RLS)
         let rpcOk = false;
         try {
           const { error } = await (sb as any).rpc("create_household_with_invite", { hid, code, name: `${youName.trim()} & ${partnerName.trim()}` });
           if (!error) rpcOk = true;
         } catch {}
         if (!rpcOk) {
-          try { await sb.from("households").upsert({ id: hid, code, name: `${youName.trim()} & ${partnerName.trim()}`, tz: "Europe/Dublin", meta: { persons } }, { onConflict: "id" } as any); } catch {}
+          try { await sb.from("households").upsert({ id: hid, code, name: `${youName.trim()} & ${partnerName.trim()}`, tz: "Europe/Dublin", meta: { persons, connectionType } } as any, { onConflict: "id" } as any); } catch {}
           try { await sb.from("household_invites").upsert({ code, household_id: hid } as any, { onConflict: "code" } as any); } catch {}
+        } else {
+          // best-effort patch meta with connectionType
+          try { await (sb as any).from("households").update({ meta: { persons, connectionType } } as any).eq("id", hid); } catch {}
         }
-        // recovery email — one per household, private, no anon read
         try {
           const emailClean = recoveryEmail.trim().toLowerCase();
           if (emailClean) {
             try { await (sb as any).rpc("set_household_recovery_email", { hid, email: emailClean }); } catch {}
-            // fallback direct update if RPC not yet deployed (service_role still allows)
             try { await (sb as any).from("households").update({ recovery_email: emailClean } as any).eq("id", hid); } catch {}
           }
         } catch {}
-        // PINs — server-only hashed via pgcrypto, never readable by client
         try { await (sb as any).rpc("upsert_household_pin", { hid, pin: youPin, person_key: "person_1" }); } catch(e:any){ console.warn("[onboard] pin1 err", e?.message); }
         try { await (sb as any).rpc("upsert_household_pin", { hid, pin: partnerPin, person_key: "person_2" }); } catch(e:any){ console.warn("[onboard] pin2 err", e?.message); }
 
-        // Seed empty couple_data row so remoteLoad has something (back-compat)
         const meta = {
           householdName: `${youName.trim()} & ${partnerName.trim()}`,
           householdId: hid,
           inviteCode: code,
           persons,
+          connectionType,
           recoveryEmail: recoveryEmail.trim().toLowerCase(),
           createdAt: new Date().toISOString(),
           onboardedAt: new Date().toISOString(),
@@ -158,7 +168,6 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
           if (insErr) console.warn("[onboard] supabase seed error", insErr.message);
         } catch {}
 
-        // Verify pins were stored — if RPC failed due to missing pgcrypto, warn but continue (local onboarding still works)
         try {
           const { data: v1 } = await (sb as any).rpc("verify_household_pin", { hid, pin: youPin });
           const { data: v2 } = await (sb as any).rpc("verify_household_pin", { hid, pin: partnerPin });
@@ -180,7 +189,8 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
   };
   const doShare = async () => {
     const url = `${location.origin}${location.pathname}?code=${inviteCode}`;
-    const text = `Join our Beirt — our private space for two. Code: ${inviteCode} — ${url}`;
+    const label = connectionType==="friends" ? "flat" : "space";
+    const text = `Join our Beirt ${label} — code: ${inviteCode} — ${url}`;
     try {
       if ((navigator as any).share) await (navigator as any).share({ title: "Join us on Beirt", text, url });
       else { await navigator.clipboard.writeText(text); setError("Link copied!"); setTimeout(()=>setError(""), 1200); }
@@ -191,10 +201,9 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
   const doJoinLookup = async () => {
     setError("");
     const rawInput = joinCode.trim();
-    // V207 emergency fix: allow direct household id like ash-ciaran-2026 or nylah-xxxxxx. Previous logic only allowed nylah- which broke recovery for legacy household.
     const lower = rawInput.toLowerCase().trim();
     const isNyDirect = lower.startsWith("nylah-") && lower.length >= 8;
-    const isLegacyDirect = lower.includes("-") && (lower==="ash-ciaran-2026" || lower.startsWith("ash-") || lower.length>=8) && !/^[A-Z0-9]+$/.test(rawInput.toUpperCase().replace(/[^A-Z0-9]/g,"")) || lower==="ash-ciaran-2026" || lower.startsWith("ash-ciaran");
+    const isLegacyDirect = lower==="ash-ciaran-2026" || lower.startsWith("ash-ciaran");
     const isAnyHid = isNyDirect || isLegacyDirect || (lower.includes("-") && lower.length>=6 && lower.length<=40 && /^[a-z0-9-]+$/.test(lower));
     const isFullHid = isAnyHid;
     const codeClean = rawInput.toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,32);
@@ -205,16 +214,12 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
       let code = "";
       if (isFullHid) {
         const hid = rawInput.toLowerCase().trim();
-        // direct HID path — try literal first, then nylah- derived if looks like code
         hidCandidates = [hid];
         if (hid.startsWith("nylah-")) {
           code = hid.split("nylah-")[1]?.slice(0,6).toUpperCase() || "" ;
-          // also include code-only variant for invite lookup
-          hidCandidates.push(hid.slice(5)); // without dash?
+          hidCandidates.push(hid.slice(5));
         } else {
-          // legacy ash-ciaran — code is ASHCI from households, but try uppercase slice
           code = rawInput.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6);
-          // also try known code mapping for ash-ciaran
           if (hid.includes("ash-ciaran")) code = "ASHCI";
         }
       } else {
@@ -226,7 +231,6 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
       if (!sb) { setError("No connection — check internet"); setJoining(false); return; }
 
       let data: any = null;
-      // 1) Try RPC lookup_household_by_code if deployed (more secure) — tries p_code then code for compatibility
       try {
         let rpcData: any = null;
         try {
@@ -238,18 +242,18 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
           rpcData = r2.data;
         }
         if (rpcData) {
-          // PostgREST may return array or single
           const row = Array.isArray(rpcData) ? rpcData[0] : rpcData;
           if (row) {
             const hid = row.id || row.household_id || hidCandidates[0];
             const rawPersons = row.persons || row.meta?.persons || [{key:"person_1", name:"Partner 1"},{key:"person_2", name:"Partner 2"}];
+            const ct = row.meta?.connectionType || row.meta?.connection_type || row.connectionType || "couple";
             const persons = normalizePersons(rawPersons, row.name || row.household_name || "", hid);
-            data = { id: hid, meta: { householdName: row.name || row.household_name || "You & Partner", persons, inviteCode: code } };
+            data = { id: hid, meta: { householdName: row.name || row.household_name || "You & Partner", persons, inviteCode: code, connectionType: ct } };
+            if (ct) { setConnectionType(ct==="friends"?"friends":"couple"); }
           }
         }
       } catch {}
 
-      // 2) Fallback: household_invites table
       if (!data && !isFullHid) {
         try {
           const resInvite = await (sb as any).from("household_invites").select("*").eq("code", code).maybeSingle();
@@ -258,7 +262,9 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
             const resHouse = await (sb as any).from("households").select('*').eq('id', mappedHid).maybeSingle();
             if (resHouse && resHouse.data) {
               const hh = resHouse.data;
-              data = { id: mappedHid, meta: { householdName: hh.name, inviteCode: code, persons: hh.meta?.persons || hh.meta?.household_persons || [{key:"person_1",name:"Partner 1"},{key:"person_2",name:"Partner 2"}] } };
+              const ct = hh.meta?.connectionType || hh.meta?.connection_type || "couple";
+              data = { id: mappedHid, meta: { householdName: hh.name, inviteCode: code, persons: hh.meta?.persons || [{key:"person_1",name:"Partner 1"},{key:"person_2",name:"Partner 2"}], connectionType: ct } };
+              if (ct) setConnectionType(ct==="friends"?"friends":"couple");
             } else {
               const resCouple = await (sb as any).from(SB_TABLE).select('*').eq('id', mappedHid).maybeSingle();
               if (resCouple && resCouple.data) data = resCouple.data;
@@ -268,14 +274,21 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
         } catch {}
       }
 
-      // 3) Try hid candidates directly
       if (!data) {
         for (const hid of hidCandidates) {
           try {
             const res1 = await (sb as any).from(SB_TABLE).select('*').eq('id', hid).maybeSingle();
-            if (res1?.data) { data = res1.data; break; }
+            if (res1?.data) { 
+              const ct = (res1.data as any)?.meta?.connectionType || "couple";
+              if (ct) setConnectionType(ct==="friends"?"friends":"couple");
+              data = res1.data; break; 
+            }
             const hh = await (sb as any).from("households").select('*').eq('id', hid).maybeSingle();
-            if (hh?.data) { data = { id: hid, meta: { householdName: hh.data.name, persons: hh.data.meta?.persons || [{key:"person_1",name:"Partner 1"},{key:"person_2",name:"Partner 2"}], inviteCode: code } }; break; }
+            if (hh?.data) { 
+              const ct = hh.data.meta?.connectionType || "couple";
+              if (ct) setConnectionType(ct==="friends"?"friends":"couple");
+              data = { id: hid, meta: { householdName: hh.data.name, persons: hh.data.meta?.persons || [{key:"person_1",name:"Partner 1"},{key:"person_2",name:"Partner 2"}], inviteCode: code, connectionType: ct } }; break; 
+            }
           } catch {}
         }
       }
@@ -286,12 +299,17 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
         return;
       }
       const meta = (data as any).meta;
+      // propagate connectionType from found house
+      const ctFound = meta?.connectionType || meta?.connection_type || "couple";
+      if (ctFound === "friends" || ctFound === "couple") {
+        setConnectionType(ctFound);
+        try { localStorage.setItem("couple_v1_connection_type", ctFound); localStorage.setItem(`couple_v1_household_connection_${(data as any).id}`, ctFound); document.documentElement.setAttribute("data-connection", ctFound);} catch {}
+      }
       setJoinMeta(meta);
       const rawPersons = meta?.persons || [{key:"person_1", name:"Partner 1"}, {key:"person_2", name:"Partner 2"}];
       const mixedHid = (data as any).id || hidCandidates[0] || "";
       const mixedName = (meta as any)?.householdName || (data as any)?.householdName || "";
       const persons = normalizePersons(rawPersons, mixedName, mixedHid);
-      // Ensure keys are sanitized to person_1 / person_2 or legacy aisling/ciaran
       const safePersons = persons.map((p:any, idx:number)=> ({
         key: (p.key && typeof p.key==="string" ? p.key : (idx===0?"person_1":"person_2")),
         name: p.name || (idx===0?"Partner 1":"Partner 2"),
@@ -322,7 +340,6 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
     try {
       const sb = getSupabase();
       if (!sb) { setError("No connection"); setJoining(false); return; }
-      // Verify PIN server-side — must match selected person
       const { data, error } = await (sb as any).rpc("verify_household_pin", { hid: householdId, pin: joinPin } as any);
       if (error || !data) { setJoinPinWrong(true); setJoining(false); return; }
       const returnedKey = typeof data === "string" ? data : (Array.isArray(data) ? (data[0]?.person_key || data[0]) : (data as any).person_key);
@@ -334,13 +351,16 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
       }
       if (!returnedKey) { setJoinPinWrong(true); setJoining(false); return; }
 
-      // Success — store household locally, never store PIN
       try {
         localStorage.setItem("couple_v1_household_id", householdId);
         localStorage.setItem("couple_v1_household_code", inviteCode);
         localStorage.setItem("couple_v1_household_name", joinMeta?.householdName || "You & Partner");
         localStorage.setItem(`couple_v1_household_persons_${householdId}`, JSON.stringify(joinPersons));
         localStorage.setItem(`couple_v1_household_persons`, JSON.stringify(joinPersons));
+        const ct = joinMeta?.connectionType || joinMeta?.connection_type || connectionType || "couple";
+        localStorage.setItem("couple_v1_connection_type", ct);
+        localStorage.setItem(`couple_v1_household_connection_${householdId}`, ct);
+        try { document.documentElement.setAttribute("data-connection", ct);} catch {}
         try { localStorage.removeItem(`couple_v1_household_pins_${householdId}`); } catch {}
       } catch {}
       setJoining(false);
@@ -352,7 +372,6 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
   };
 
   const doJoinWithoutPin = async () => {
-    // Fallback for legacy households where PIN RPC not yet deployed — still requires knowledge of invite code (shared secret)
     setError(""); setJoining(true);
     try {
       const persons = joinPersons;
@@ -363,6 +382,10 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
         localStorage.setItem("couple_v1_household_name", meta?.householdName || "You & Partner");
         localStorage.setItem(`couple_v1_household_persons_${householdId}`, JSON.stringify(persons));
         localStorage.setItem(`couple_v1_household_persons`, JSON.stringify(persons));
+        const ct = meta?.connectionType || meta?.connection_type || connectionType || "couple";
+        localStorage.setItem("couple_v1_connection_type", ct);
+        localStorage.setItem(`couple_v1_household_connection_${householdId}`, ct);
+        try { document.documentElement.setAttribute("data-connection", ct);} catch {}
       } catch {}
       setJoining(false);
       onComplete(householdId);
@@ -396,7 +419,9 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
       const rawPersons = found.persons;
       const householdName = found.name || found.household_name || "";
       const safePersons = normalizePersons(rawPersons, householdName, hid);
-      setHouseholdId(hid); setInviteCode(code); setJoinMeta({ householdName, persons: safePersons });
+      const ct = found.meta?.connectionType || found.connectionType || found.meta?.connection_type || "couple";
+      if (ct) { setConnectionType(ct==="friends"?"friends":"couple"); try { localStorage.setItem("couple_v1_connection_type", ct); document.documentElement.setAttribute("data-connection", ct);} catch {}}
+      setHouseholdId(hid); setInviteCode(code); setJoinMeta({ householdName, persons: safePersons, connectionType: ct });
       setJoinPersons(safePersons);
       setJoining(false);
       setStep("join_pick");
@@ -412,7 +437,6 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
       <div className="absolute inset-0 z-[90] flex min-h-dvh w-full flex-col bg-[#FFFBF6] overflow-hidden">
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Instrument+Sans:wght@400;500&display=swap');`}</style>
 
-        {/* Top */}
         <div className="flex flex-col items-center px-6 pt-[36px] pb-[18px] shrink-0 bg-[#FFFBF6]">
           <div className="flex flex-col items-center">
             <div className="h-[64px] w-[78px] grid place-items-center">
@@ -432,7 +456,6 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
           <p className="mt-2.5 max-w-[300px] text-[12.5px] leading-[1.5] text-[#6E5F55] text-center" style={{fontFamily:"Instrument Sans"}}>Beirt is your private space for two. Stay organised, share responsibilities, and build a stronger home—together.</p>
         </div>
 
-        {/* Hero — tightly cropped to mugs/table, no huge cream gap, no white stripe */}
         <div className="relative w-full flex-1 bg-[#FFFBF6] overflow-hidden">
           <div className="absolute inset-0">
             <img
@@ -442,16 +465,13 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
               style={{ objectPosition:"50% 62%" }}
               draggable={false}
             />
-            {/* crop top cream, focus lower half */}
           </div>
-          {/* bottom gradient into card */}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[34%] bg-gradient-to-t from-[#0F1012]/28 to-transparent" />
         </div>
 
-        {/* Bottom sheet — overlaid, single, no white strip */}
         <div className="relative z-[3] -mt-[86px] w-full px-[14px] pb-[max(14px,env(safe-area-inset-bottom))]">
           <div className="mx-auto w-full max-w-[388px] rounded-[24px] bg-[#101214] px-[16px] pt-[12px] pb-[14px] border border-white/[0.05]" style={{boxShadow:"0 24px 64px rgba(0,0,0,0.42), 0 2px 0 rgba(255,255,255,0.05) inset"}}>
-            <button onClick={()=> setStep("create_names")} className="w-full h-[50px] rounded-full bg-[#E07A3F] text-white font-semibold text-[14.5px] flex items-center pl-6 pr-[6px] active:scale-[0.98]">
+            <button onClick={()=> setStep("connection")} className="w-full h-[50px] rounded-full bg-[#E07A3F] text-white font-semibold text-[14.5px] flex items-center pl-6 pr-[6px] active:scale-[0.98]">
               <span className="flex-1 text-center">Create our space</span>
               <span className="grid h-[36px] w-[36px] place-items-center rounded-full bg-black text-white">→</span>
             </button>
@@ -460,7 +480,6 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
               <span className="flex-1 text-left text-[13.5px]">I have a code</span>
               <span className="pr-2 opacity-70">›</span>
             </button>
-            {/* V207 emergency restore hint for ash-ciaran primary */}
             <button onClick={()=>{ setJoinCode("ASHCI"); setStep("join_code"); }} className="mt-2 w-full text-[10.5px] text-white/60 underline text-center">Lost your space? Restore Aisling & Ciaran (ASHCI / ash-ciaran-2026)</button>
           </div>
         </div>
@@ -468,6 +487,50 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
     );
   }                                     
 
+  if (step==="connection") {
+    const isCouple = connectionType==="couple";
+    return (
+      <div className="absolute inset-0 z-[90] flex min-h-dvh w-full flex-col bg-[#FFFBF6] overflow-auto">
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Instrument+Sans:wght@400;500&display=swap');`}</style>
+        <div className="mx-auto w-full max-w-[380px] px-6 pt-[28px] pb-[24px]">
+          <button onClick={()=> setStep("welcome")} className="text-[11px] text-[#8B7357]">← Back</button>
+          <h2 className="mt-3 text-[28px] font-bold leading-[0.96] tracking-[-0.02em] text-[#16120E]" style={{fontFamily:"Fraunces"}}>Who's this for?</h2>
+          <p className="mt-2 text-[12.5px] leading-[1.5] text-[#6E5F55]" style={{fontFamily:"Instrument Sans"}}>Picking this sets the wording everywhere — no extra features, just the right language. Both scale to thousands of houses via <span className="font-mono text-[11px] bg-black/5 px-1 py-0.5 rounded">nylah-xxxxxx</span>.</p>
+
+          <div className="mt-6 grid gap-3">
+            <button
+              onClick={()=> { setConnectionType("couple"); try{localStorage.setItem("couple_v1_connection_type","couple"); document.documentElement.setAttribute("data-connection","couple");}catch{} }}
+              className={`text-left rounded-[18px] border px-4 py-4 flex gap-3 items-start transition ${isCouple ? "bg-[#0F1012] text-white border-[#0F1012] shadow-[0_12px_28px_rgba(0,0,0,0.18)]" : "bg-white border-[#E8DDD3] hover:shadow-sm"}`}
+            >
+              <span className={`grid h-10 w-10 place-items-center rounded-full shrink-0 ${isCouple ? "bg-white text-black" : "bg-[#F6EFE8] text-[#8B7357]"}`}>♥</span>
+              <span className="flex-1">
+                <span className="text-[14px] font-semibold block" style={{fontFamily:"Instrument Sans"}}>For couples</span>
+                <span className={`text-[11.5px] leading-[1.4] mt-0.5 block ${isCouple ? "text-white/70" : "text-[#6E5F55]"}`}>You two building a life together. Partners sharing responsibilities and plans.</span>
+                <span className={`mt-2 inline-flex text-[10px] px-2 py-1 rounded-full ${isCouple ? "bg-white/15 text-white/80" : "bg-[#F6EFE8] text-[#8B7357]"}`}>nylah- saves as couple • wording "partner"</span>
+              </span>
+              <span className={`mt-1 h-4 w-4 rounded-full border grid place-items-center ${isCouple ? "border-white bg-white" : "border-[#D8CDC2]"}`}>{isCouple && <span className="h-1.5 w-1.5 rounded-full bg-black" />}</span>
+            </button>
+
+            <button
+              onClick={()=> { setConnectionType("friends"); try{localStorage.setItem("couple_v1_connection_type","friends"); document.documentElement.setAttribute("data-connection","friends");}catch{} }}
+              className={`text-left rounded-[18px] border px-4 py-4 flex gap-3 items-start transition ${!isCouple ? "bg-[#0F1012] text-white border-[#0F1012] shadow-[0_12px_28px_rgba(0,0,0,0.18)]" : "bg-white border-[#E8DDD3] hover:shadow-sm"}`}
+            >
+              <span className={`grid h-10 w-10 place-items-center rounded-full shrink-0 ${!isCouple ? "bg-white text-black" : "bg-[#EEF4F0] text-[#6E8A7A]"}`}>⍤</span>
+              <span className="flex-1">
+                <span className="text-[14px] font-semibold block" style={{fontFamily:"Instrument Sans"}}>For roommates & friends</span>
+                <span className={`text-[11.5px] leading-[1.4] mt-0.5 block ${!isCouple ? "text-white/70" : "text-[#6E5F55]"}`}>Roommates, close friends, buddies keeping track of life together. Same fridge, different wording.</span>
+                <span className={`mt-2 inline-flex text-[10px] px-2 py-1 rounded-full ${!isCouple ? "bg-white/15 text-white/80" : "bg-[#EEF4F0] text-[#6E8A7A]"}`}>nylah- saves as friends • wording "flatmate"</span>
+              </span>
+              <span className={`mt-1 h-4 w-4 rounded-full border grid place-items-center ${!isCouple ? "border-white bg-white" : "border-[#D8CDC2]"}`}>{!isCouple && <span className="h-1.5 w-1.5 rounded-full bg-black" />}</span>
+            </button>
+          </div>
+
+          <button onClick={()=>{ setError(""); setStep("create_names"); }} className="mt-5 w-full h-[48px] rounded-full bg-[#0A0A0A] text-white text-[14px] font-semibold active:scale-[0.98]">Continue as {connectionType==="friends" ? "friends" : "couple"} →</button>
+          <div className="mt-3 text-[10.5px] text-[#8B7357] text-center">Household still <span className="font-mono">nylah-xxxxxx</span> • scalable to 4k houses • stored server side via meta.connectionType</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="absolute inset-0 z-[90] flex items-center justify-center bg-[var(--bg)] px-4 overflow-auto backdrop-blur-[2px]" style={{ background: "linear-gradient(180deg,#FEF6EE 0%,#FEF3E8 38%,#FFFEFB 100%)" }}>
@@ -476,18 +539,21 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
         {step==="create_names" && (
           <>
             <div className="w-full text-left">
-              <button onClick={()=> setStep("welcome")} className="text-[11px] text-[#8B7357]">← Back</button>
+              <div className="flex items-center justify-between">
+                <button onClick={()=> setStep("connection")} className="text-[11px] text-[#8B7357]">← Back</button>
+                <span className="text-[10px] px-2 py-1 rounded-full bg-[#F6EFE8] text-[#8B7357]">{connectionType==="friends" ? "Roommates" : "Couple"} • {connectionType}</span>
+              </div>
               <div className="mt-2 font-display text-[20px] font-semibold text-[#0A0A0A]">What should we call you two?</div>
-              <div className="mt-1 text-[12px] text-[#6B5242]">These show up everywhere — on chips, calendar dots, notes. You can change later.</div>
+              <div className="mt-1 text-[12px] text-[#6B5242]">{connectionType==="friends" ? "This shows on chips, notes, calendar dots. Names of flatmates." : "These show up everywhere — on chips, calendar dots, notes."} You can change later.</div>
             </div>
             <div className="mt-4 w-full space-y-3">
               <div>
                 <label className="text-[11px] text-[#6B5242] font-medium">You</label>
-                <input value={youName} onChange={e=> setYouName(e.target.value)} placeholder="e.g. Maya" className="mt-1 w-full rounded-[14px] border bg-white px-3 py-3 text-[14px] outline-none" style={{borderColor:"var(--border)"}} autoFocus />
+                <input value={youName} onChange={e=> setYouName(e.target.value)} placeholder={connectionType==="friends" ? "e.g. Sam" : "e.g. Maya"} className="mt-1 w-full rounded-[14px] border bg-white px-3 py-3 text-[14px] outline-none" style={{borderColor:"var(--border)"}} autoFocus />
               </div>
               <div>
-                <label className="text-[11px] text-[#6B5242] font-medium">Your partner</label>
-                <input value={partnerName} onChange={e=> setPartnerName(e.target.value)} placeholder="e.g. Jon" className="mt-1 w-full rounded-[14px] border bg-white px-3 py-3 text-[14px] outline-none" style={{borderColor:"var(--border)"}} />
+                <label className="text-[11px] text-[#6B5242] font-medium">{connectionType==="friends" ? "Your flatmate / friend" : "Your partner"}</label>
+                <input value={partnerName} onChange={e=> setPartnerName(e.target.value)} placeholder={connectionType==="friends" ? "e.g. Alex" : "e.g. Jon"} className="mt-1 w-full rounded-[14px] border bg-white px-3 py-3 text-[14px] outline-none" style={{borderColor:"var(--border)"}} />
               </div>
             </div>
             {error && <div className="mt-3 text-[11px] text-[#991B1B] w-full">{error}</div>}
@@ -499,7 +565,7 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
             <div className="w-full text-left">
               <button onClick={()=> setStep("create_names")} className="text-[11px] text-[#8B7357]">← Back</button>
               <div className="mt-2 font-display text-[20px] font-semibold text-[#0A0A0A]">Recovery email</div>
-              <div className="mt-1 text-[12px] text-[#6B5242]">One per household. If you lose your code and your partner can't share it, we can find your house with this. Private — never listed.</div>
+              <div className="mt-1 text-[12px] text-[#6B5242]">One per household ({connectionType}). If you lose your code and {connectionType==="friends" ? "your flatmate" : "your partner"} can't share it, we can find your house with this. Private — never listed.</div>
             </div>
             <div className="mt-4 w-full space-y-3">
               <input value={recoveryEmail} onChange={e=> setRecoveryEmail(e.target.value)} placeholder="you@email.com" type="email" className="mt-1 w-full rounded-[14px] border bg-white px-3 py-3 text-[14px] outline-none" style={{borderColor:"var(--border)"}} autoFocus />
@@ -514,7 +580,7 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
             <div className="w-full text-left">
               <button onClick={()=> setStep("create_email")} className="text-[11px] text-[#8B7357]">← Back</button>
               <div className="mt-2 font-display text-[20px] font-semibold text-[#0A0A0A]">Set your 4-digit PINs</div>
-              <div className="mt-1 text-[12px] text-[#6B5242]">Hashed server-side with bcrypt. Never stored plain on device. Different PINs required.</div>
+              <div className="mt-1 text-[12px] text-[#6B5242]">Hashed server-side with bcrypt. Never stored plain on device. Different PINs required. ({connectionType})</div>
             </div>
             <div className="mt-4 w-full space-y-3">
               <div>
@@ -522,40 +588,40 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
                 <input value={youPin} onChange={e=> setYouPin(e.target.value.replace(/\D/g,"").slice(0,4))} inputMode="numeric" placeholder="••••" className="mt-1 w-full rounded-[14px] border bg-white px-3 py-3 text-center text-[18px] tracking-[0.3em] outline-none" style={{borderColor:"var(--border)"}} />
               </div>
               <div>
-                <label className="text-[11px] text-[#6B5242] font-medium">{partnerName||"Partner"}’s PIN</label>
+                <label className="text-[11px] text-[#6B5242] font-medium">{partnerName|| (connectionType==="friends"?"Flatmate":"Partner") }’s PIN</label>
                 <input value={partnerPin} onChange={e=> setPartnerPin(e.target.value.replace(/\D/g,"").slice(0,4))} inputMode="numeric" placeholder="••••" className="mt-1 w-full rounded-[14px] border bg-white px-3 py-3 text-center text-[18px] tracking-[0.3em] outline-none" style={{borderColor:"var(--border)"}} />
               </div>
               <div className="text-[10px] text-[#8B7357]">Must be different. Fingerprint/Face ID can be added later in Settings.</div>
             </div>
             {error && <div className="mt-3 text-[11px] text-[#991B1B] w-full">{error}</div>}
-            <button disabled={!canContinuePins} onClick={doCreate} className={"mt-5 w-full h-[48px] rounded-full text-[14px] font-semibold active:scale-[0.98] "+(canContinuePins?"bg-[#0A0A0A] text-white shadow-sm":"bg-[var(--chip-bg)] text-[#8B7357]")}>{creating?"Creating…":"Create our space"}</button>
-            <div className="mt-2 text-[10px] text-[#8B7357] text-center">Household ID will be nylah-xxxxxx • stored locally + on Supabase</div>
+            <button disabled={!canContinuePins} onClick={doCreate} className={"mt-5 w-full h-[48px] rounded-full text-[14px] font-semibold active:scale-[0.98] "+(canContinuePins?"bg-[#0A0A0A] text-white shadow-sm":"bg-[var(--chip-bg)] text-[#8B7357]")}>{creating?"Creating…":"Create our "+(connectionType==="friends"?"flat":"space")}</button>
+            <div className="mt-2 text-[10px] text-[#8B7357] text-center">Household ID will be nylah-xxxxxx ({connectionType}) • stored locally + on Supabase meta.connectionType</div>
           </>
         )}
         {step==="creating" && (
           <div className="py-10 text-center">
             <div className="h-10 w-10 rounded-full bg-[var(--chip-bg)] animate-pulse mx-auto grid place-items-center">♥</div>
-            <div className="mt-3 text-[14px] font-medium text-[#2D2118]">Creating your private space…</div>
-            <div className="mt-1 text-[11px] text-[#6B5242]">Generating invite code, hashing PINs server-side, saving household-isolated row</div>
+            <div className="mt-3 text-[14px] font-medium text-[#2D2118]">Creating your private {connectionType==="friends"?"flat":"space"}…</div>
+            <div className="mt-1 text-[11px] text-[#6B5242]">Generating invite code, hashing PINs server-side, saving household-isolated row with connectionType {connectionType}</div>
           </div>
         )}
         {step==="share" && (
           <>
             <div className="h-10 w-10 rounded-full bg-[#0A0A0A] text-white grid place-items-center">✓</div>
             <div className="mt-3 font-display text-[20px] font-semibold text-[#0A0A0A] text-center">You’re set!</div>
-            <div className="mt-1 text-[12px] text-[#6B5242] text-center">Share this code with {partnerName||"your partner"} — they need it + their PIN to join.</div>
+            <div className="mt-1 text-[12px] text-[#6B5242] text-center">Share this code with {partnerName|| (connectionType==="friends"?"your flatmate":"your partner")} — they need it + their PIN to join. Type: {connectionType}</div>
             <div className="mt-4 w-full rounded-[20px] border bg-[var(--chip-bg)] px-4 py-4 text-center" style={{borderColor:"var(--border)"}}>
-              <div className="text-[11px] uppercase tracking-[0.12em] text-[#8B7357]">Invite code</div>
+              <div className="text-[11px] uppercase tracking-[0.12em] text-[#8B7357]">Invite code ({connectionType})</div>
               <div className="mt-1 font-mono text-[28px] font-bold tracking-[0.18em] text-[#0A0A0A]">{inviteCode}</div>
-              <div className="mt-1 text-[11px] text-[#6B5242]">{householdId} • {youName} & {partnerName}</div>
+              <div className="mt-1 text-[11px] text-[#6B5242]">{householdId} • {youName} & {partnerName} • {connectionType}</div>
               <div className="mt-3 flex gap-2 justify-center">
                 <button onClick={doCopyCode} className="h-[36px] rounded-full bg-white border border-[var(--border)] px-4 text-[11px] font-semibold">Copy code</button>
                 <button onClick={doShare} className="h-[36px] rounded-full bg-[#0A0A0A] text-white px-4 text-[11px] font-semibold">Share link</button>
               </div>
             </div>
             {error && <div className="mt-2 text-[11px] text-[#6B5242]">{error}</div>}
-            <button onClick={()=> onComplete(householdId)} className="mt-4 w-full h-[48px] rounded-full bg-[#0A0A0A] text-white text-[14px] font-semibold active:scale-[0.98]">Continue to our space →</button>
-            <div className="mt-2 text-[10px] text-[#8B7357] text-center">You’ll be asked who you are, then your PIN (server-verified). Your partner joins with the code above.</div>
+            <button onClick={()=> onComplete(householdId)} className="mt-4 w-full h-[48px] rounded-full bg-[#0A0A0A] text-white text-[14px] font-semibold active:scale-[0.98]">Continue to our {connectionType==="friends"?"flat":"space"} →</button>
+            <div className="mt-2 text-[10px] text-[#8B7357] text-center">You’ll be asked who you are, then your PIN (server-verified). Type saved locally as data-connection={connectionType}.</div>
           </>
         )}
         {step==="join_code" && (
@@ -563,7 +629,7 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
             <div className="w-full text-left">
               <button onClick={()=> setStep("welcome")} className="text-[11px] text-[#8B7357]">← Back</button>
               <div className="mt-2 font-display text-[20px] font-semibold text-[#0A0A0A]">Enter your invite code or household ID</div>
-              <div className="mt-1 text-[12px] text-[#6B5242]">6-letter code like ABC123 or full ID like nylah-abc123. You’ll be asked your PIN right after — server-verified.</div>
+              <div className="mt-1 text-[12px] text-[#6B5242]">6-letter code like ABC123 or full ID like nylah-abc123. Works for couples & roommates — type auto-detected.</div>
             </div>
             <input value={joinCode} onChange={e=> setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,32))} placeholder="ABC123 or nylah-abc123" className="mt-4 w-full rounded-[16px] border bg-white px-4 py-4 text-center font-mono text-[14px] tracking-[0.12em] outline-none" style={{borderColor:"var(--border)"}} autoFocus />
             {error && <div className="mt-2 text-[11px] text-[#991B1B] w-full text-center">{error}</div>}
@@ -571,7 +637,7 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
             <button onClick={()=> { setRecoveryEmail(""); setError(""); setStep("recover_email"); }} className="mt-3 text-[11px] text-[#8B7357] underline">Don't have the code? Recover with email</button>
             <div className="mt-3 w-full rounded-[14px] bg-[var(--chip-bg)] px-3 py-2.5 text-left">
               <div className="text-[11px] font-semibold text-[#2D2118]">Why PIN again?</div>
-              <div className="text-[10.5px] text-[#6B5242] leading-[1.35] mt-0.5">Your PIN is hashed bcrypt on Supabase. Joining checks server-side — fail-closed if wrong. No local PIN storage.</div>
+              <div className="text-[10.5px] text-[#6B5242] leading-[1.35] mt-0.5">Your PIN is hashed bcrypt on Supabase. Joining checks server-side — fail-closed if wrong. Works for both tracks.</div>
             </div>
           </>
         )}
@@ -592,18 +658,18 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
           <>
             <div className="h-10 w-10 rounded-full bg-[var(--chip-bg)] grid place-items-center text-[16px]">♥</div>
             <div className="mt-3 font-display text-[18px] font-semibold text-[#0A0A0A] text-center">Which one are you?</div>
-            <div className="mt-1 text-[12px] text-[#6B5242] text-center">{joinMeta?.householdName||"You two"} — {inviteCode} — pick your name. You’ll enter your PIN next.</div>
+            <div className="mt-1 text-[12px] text-[#6B5242] text-center">{joinMeta?.householdName||"You two"} — {inviteCode} — {joinMeta?.connectionType || connectionType} — pick your name. You’ll enter your PIN next.</div>
             <div className="mt-4 w-full space-y-2">
               {joinPersons.map((p:any)=> (
                 <button key={p.key} onClick={()=> doPickJoinPerson(p.key)} disabled={joining} className="w-full flex items-center gap-3 rounded-[16px] border bg-white px-4 py-3 text-left active:scale-[0.98]" style={{borderColor:"var(--border)"}}>
                   <span className="grid h-10 w-10 place-items-center rounded-full bg-[var(--chip-bg)] text-[12px] font-bold">{p.initial||p.name?.slice(0,1).toUpperCase()}</span>
-                  <span className="flex-1"><div className="text-[14px] font-medium">{p.name}</div><div className="text-[11px] text-[#6B5242]">Tap to join as {p.name} — PIN needed</div></span>
+                  <span className="flex-1"><div className="text-[14px] font-medium">{p.name}</div><div className="text-[11px] text-[#6B5242]">Tap to join as {p.name} — PIN needed ({joinMeta?.connectionType||connectionType})</div></span>
                   <span className="text-[11px] text-[#8B7357]">→</span>
                 </button>
               ))}
             </div>
             {error && <div className="mt-3 text-[11px] text-[#991B1B]">{error}</div>}
-            <div className="mt-3 text-[10px] text-[#8B7357] text-center">No PIN storage on device — server bcrypt only. If RPCs missing, you can still join (legacy mode) via button below.</div>
+            <div className="mt-3 text-[10px] text-[#8B7357] text-center">No PIN storage on device — server bcrypt only.</div>
             <button onClick={doJoinWithoutPin} className="mt-2 text-[11px] text-[#8B7357] underline">Skip PIN (legacy / offline dev)</button>
           </>
         )}
@@ -612,19 +678,19 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
             <div className="w-full text-left">
               <button onClick={()=> setStep("join_pick")} className="text-[11px] text-[#8B7357]">← Back</button>
               <div className="mt-2 font-display text-[20px] font-semibold text-[#0A0A0A]">Enter your PIN</div>
-              <div className="mt-1 text-[12px] text-[#6B5242]">Joining as <b>{joinPersons.find((p:any)=>p.key===selectedJoinKey)?.name}</b> — PIN is verified server-side against {householdId}, fail-closed if wrong.</div>
+              <div className="mt-1 text-[12px] text-[#6B5242]">Joining as <b>{joinPersons.find((p:any)=>p.key===selectedJoinKey)?.name}</b> — PIN is verified server-side against {householdId}, fail-closed if wrong. ({connectionType})</div>
             </div>
             <input value={joinPin} onChange={e=> setJoinPin(e.target.value.replace(/\D/g,"").slice(0,4))} inputMode="numeric" placeholder="••••" className={"mt-4 w-full rounded-[16px] border bg-white px-4 py-4 text-center text-[18px] tracking-[0.35em] outline-none "+(joinPinWrong?"border-[#E07A5F]":"")} style={{borderColor: joinPinWrong ? "#E07A5F" :"var(--border)"}} autoFocus />
             {joinPinWrong && <div className="mt-2 text-[11px] text-[#991B1B] w-full text-center">Wrong PIN for this person — try again or tap Back to pick other name.</div>}
             {error && <div className="mt-2 text-[11px] text-[#991B1B] w-full text-center">{error}</div>}
             <button onClick={doJoinPinVerify} disabled={joining || joinPin.length!==4} className="mt-4 w-full h-[48px] rounded-full bg-[#0A0A0A] text-white text-[14px] font-semibold disabled:opacity-60 active:scale-[0.98]">{joining?"Verifying server-side…":"Verify PIN & Join"}</button>
-            <div className="mt-2 text-[10px] text-[#8B7357] text-center">Server RPC verify_household_pin({householdId}, ****) → {selectedJoinKey} if correct. Hashed bcrypt, never plain.</div>
+            <div className="mt-2 text-[10px] text-[#8B7357] text-center">Server RPC verify_household_pin({householdId}, ****) → {selectedJoinKey} if correct. Type {connectionType}.</div>
           </>
         )}
         {step==="joining" && (
           <div className="py-10 text-center">
             <div className="h-10 w-10 rounded-full bg-[var(--chip-bg)] animate-pulse mx-auto grid place-items-center">♥</div>
-            <div className="mt-3 text-[14px] font-medium text-[#2D2118]">Joining your space…</div>
+            <div className="mt-3 text-[14px] font-medium text-[#2D2118]">Joining your {connectionType==="friends"?"flat":"space"}…</div>
             <div className="mt-1 text-[11px] text-[#6B5242]">Syncing household-isolated chores, calendar, shopping, notes</div>
           </div>
         )}

@@ -112,7 +112,7 @@ create table if not exists public.chore_occurrences (
   "awardedMultiplier" float,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint chk_household_occ check (household_id in ('ash-ciaran-2026'))
+  constraint chk_household_occ check (household_id like 'nylah-%' or household_id='ash-ciaran-2026')
 );
 alter table public.chore_occurrences add column if not exists household_id text not null default 'ash-ciaran-2026';
 create index if not exists idx_chore_occ_household on public.chore_occurrences (household_id);
@@ -125,9 +125,15 @@ drop policy if exists "anon_all_occ_permissive" on public.chore_occurrences;
 drop policy if exists "anon_select_occ" on public.chore_occurrences;
 drop policy if exists "anon_insert_occ" on public.chore_occurrences;
 drop policy if exists "anon_update_occ" on public.chore_occurrences;
-create policy "anon_select_occ" on public.chore_occurrences for select to anon using (household_id='ash-ciaran-2026');
-create policy "anon_insert_occ" on public.chore_occurrences for insert to anon with check (household_id='ash-ciaran-2026');
-create policy "anon_update_occ" on public.chore_occurrences for update to anon using (household_id='ash-ciaran-2026') with check (household_id='ash-ciaran-2026');
+drop policy if exists "anon_delete_occ" on public.chore_occurrences;
+drop policy if exists "allow_nylah_select_occ" on public.chore_occurrences;
+drop policy if exists "allow_nylah_insert_occ" on public.chore_occurrences;
+drop policy if exists "allow_nylah_update_occ" on public.chore_occurrences;
+drop policy if exists "allow_nylah_delete_occ" on public.chore_occurrences;
+create policy "allow_nylah_select_occ" on public.chore_occurrences for select to anon using (household_id like 'nylah-%' or household_id='ash-ciaran-2026');
+create policy "allow_nylah_insert_occ" on public.chore_occurrences for insert to anon with check (household_id like 'nylah-%' or household_id='ash-ciaran-2026');
+create policy "allow_nylah_update_occ" on public.chore_occurrences for update to anon using (household_id like 'nylah-%' or household_id='ash-ciaran-2026') with check (household_id like 'nylah-%' or household_id='ash-ciaran-2026');
+create policy "allow_nylah_delete_occ" on public.chore_occurrences for delete to anon using (household_id like 'nylah-%' or household_id='ash-ciaran-2026');
 drop policy if exists "service_role_all_occ" on public.chore_occurrences;
 create policy "service_role_all_occ" on public.chore_occurrences for all to service_role using (true) with check (true);
 
@@ -154,7 +160,7 @@ create table if not exists public.calendar_series (
   updated_at timestamptz not null default now(),
   recurrence_until timestamptz,
   "recurrenceUntil" text,
-  constraint chk_household_series check (household_id in ('ash-ciaran-2026'))
+  constraint chk_household_series check (household_id like 'nylah-%' or household_id='ash-ciaran-2026')
 );
 alter table public.calendar_series add column if not exists household_id text not null default 'ash-ciaran-2026';
 alter table public.calendar_series add column if not exists weekdays boolean[] not null default '{false,false,false,false,false,false,false}';
@@ -164,9 +170,15 @@ drop policy if exists "allow_ash_ciaran_2026_series" on public.calendar_series;
 drop policy if exists "anon_select_series" on public.calendar_series;
 drop policy if exists "anon_insert_series" on public.calendar_series;
 drop policy if exists "anon_update_series" on public.calendar_series;
-create policy "anon_select_series" on public.calendar_series for select to anon using (household_id='ash-ciaran-2026');
-create policy "anon_insert_series" on public.calendar_series for insert to anon with check (household_id='ash-ciaran-2026');
-create policy "anon_update_series" on public.calendar_series for update to anon using (household_id='ash-ciaran-2026') with check (household_id='ash-ciaran-2026');
+drop policy if exists "anon_delete_series" on public.calendar_series;
+drop policy if exists "allow_nylah_select_series" on public.calendar_series;
+drop policy if exists "allow_nylah_insert_series" on public.calendar_series;
+drop policy if exists "allow_nylah_update_series" on public.calendar_series;
+drop policy if exists "allow_nylah_delete_series" on public.calendar_series;
+create policy "allow_nylah_select_series" on public.calendar_series for select to anon using (household_id like 'nylah-%' or household_id='ash-ciaran-2026');
+create policy "allow_nylah_insert_series" on public.calendar_series for insert to anon with check (household_id like 'nylah-%' or household_id='ash-ciaran-2026');
+create policy "allow_nylah_update_series" on public.calendar_series for update to anon using (household_id like 'nylah-%' or household_id='ash-ciaran-2026') with check (household_id like 'nylah-%' or household_id='ash-ciaran-2026');
+create policy "allow_nylah_delete_series" on public.calendar_series for delete to anon using (household_id like 'nylah-%' or household_id='ash-ciaran-2026');
 drop policy if exists "service_role_all_series" on public.calendar_series;
 create policy "service_role_all_series" on public.calendar_series for all to service_role using (true) with check (true);
 
@@ -187,7 +199,7 @@ create table if not exists public.calendar_occurrence_overrides (
   "updatedAt" text,
   data jsonb,
   unique(series_id, occurrence_date),
-  constraint chk_household_override check (household_id in ('ash-ciaran-2026'))
+  constraint chk_household_override check (household_id like 'nylah-%' or household_id='ash-ciaran-2026')
 );
 alter table public.calendar_occurrence_overrides add column if not exists household_id text not null default 'ash-ciaran-2026';
 create index if not exists idx_calendar_override_household on public.calendar_occurrence_overrides (household_id);
@@ -196,9 +208,15 @@ drop policy if exists "allow_ash_ciaran_2026_overrides" on public.calendar_occur
 drop policy if exists "anon_select_overrides" on public.calendar_occurrence_overrides;
 drop policy if exists "anon_insert_overrides" on public.calendar_occurrence_overrides;
 drop policy if exists "anon_update_overrides" on public.calendar_occurrence_overrides;
-create policy "anon_select_overrides" on public.calendar_occurrence_overrides for select to anon using (household_id='ash-ciaran-2026');
-create policy "anon_insert_overrides" on public.calendar_occurrence_overrides for insert to anon with check (household_id='ash-ciaran-2026');
-create policy "anon_update_overrides" on public.calendar_occurrence_overrides for update to anon using (household_id='ash-ciaran-2026') with check (household_id='ash-ciaran-2026');
+drop policy if exists "anon_delete_overrides" on public.calendar_occurrence_overrides;
+drop policy if exists "allow_nylah_select_overrides" on public.calendar_occurrence_overrides;
+drop policy if exists "allow_nylah_insert_overrides" on public.calendar_occurrence_overrides;
+drop policy if exists "allow_nylah_update_overrides" on public.calendar_occurrence_overrides;
+drop policy if exists "allow_nylah_delete_overrides" on public.calendar_occurrence_overrides;
+create policy "allow_nylah_select_overrides" on public.calendar_occurrence_overrides for select to anon using (household_id like 'nylah-%' or household_id='ash-ciaran-2026');
+create policy "allow_nylah_insert_overrides" on public.calendar_occurrence_overrides for insert to anon with check (household_id like 'nylah-%' or household_id='ash-ciaran-2026');
+create policy "allow_nylah_update_overrides" on public.calendar_occurrence_overrides for update to anon using (household_id like 'nylah-%' or household_id='ash-ciaran-2026') with check (household_id like 'nylah-%' or household_id='ash-ciaran-2026');
+create policy "allow_nylah_delete_overrides" on public.calendar_occurrence_overrides for delete to anon using (household_id like 'nylah-%' or household_id='ash-ciaran-2026');
 drop policy if exists "service_role_all_overrides" on public.calendar_occurrence_overrides;
 create policy "service_role_all_overrides" on public.calendar_occurrence_overrides for all to service_role using (true) with check (true);
 create unique index if not exists idx_calendar_override_unique on public.calendar_occurrence_overrides (series_id, occurrence_date);

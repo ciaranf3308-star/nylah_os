@@ -359,8 +359,81 @@ function CalendarPageV2(props: any) {
   function updateEvent(id:string, patch: Partial<CalendarEvent>) {
     setEvents((prev:any)=> prev.map((ev: CalendarEvent)=> ev.id===id ? { ...ev, ...patch, updatedAt:new Date().toISOString(), updatedBy: currentUser, mutationId: (globalThis.crypto as any)?.randomUUID ? (globalThis.crypto as any).randomUUID() : String(Date.now()) } : ev));
   }
-  function removeEvent(id:string) {
+  async function removeEvent(idOrEv:any) {
+    // resolve target event from id or object
+    const id = typeof idOrEv === 'string' ? idOrEv : idOrEv?.id;
+    if (!id) return;
+    // find current event snapshot for smarter handling
+    let target:any = typeof idOrEv === 'string' ? null : idOrEv;
+    if (!target) {
+      target = (events as any[]).find((e:any)=> e.id===id) || null;
+    }
+    if (!target) {
+      // also check generated occurrences (monthOccurrences / combined)
+      try {
+        const combined = [...(events as any[]).filter((e:any)=> !e.deletedAt), ...(monthOccurrences as any[])];
+        target = combined.find((e:any)=> e.id===id) || null;
+      } catch {}
+    }
+    const isGeneratedOccurrence = !!(target && (target as any).templateId && (target as any).occurrenceId);
+    const isTemplate = !!(target && ((target as any).isTemplate || ((target as any).frequency && (target as any).frequency!=='once' && (target as any).type==='repeat')));
+    if (isGeneratedOccurrence) {
+      const tplId = (target as any).templateId;
+      const occId = (target as any).occurrenceId;
+      const ovId = tplId + "#" + occId;
+      const override = {
+        id: ovId,
+        templateId: tplId,
+        occurrenceId: occId,
+        isOverride: true,
+        deletedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        updatedBy: currentUser,
+        title: (target as any).title,
+        start: (target as any).start,
+        dueAt: (target as any).dueAt,
+      } as any;
+      // local: add override so shouldSuppressGeneratedOccurrence hides it immediately, and it will sync as delete through queue
+      setEvents((prev:any)=> {
+        // remove any previous override for same occ, then push new deleted override
+        const without = (prev as any[]).filter((e:any)=> !(e.templateId===tplId && e.occurrenceId===occId));
+        return [...without, override];
+      });
+      try {
+        await upsertCalendarOverride({ id: ovId, seriesId: tplId, series_id: tplId, occurrenceDate: occId, occurrence_date: occId, deleted: true, title: (target as any).title, data: override } as any);
+      } catch {}
+      return;
+    }
+    if (isTemplate) {
+      // delete whole series — soft-delete template and any existing overrides for safety
+      setEvents((prev:any)=> prev.map((ev:any)=> ev.id===id || ev.templateId===id ? { ...ev, deletedAt:new Date().toISOString(), updatedAt:new Date().toISOString(), updatedBy: currentUser } : ev).filter((ev:any)=> true));
+      // also try server series delete via direct Supabase (normalized)
+      try {
+        const { getSupabase, getEffectiveRowId } = await import("../../lib/supabase");
+        const sb = getSupabase();
+        const hid = getEffectiveRowId() || (target as any).household_id;
+        if (sb && hid) {
+          try { await (sb as any).from('calendar_series').delete().eq('id', id).eq('household_id', hid); } catch {}
+          try { await (sb as any).from('calendar_occurrence_overrides').delete().eq('series_id', id).eq('household_id', hid); } catch {}
+          try { await (sb as any).from('calendar_occurrence_overrides').delete().eq('seriesId', id).eq('household_id', hid); } catch {}
+          // also ensure calendar_events deleted
+          try { await (sb as any).from('calendar_events').delete().eq('id', id).eq('household_id', hid); } catch {}
+          try { await (sb as any).from('calendar_events').update({ deleted_at: new Date().toISOString() }).eq('id', id).eq('household_id', hid); } catch {}
+        }
+      } catch {}
+      return;
+    }
+    // normal single event — soft-delete locally, queue will DELETE server, also nudge legacy giant JSON cleanup
     setEvents((prev:any)=> prev.map((ev: CalendarEvent)=> ev.id===id ? { ...ev, deletedAt:new Date().toISOString(), updatedAt:new Date().toISOString(), updatedBy: currentUser } : ev));
+    try {
+      const { getSupabase, getEffectiveRowId } = await import("../../lib/supabase");
+      const sb = getSupabase();
+      const hid = getEffectiveRowId() || (target as any)?.household_id || localStorage.getItem('couple_v1_household_id');
+      if (sb && hid) {
+        try { await (sb as any).from('calendar_events').delete().eq('id', id).eq('household_id', hid); } catch (e:any) { /* fallback soft-delete if RLS blocks hard delete */ }
+        try { await (sb as any).from('calendar_events').update({ deleted_at: new Date().toISOString() } as any).eq('id', id).eq('household_id', hid); } catch {}
+      }
+    } catch {}
   }
   function handleResponse(ev: CalendarEvent, kind: CalendarResponseKind, comment?: string) {
     const existing = getResponses(ev);

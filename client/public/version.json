@@ -1,8 +1,8 @@
 {
-  "build": "v184-calendar-boutique",
-  "builtAt": "2026-08-08T11:17:32Z",
-  "changelog": "calendar pinned boutique card 164px crisp illustration 60% wash tangerine pill large 54px, grouping What\u2019s ahead + Today/Tomorrow/Later timeline + Pending 44px kind chip peach/sage/tan, fridge countdown 172px same card, dark polished, previous v183 shopping phrase fix",
-  "code": 184,
+  "build": "v185-calendar-delete-multiplayer",
+  "builtAt": "2026-08-08T12:23:00Z",
+  "changelog": "delete calendar true live: recurring occurrence override deleted true, single event hard delete + soft fallback, template whole series cascade, remoteSync no longer resurrects deleted via legacy merge, series/overrides/occurrence RLS allow nylah-% + delete",
+  "code": 185,
   "mandatory": false,
-  "version": "184.0.0"
+  "version": "185.0.0"
 }

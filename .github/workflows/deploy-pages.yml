@@ -39,6 +39,8 @@ jobs:
           fi
           # public assets
           cp -r public/* dist/ 2>/dev/null || true
+          # version.json — root is source of truth for poller
+          cp ../version.json dist/version.json 2>/dev/null || cp version.json dist/version.json 2>/dev/null || echo '{"code":227,"build":"v227-friends-second-path"}' > dist/version.json
           rm -f dist/supabase-init.sql client/dist/supabase-init.sql
           cp dist/index.html dist/404.html || true
           touch dist/.nojekyll

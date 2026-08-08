@@ -431,20 +431,28 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
           </p>
         </div>
 
-        {/* Photoreal illustration — chopped from your target, pixel perfect */}
-        <div className="relative mt-5 w-full flex-1 min-h-[300px] overflow-hidden">
+        {/* Photoreal illustration — pixel perfect to your target with peach + sage circles behind */}
+        <div className="relative mt-5 w-full flex-1 min-h-[340px] overflow-visible flex items-end justify-center">
+          {/* boutique shapes behind — match your iPhone ref exactly */}
+          <div className="pointer-events-none absolute left-[-42px] bottom-[28px] w-[340px] h-[340px] rounded-full bg-[#F3D0A8]/95 blur-[0.3px]" />
+          <div className="pointer-events-none absolute left-[-6px] top-[92px] w-[88px] h-[160px] opacity-[0.22] rotate-[-6deg]" style={{background:"radial-gradient(ellipse at center, #9E8B78 0%, transparent 70%)"}} />
+          <div className="pointer-events-none absolute right-[-58px] bottom-[44px] w-[312px] h-[312px] rounded-full bg-[#C9D5CC]/90" />
+          {/* leaf shadow left edge like ref */}
+          <div className="pointer-events-none absolute left-[-10px] top-[16px] w-[140px] h-[180px] opacity-[0.26]" style={{backgroundImage:"radial-gradient(ellipse at 40% 30%, rgba(115,95,75,0.22) 0%, transparent 65%)"}} />
+
           <img
             src="./onboarding-mid-photo.jpg"
             alt=""
-            className="absolute inset-0 w-full h-full object-cover object-[center_bottom] scale-[1.02]"
+            className="relative z-[1] w-[100%] max-w-[500px] h-auto object-contain object-bottom translate-y-[12px]"
+            style={{ filter:"drop-shadow(0 8px 24px rgba(90,60,35,0.12))" }}
             draggable={false}
           />
-          {/* subtle top fade into beige so text meets photo softly */}
-          <div className="absolute inset-x-0 top-0 h-[64px] bg-gradient-to-b from-[#FEF7F0] to-transparent pointer-events-none" />
+          {/* soft top fade so text meets shapes */}
+          <div className="absolute inset-x-0 top-0 h-[84px] bg-gradient-to-b from-[#FEF7F0] to-transparent pointer-events-none z-[2]" />
         </div>
 
-        {/* Bottom sheet — charcoal */}
-        <div className="w-full px-[18px] pb-[max(18px,env(safe-area-inset-bottom))] mt-auto bg-[#FEF7F0]">
+        {/* Bottom sheet — charcoal, slightly overlaps wood like ref */}
+        <div className="w-full px-[18px] pb-[max(18px,env(safe-area-inset-bottom))] mt-[-14px] bg-transparent relative z-[3]">
           <div className="mx-auto w-full max-w-[384px] rounded-[26px] bg-[#101214] px-[18px] pt-[14px] pb-[18px] shadow-[0_22px_60px_rgba(0,0,0,0.42),0_2px_0_rgba(255,255,255,0.04)_inset] border border-white/[0.04]">
             <button
               onClick={()=> setStep("create_names")}

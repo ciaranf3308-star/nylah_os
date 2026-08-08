@@ -128,37 +128,46 @@ function IconFootball({stroke, title}:{stroke:string; title?:string}) {
     );
   }
   if (sub === "football") {
-    // V210 — proper boutique soccer ball (you asked for it lol)
+    // V221 — boutique football v2: obviously football, warm stitched leather, crisp powerhouse
+    // 20-pass: hand-panelled, paper-base, terracotta seam, paper highlight, boutique tells
     return (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* soft wash */}
-        <circle cx="12" cy="12.2" r="7.5" fill={stroke} opacity="0.10"/>
-        <circle cx="12" cy="12.2" r="7.5" stroke={stroke} strokeWidth="0.55" opacity="0.10"/>
-        {/* ball base — slight warm paper */}
-        <circle cx="12" cy="12.2" r="6.35" fill="white" stroke={stroke} strokeWidth="1.48" strokeLinejoin="round"/>
-        {/* inner highlight */}
-        <path d="M8.2 8.4c1.1-.85 2.5-1.35 4-1.35 1.5 0 2.9.5 4 1.35" stroke="white" strokeWidth="0.75" opacity="0.75" strokeLinecap="round"/>
-        {/* classic football panels — boutique wobble */}
-        {/* center pentagon */}
-        <path d="M12 9.1l2.35 1.6-.9 2.75H10.55L9.65 10.7L12 9.1Z" fill={stroke} opacity="0.92" stroke={stroke} strokeWidth="1.02" strokeLinejoin="round"/>
-        {/* top seam */}
-        <path d="M12 9.1L12 5.95" stroke={stroke} strokeWidth="1.08" strokeLinecap="round" opacity="0.96"/>
-        {/* upper left */}
-        <path d="M9.65 10.7L6.6 9.8" stroke={stroke} strokeWidth="1.08" strokeLinecap="round" opacity="0.96"/>
-        <path d="M6.6 9.8c-.22.7-.34 1.44-.34 2.25" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.86" strokeDasharray="0.7 1.1"/>
-        {/* upper right */}
-        <path d="M14.35 10.7L17.4 9.8" stroke={stroke} strokeWidth="1.08" strokeLinecap="round" opacity="0.96"/>
-        <path d="M17.4 9.8c.22.7.34 1.44.34 2.25" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.86" strokeDasharray="0.7 1.1"/>
-        {/* lower seams */}
-        <path d="M10.55 13.45L9.2 16.6" stroke={stroke} strokeWidth="1.08" strokeLinecap="round" opacity="0.96"/>
-        <path d="M13.45 13.45L14.8 16.6" stroke={stroke} strokeWidth="1.08" strokeLinecap="round" opacity="0.96"/>
-        <path d="M9.2 16.6Q12 18.15 14.8 16.6" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.78"/>
-        {/* side panels — subtle stitch ticks */}
-        <path d="M7.7 12.05l2.0-1.35" stroke={stroke} strokeWidth="0.85" strokeLinecap="round" opacity="0.56"/>
-        <path d="M16.3 12.05l-2.0-1.35" stroke={stroke} strokeWidth="0.85" strokeLinecap="round" opacity="0.56"/>
-        {/* grain — boutique */}
-        <circle cx="18.1" cy="6.9" r="0.45" fill={stroke} opacity="0.42"/><circle cx="18.28" cy="6.62" r="0.13" fill="white" opacity="0.85"/>
-        <circle cx="5.9" cy="16.2" r="0.32" fill={stroke} opacity="0.18"/>
+        {/* warm wash */}
+        <circle cx="12" cy="12.25" r="7.8" fill={stroke} opacity="0.16"/>
+        {/* paper base */}
+        <circle cx="12" cy="12.25" r="6.65" fill="#FFFDFA" stroke={stroke} strokeWidth="0.9" opacity="0.18"/>
+        {/* outer leather */}
+        <circle cx="12" cy="12.25" r="6.35" fill="white" stroke={stroke} strokeWidth="1.55" strokeLinecap="round" strokeLinejoin="round"/>
+        {/* subtle paper inner stroke */}
+        <circle cx="12" cy="12.25" r="6.35" stroke="white" strokeWidth="0.75" opacity="0.82" strokeLinecap="round"/>
+        {/* soft top highlight — boutique paper sheen */}
+        <path d="M8.6 8.9 Q12 6.9 15.4 8.9" stroke="white" strokeWidth="1.1" opacity="0.78" strokeLinecap="round"/>
+        <path d="M9.2 9.3 Q12 7.7 14.8 9.3" stroke="white" strokeWidth="0.6" opacity="0.42" strokeLinecap="round"/>
+        {/* centre pentagon — deep terracotta leather */}
+        <path d="M12 9.05 L14.42 10.68 L13.56 13.55 L10.44 13.55 L9.58 10.68 Z" fill={stroke} opacity="0.96" stroke={stroke} strokeWidth="1.05" strokeLinejoin="round" strokeLinecap="round"/>
+        {/* inner scuff — tiny ivory dot */}
+        <circle cx="11.45" cy="10.8" r="0.42" fill="white" opacity="0.34"/>
+        {/* seams outward — boutique solid stitch */}
+        <path d="M12 9.05 L12 5.85" stroke={stroke} strokeWidth="1.12" strokeLinecap="round" opacity="0.98"/>
+        <path d="M14.42 10.68 L17.55 9.55" stroke={stroke} strokeWidth="1.12" strokeLinecap="round" opacity="0.98"/>
+        <path d="M9.58 10.68 L6.45 9.55" stroke={stroke} strokeWidth="1.12" strokeLinecap="round" opacity="0.98"/>
+        <path d="M13.56 13.55 L15.05 16.95" stroke={stroke} strokeWidth="1.12" strokeLinecap="round" opacity="0.98"/>
+        <path d="M10.44 13.55 L8.95 16.95" stroke={stroke} strokeWidth="1.12" strokeLinecap="round" opacity="0.98"/>
+        {/* outer ring arcs — closing panels */}
+        <path d="M12 5.85 Q15.8 6.6 17.55 9.55" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.88"/>
+        <path d="M12 5.85 Q8.2 6.6 6.45 9.55" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.88"/>
+        <path d="M6.45 9.55 Q5.55 12.0 6.9 14.7" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.78"/>
+        <path d="M17.55 9.55 Q18.45 12.0 17.1 14.7" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.78"/>
+        <path d="M6.9 14.7 Q9.4 18.9 12 18.95" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.78"/>
+        <path d="M17.1 14.7 Q14.6 18.9 12 18.95" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.78"/>
+        {/* stitch ticks — boutique detail */}
+        <path d="M7.35 11.2 L8.55 10.6" stroke={stroke} strokeWidth="0.72" strokeLinecap="round" opacity="0.38"/>
+        <path d="M16.65 11.2 L15.45 10.6" stroke={stroke} strokeWidth="0.72" strokeLinecap="round" opacity="0.38"/>
+        <path d="M11.0 15.35 L11.0 16.1" stroke={stroke} strokeWidth="0.62" strokeLinecap="round" opacity="0.32"/>
+        <path d="M13.0 15.35 L13.0 16.1" stroke={stroke} strokeWidth="0.62" strokeLinecap="round" opacity="0.32"/>
+        {/* boutique grain */}
+        <circle cx="18.35" cy="6.85" r="0.48" fill={stroke} opacity="0.38"/><circle cx="18.54" cy="6.58" r="0.14" fill="white" opacity="0.92"/>
+        <circle cx="6.1" cy="16.4" r="0.28" fill={stroke} opacity="0.16"/>
       </svg>
     );
   }
@@ -309,9 +318,10 @@ export default function EventIcon({kind="other", title, size=36, variant="bubble
   if (variant === "watermark") {
     const s = size || 96;
     const iconFn = ICON_MAP[def.id] || ICON_MAP.other;
+    const isFootball = (def.id === "sports") && (title ? /united|city|arsenal|liverpool|chelsea|footbal|soccer|match|premier/.test(title.toLowerCase()) : true);
     return (
-      <div className={className} style={{ width: s, height: s, display:"grid", placeItems:"center", opacity: isDark ? 0.20 : 0.18, pointerEvents:"none", ...style }}>
-        <div style={{ transform: `scale(${s/28})`, transformOrigin:"center", filter: isDark ? "drop-shadow(0 2px 10px rgba(0,0,0,0.28))" : "drop-shadow(0 2px 6px rgba(0,0,0,0.06))" }}>
+      <div className={className} style={{ width: s, height: s, display:"grid", placeItems:"center", opacity: isFootball ? 0.88 : isDark ? 0.38 : 0.32, pointerEvents:"none", ...style }}>
+        <div style={{ transform: `scale(${s/28})`, transformOrigin:"center", filter: isDark ? "drop-shadow(0 6px 18px rgba(0,0,0,0.32))" : "drop-shadow(0 10px 20px rgba(80,45,18,0.14)) drop-shadow(0 2px 6px rgba(0,0,0,0.06))" }}>
           {iconFn({ stroke: pal.fg, title })}
         </div>
       </div>

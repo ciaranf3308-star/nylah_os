@@ -1,8 +1,8 @@
 {
-  "build": "v220-scroll-rescue",
-  "builtAt": "2026-08-08T19:28:00Z",
-  "changelog": "V220 rescue scrolling: remove all nested overflow-hidden h-800px traps, standalone and browser both use window scroll natural flow, strip custom PTR handlers that blocked touch, fixed centered nav 68px 22px remains",
-  "code": 220,
+  "build": "v221-football-boutique",
+  "builtAt": "2026-08-08T19:40:00Z",
+  "changelog": "V221 football boutique v2: obviously football not dust, warm stitched leather panels centre pentagon deep terracotta, solid seams, paper highlight, watermark opacity 0.88 for football so pinned card crisp, scroll rescue kept",
+  "code": 221,
   "mandatory": false,
-  "version": "220.0.0"
+  "version": "221.0.0"
 }

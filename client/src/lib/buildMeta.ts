@@ -8,8 +8,8 @@ export const BUILD_CHANNEL = "beta" as const;
 export const BUILD_META = {
   tz: HOUSEHOLD_TZ,
   channel: BUILD_CHANNEL,
-  build: "v220-scroll-rescue",
-  code: 220,
+  build: "v221-football-boutique",
+  code: 221,
 } as const;
 export const HOUSEHOLD_ID: string | null = null;
 export const HOUSEHOLD_ROW_ID: string | null = null;

@@ -1,8 +1,8 @@
 {
-  "build": "v204-true-multiplayer-pin-audit",
-  "builtAt": "2026-08-08T13:29:02Z",
-  "changelog": "true multiplayer audit: pinned events now save (togglePin now uses updateEvent+persist unpins others), chore steal/split/reshuffle/detail-done all now hardPersist, admin reshuffle/archive delete now persist, split deletes original, AppMonolith pin fixed same logic, shopping/chore/note/ calendar all via direct upsert+queue+drain",
-  "code": 204,
+  "build": "v205-boutique-event-icons",
+  "builtAt": "2026-08-08T13:32:56Z",
+  "changelog": "beautiful boutique event SVGs: hand-illustrated heart/plane/ball/vinyl/cake etc, warm watercolor washes, large crisp 164px pinned illustrations, unified Upcoming/Agenda/Calendar",
+  "code": 205,
   "mandatory": false,
-  "version": "204.0.0"
+  "version": "205.0.0"
 }

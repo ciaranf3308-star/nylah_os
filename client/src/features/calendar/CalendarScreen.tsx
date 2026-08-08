@@ -7,42 +7,43 @@ import { uid } from "../../shared/utils/helpers";
 import { expandTemplateForMonthDublin, getDublinHourMinuteFromIso, shouldSuppressGeneratedOccurrence } from "../../lib/recurrence";
 import { upsertCalendarSeries, upsertCalendarOverride } from "../../lib/normalized";
 import { AddEventForm } from "./EventEditor";
-import { inferKindFromTitle, EVENT_KINDS } from "../../lib/eventTypes";
+import { inferKindFromTitle, EVENT_KINDS, getKindDef } from "../../lib/eventTypes";
+import EventIcon from "../../components/EventIcon";
 
 function PinnedCalendarCard({ ev, nowMs, onClear, onTap, tz }: { ev:any, nowMs:number, onClear:()=>void, onTap:()=>void, tz:string }){
   const title = ev.title || "Pinned";
   const iso = ev.start || ev.dueAt;
-  const kind = (ev.kind || ev.eventKind || inferKindFromTitle(title) || "sports") as string;
+  const kind = (ev.kind || ev.eventKind || inferKindFromTitle(title) || "other") as string;
   const kindDef = (EVENT_KINDS as any)[kind] || EVENT_KINDS.other;
+  const pal = kindDef.light;
   const diffMs = iso ? new Date(iso).getTime() - nowMs : 0;
   const daysLeft = Math.max(0, Math.ceil(diffMs/86400000));
   const hoursLeft = Math.max(0, Math.floor(diffMs/3600000));
   const minsLeft = Math.max(0, Math.floor((diffMs%3600000)/60000));
   const dateKey = (()=>{ try{ return iso ? new Date(iso).toLocaleDateString("en-GB",{timeZone:tz, month:"short", day:"numeric"}) : "" }catch{return ""}})();
-  const isSports = kind==="sports" || /united/i.test(title);
   return (
-    <button onClick={onTap} className="group w-full text-left rounded-[22px] border bg-[#FFFEFB] px-5 pt-4 pb-5 min-h-[172px] relative overflow-hidden shadow-[0_12px_30px_rgba(60,40,20,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] hover:shadow-[0_16px_40px_rgba(60,40,20,0.14)] transition text-left" style={{borderColor:"#EDE2D6"}}>
+    <button onClick={onTap} className="group w-full text-left rounded-[24px] border bg-[#FFFEFB] px-5 pt-4 pb-5 min-h-[172px] relative overflow-hidden shadow-[0_12px_30px_rgba(60,40,20,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] hover:shadow-[0_18px_42px_rgba(60,40,20,0.15)] hover:-translate-y-[0.5px] transition-all" style={{borderColor:"#EDE2D6"}}>
       <div className="flex items-start justify-between relative z-[2]">
-        <span className="inline-flex h-[28px] items-center rounded-full bg-[#FCE3D8] px-3.5 text-[12px] font-[700] text-[#C06A32] tracking-[-0.01em] border border-[#F1CAB0] shadow-[0_1px_0_rgba(255,255,255,0.7)_inset]">{diffMs<=0 ? "today" : `${daysLeft}d left`}</span>
+        <span className="inline-flex h-[28px] items-center rounded-full px-3.5 text-[12px] font-[700] tracking-[-0.01em] border shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]" style={{background: pal.bg, color: pal.fg, borderColor: pal.fg+"22"}}>{diffMs<=0 ? "today" : `${daysLeft}d left`}</span>
         <span className="flex items-center gap-2">
-          <span className="h-[8px] w-[8px] rounded-full bg-[#F59E4B] shadow-[0_0_0_4px_rgba(245,158,75,0.18)]" />
-          <span onClick={(e)=>{ e.stopPropagation(); onClear(); }} className="h-[28px] w-[28px] grid place-items-center rounded-full bg-white border border-[#EDE2D6] text-[12px] hover:bg-[#FFF4EC]">✕</span>
+          <span className="h-[8px] w-[8px] rounded-full" style={{background:"#F59E4B", boxShadow:"0 0 0 4px rgba(245,158,75,0.18)"}} />
+          <span onClick={(e)=>{ e.stopPropagation(); onClear(); }} className="h-[28px] w-[28px] grid place-items-center rounded-full bg-white border border-[#EDE2D6] text-[12px] hover:bg-[#FFF4EC] transition">✕</span>
         </span>
       </div>
       <div className="mt-3 flex items-baseline gap-2 relative z-[2]">
         <span className="text-[52px] font-[850] tracking-[-0.04em] text-[#12100E]" style={{fontFamily:'Fraunces, serif', lineHeight:0.9}}>{diffMs<=0 ? "0" : daysLeft}</span>
         <span className="text-[12.5px] font-[600] text-[#7C756E] px-2 py-0.5 rounded-full bg-white border border-[#F0E5D8]">{diffMs<=0 ? "today" : daysLeft>1 ? `${daysLeft} days` : `${hoursLeft}h ${minsLeft}m`}</span>
       </div>
-      <div className="mt-1 text-[14.5px] font-[700] text-[#191410] truncate pr-[116px] relative z-[2]" style={{fontFamily:'Fraunces, serif'}}>{title}</div>
-      <div className="mt-0.5 text-[12px] text-[#8E867F] pr-[116px] relative z-[2] flex items-center gap-1.5">
-        <span className="inline-flex h-[22px] items-center rounded-full px-2 text-[10.5px] font-[700] border" style={{background:kindDef.light.bg, color:kindDef.light.fg, borderColor:kindDef.light.bg}}>{kindDef.label}</span>
+      <div className="mt-1 text-[14.5px] font-[700] text-[#191410] truncate pr-[120px] relative z-[2]" style={{fontFamily:'Fraunces, serif'}}>{title}</div>
+      <div className="mt-0.5 text-[12px] text-[#8E867F] pr-[120px] relative z-[2] flex items-center gap-1.5">
+        <span className="inline-flex h-[22px] items-center rounded-full px-2.5 text-[10.5px] font-[700] border" style={{background:pal.bg, color:pal.fg, borderColor:"rgba(0,0,0,0.06)"}}>{kindDef.label}</span>
         <span>{dateKey} {ev.location ? `• ${ev.location}` : ""}</span>
       </div>
-      <div className="pointer-events-none absolute right-[-10px] bottom-[-10px] rotate-[-6deg]">
-        <div className="relative" style={{ width:164, height:164, filter:"drop-shadow(0 14px 20px rgba(100,60,20,0.10))" }}>
-          <div className="absolute inset-[12px] rounded-full" style={{ background:"radial-gradient(115% 90% at 32% 28%, #FFF8F0 0%, #FBE7CF 44%, #F7D9B6 78%)", opacity:0.78 }} />
-          <div className="relative w-full h-full grid place-items-center">
-            {isSports ? <svg width="128" height="128" viewBox="0 0 24 24" fill="none" stroke="#D9A88B" strokeWidth="0.95" opacity={0.54}><circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="2.2"/><path d="M12 3.4v2.8M20.6 12H17.8M12 20.6v-2.8M3.4 12h2.8M6.1 6.1l2 2M17.9 6.1l-2 2M17.9 17.9l-2-2M6.1 17.9l2-2"/></svg> : <svg width="112" height="112" viewBox="0 0 24 24" fill="none" stroke="#D9A88B" strokeWidth="1.05" opacity={0.48}><circle cx="12" cy="12" r="7.5"/><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="2.8" opacity={0.35}/></svg>}
+      <div className="pointer-events-none absolute right-[-12px] bottom-[-14px] rotate-[-5deg] group-hover:rotate-[-3deg] group-hover:scale-[1.03] transition-transform duration-500">
+        <div className="relative" style={{ width:164, height:164 }}>
+          <div className="absolute inset-[12px] rounded-[28px] rotate-[8deg]" style={{ background:`radial-gradient(115% 90% at 32% 28%, white 0%, ${pal.bg} 48%, ${pal.chipBg||pal.bg} 82%)`, opacity:0.88 }} />
+          <div className="relative w-full h-full grid place-items-center" style={{filter:"drop-shadow(0 14px 22px rgba(80,45,18,0.14))"}}>
+            <EventIcon kind={kind} size={118} variant="watermark" theme="light"/>
           </div>
         </div>
       </div>

@@ -1,5 +1,7 @@
 import type { CalendarEventV2, PersonKey } from "../../types";
 import { HOUSEHOLD_TZ } from "../../lib/dates";
+import EventIcon from "../../components/EventIcon";
+import { getKindDef, inferKindFromTitle } from "../../lib/eventTypes";
 
 type Props = {
   eventsForToday: CalendarEventV2[];
@@ -21,19 +23,20 @@ export function AgendaView({ eventsForToday, eventsForTomorrow, laterFlat, onSel
     const attendees = (ev as any).attendees || ["aisling","ciaran"];
     const isBoth = attendees.length!==1;
     const leftRuleColor = isBoth ? "#8B7357" : (attendees[0]==="aisling" ? "#A89FDA" : "#E07A5F");
+    const kindId = (ev as any).kind || (ev as any).eventKind || inferKindFromTitle((ev as any).title||"") || "other";
+    const def = getKindDef(kindId);
     return (
-      <button onClick={()=> onSelectEvent(ev)} className="w-full text-left flex items-stretch rounded-[18px] border bg-[var(--card-bg)] overflow-hidden active:scale-[0.98] min-h-[64px] relative" style={{borderColor:"var(--border)", paddingLeft:3}}>
+      <button onClick={()=> onSelectEvent(ev)} className="w-full text-left flex items-stretch rounded-[18px] border bg-[var(--card-bg)] overflow-hidden active:scale-[0.98] min-h-[64px] relative group" style={{borderColor:"var(--border)", paddingLeft:3}}>
         <span className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-[18px]" style={{background:leftRuleColor}} aria-hidden="true"/>
         <span className="flex flex-1 items-center gap-3 px-3.5 py-3 min-w-0 ml-[3px]">
-          <span className="flex flex-col items-center gap-1.5 shrink-0">
-            <span className="tabular-nums text-[12px] font-medium rounded-full px-2 py-0.5 border" style={{fontFamily:'Inter Tight, var(--font-ui)', background:'var(--chip-bg)', borderColor:'var(--border)'}}>{timeStr}</span>
-            <span className="h-[7px] w-[7px] rounded-full" style={{background:leftRuleColor}}/>
+          <span className="h-[38px] w-[38px] shrink-0 grid place-items-center rounded-full border" style={{ background:`radial-gradient(110% 90% at 30% 20%, white 0%, ${def.light.bg} 50%)`, borderColor:"rgba(0,0,0,0.06)" }}>
+            <EventIcon kind={def.id} size={24} theme="light" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[14px] font-semibold truncate">{ev.title}</span>
-            <span className="block text-[11px] truncate max-w-[150px]" style={{color:'var(--muted)'}}>{(ev as any).location||""} {isPending?"• Needs you":""}</span>
+            <span className="block text-[13.5px] font-semibold truncate" style={{letterSpacing:"-0.01em"}}>{ev.title}</span>
+            <span className="block text-[11px] truncate max-w-[160px] flex items-center gap-1.5" style={{color:'var(--muted)'}}>{timeStr}{ (ev as any).location ? ` • ${(ev as any).location}` : ""} {isPending && <span className="inline-flex px-1.5 py-0.5 rounded-full bg-[#FFF1E0] text-[#9A6720] text-[10px] border border-[#F0D9BE]">Needs you</span>}</span>
           </span>
-          <span className="shrink-0 rounded-full h-8 w-8 grid place-items-center border text-[12px]" style={{background:'var(--chip-bg)', borderColor:'var(--border)'}}>›</span>
+          <span className="shrink-0 rounded-full h-8 w-8 grid place-items-center border text-[12px] group-hover:bg-[#FFF8F0] transition" style={{background:'var(--chip-bg)', borderColor:'var(--border)'}}>›</span>
         </span>
       </button>
     );

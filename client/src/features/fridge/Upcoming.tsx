@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import type { PersonKey, TabKey, ChoreV2, CalendarEventV2, ShoppingItemV2 } from "../../types";
-import { HOUSEHOLD_TZ, toLocalKey as toLocalKeyDublin, tzWallToUtc } from "../../lib/dates";
-import { getDueMsChore } from "../../shared/utils/helpers";
-import { computeShoppingNextDue } from "../../lib/shoppingDue";
-import { inferKindFromTitle, type EventKind } from "../../lib/eventTypes";
+import { HOUSEHOLD_TZ, toLocalKey as toLocalKeyDublin } from "../../lib/dates";
+import { inferKindFromTitle } from "../../lib/eventTypes";
+import { getKindDef } from "../../lib/eventTypes";
+import EventIcon from "../../components/EventIcon";
 
 type Props = {
   currentUser: PersonKey;
@@ -15,48 +15,14 @@ type Props = {
   setTab: (k: TabKey) => void;
 };
 
-function IconFriends({stroke}:{stroke:string}) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="9.2" cy="7.8" r="2.6" />
-      <path d="M4.2 19c.5-2.9 2.5-5 5-5s4.5 2.1 5 5" />
-      <circle cx="17.2" cy="9.2" r="1.7" />
-      <path d="M18.8 19c.2-1.6-.6-2.9-1.8-3.6" opacity={0.85}/>
-    </svg>
-  );
-}
-function IconFootball({stroke}:{stroke:string}) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.25" strokeLinecap="round">
-      <circle cx="12" cy="12" r="7.6" />
-      <path d="M12 12m-2.2 0a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0" />
-      <path d="M12 4.4v2.8M19 12h-2.8M12 19.6v-2.8M5 12h2.8M6.6 6.6l2 2M17.4 6.6l-2 2M17.4 17.4l-2-2M6.6 17.4l2-2" />
-    </svg>
-  );
-}
-function IconPlane({stroke}:{stroke:string}) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3.5 11l15.8-4.6a.6.6 0 0 1 .8.7L14.9 20a.6.6 0 0 1-1 .3l-2.4-3.6-3.1 2.1a.6.6 0 0 1-.9-.4l-.3-3.8L18 7.2" />
-    </svg>
-  );
-}
-function getBubble(k: EventKind | string) {
-  const key = (k||"").toLowerCase();
-  if (key === "sports") return { bg:"#F9DCC0", fg:"#8D5A3E", border:"#E8C5A6", Icon: (p:any)=> <IconFootball stroke={p.fg}/> };
-  if (key === "friends") return { bg:"#DDE8DC", fg:"#5A6F64", border:"#C4D5CC", Icon: (p:any)=> <IconFriends stroke={p.fg}/> };
-  if (key === "family") return { bg:"#F2E3C9", fg:"#7A6A55", border:"#E6D4B0", Icon: (p:any)=> <IconFriends stroke={p.fg}/> };
-  if (key === "date") return { bg:"#F2E9DC", fg:"#7A6A55", border:"#E2D2BA", Icon: (p:any)=> <IconFriends stroke={p.fg}/> };
-  if (key==="travel") return { bg:"#D6E6DC", fg:"#5E7A6B", border:"#C0D5C8", Icon: (p:any)=> <IconPlane stroke={p.fg}/> };
-  if (key==="birthday") return { bg:"#FCE8E2", fg:"#9E6A5E", border:"#F0D0C6", Icon: (p:any)=> <IconFriends stroke={p.fg}/> };
-  // default to friends/people neutral
-  return { bg:"#D8E5DF", fg:"#5A7367", border:"#C8D9CE", Icon: (p:any)=> <IconFriends stroke={p.fg}/> };
+function getBubble(k: string) {
+  const def = getKindDef(k);
+  const pal = def.light;
+  return { bg: pal.bg, fg: pal.fg, border: pal.chipBg || pal.bg, kind: def.id };
 }
 
 export default function Upcoming({ currentUser, calendar, chores, shopping, nowMs, todayDateStr, setTab }: Props) {
-  const activeChores = useMemo(() => (chores as any[]).filter(c => !(c as any).deletedAt), [chores]);
   const activeCalendar = useMemo(() => (calendar as any[]).filter((ev:any) => !(ev as any).deletedAt), [calendar]);
-  const activeShopping = useMemo(() => (shopping as any[]).filter((s:any) => !(s as any).deletedAt && !(s as any).archivedAt), [shopping]);
 
   const fmtTime = (iso: string) => {
     try { return new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit', timeZone: HOUSEHOLD_TZ} as any).format(new Date(iso)) } catch { try{ return new Date(iso).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}) }catch{ return "" } }
@@ -102,11 +68,10 @@ export default function Upcoming({ currentUser, calendar, chores, shopping, nowM
         <button onClick={()=> setTab("calendar")} className="text-[12px] tracking-[-0.01em] underline underline-offset-2 text-[#7C746E] min-h-[44px] px-2">View all →</button>
       </div>
 
-      <div className="rounded-[22px] border bg-[#FFFEFB] overflow-hidden shadow-[0_6px_20px_rgba(60,40,20,0.08)]" style={{ borderColor:"#EDE2D6" }}>
+      <div className="rounded-[28px] border bg-[#FFFEFB] overflow-hidden shadow-[0_10px_32px_rgba(60,40,20,0.10),0_2px_0_rgba(255,255,255,0.9)_inset]" style={{ borderColor:"#E8DDD3" }}>
         {upcoming.map((ev:any, idx:number)=>{
           const kind = (ev as any).kind || (ev as any).eventKind || inferKindFromTitle(ev.title||"") || "friends";
           const bubble = getBubble(kind);
-          const Icon = (bubble as any).Icon;
           const isAisling = (()=> {
             const at = (ev as any).attendees as string[]|undefined;
             if (!at) return (ev as any).ownerId==="aisling" || (ev as any).person==="aisling";
@@ -114,17 +79,28 @@ export default function Upcoming({ currentUser, calendar, chores, shopping, nowM
             return at.includes("aisling") && !at.includes("ciaran");
           })();
           return (
-            <button key={ev.id} onClick={()=> setTab("calendar")} className="w-full text-left flex items-center gap-3 px-3.5 py-3.5 min-h-[66px] hover:bg-[#FFD9C4]/12 transition" style={{ borderTop: idx===0?undefined:"1px solid #F0E5D8" }}>
-              <span className="h-[44px] w-[44px] shrink-0 grid place-items-center rounded-full border" style={{ background: (bubble as any).bg, borderColor:(bubble as any).border }}><Icon fg={(bubble as any).fg} /></span>
+            <button key={ev.id} onClick={()=> setTab("calendar")} className="w-full text-left flex items-center gap-3.5 px-4 py-4 min-h-[74px] hover:bg-[#FFF6EF]/70 transition group" style={{ borderTop: idx===0?undefined:"1px solid #F2E6D8" }}>
+              {/* beautiful boutique bubble — breaks out slightly */}
+              <span className="h-[48px] w-[48px] shrink-0 grid place-items-center rounded-full border shadow-sm group-active:scale-[0.97] transition" 
+                style={{ 
+                  background: `radial-gradient(120% 90% at 30% 20%, white 0%, ${bubble.bg} 42%)`,
+                  borderColor:"rgba(0,0,0,0.06)",
+                  boxShadow:"0 2px 10px rgba(60,30,10,0.10), inset 0 1px 0 white"
+                }}>
+                <EventIcon kind={bubble.kind} size={32} theme="light" />
+              </span>
               <div className="min-w-0 flex-1">
-                <div className="text-[15px] font-[650] text-[#19140F] truncate" style={{ fontFamily:"Fraunces, serif", letterSpacing:"-0.01em" }}>{ev.title}</div>
-                <div className="mt-0.5 text-[12px] text-[#7E766F] flex items-center gap-1" style={{ fontFamily:"Inter, sans-serif" }}>{fmtDayShort(ev.dueAt)}</div>
+                <div className="text-[15px] font-[650] text-[#19140F] truncate" style={{ fontFamily:"Fraunces, serif", letterSpacing:"-0.015em" }}>{ev.title}</div>
+                <div className="mt-0.5 text-[12px] text-[#8B847D] flex items-center gap-1.5" style={{ fontFamily:"Inter, sans-serif" }}>
+                  <span className="inline-flex h-1 w-1 rounded-full" style={{background:bubble.fg, opacity:0.6}}/>
+                  {fmtDayShort(ev.dueAt)}
+                </div>
               </div>
               <div className="flex items-center gap-2 pl-1">
                 {isAisling && (
                   <span className="grid h-6 w-6 place-items-center rounded-full bg-[#8D7AD6] text-[11px] font-bold text-white shadow-sm ring-2 ring-white">A</span>
                 )}
-                <span className="text-[#9E9791]"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M5 3l5 5-5 5"/></svg></span>
+                <span className="text-[#A69E95] group-hover:text-[#5A524B] transition"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><path d="M5 3l5 5-5 5"/></svg></span>
               </div>
             </button>
           )

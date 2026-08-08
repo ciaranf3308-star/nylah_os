@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import type { TabKey, CalendarEventV2 } from "../../types";
 import { HOUSEHOLD_TZ, toLocalKey as toLocalKeyDublin } from "../../lib/dates";
-import { inferKindFromTitle } from "../../lib/eventTypes";
+import { getKindDef, inferKindFromTitle } from "../../lib/eventTypes";
+import EventIcon from "../../components/EventIcon";
 
 type Props = {
   calendar: CalendarEventV2[];
@@ -9,19 +10,6 @@ type Props = {
   todayDateStr?: string;
   setTab: (k: TabKey) => void;
 };
-
-function IconFootballMutedLarge() {
-  return (
-    <svg width="164" height="164" viewBox="0 0 24 24" fill="none" stroke="#D9A88B" strokeWidth="0.95" strokeLinecap="round" strokeLinejoin="round" opacity={0.52}>
-      <circle cx="12" cy="12" r="8.6" />
-      <circle cx="12" cy="12" r="2.2" />
-      <path d="M12 3.4v2.8M20.6 12H17.8M12 20.6v-2.8M3.4 12h2.8M6.1 6.1l2 2M17.9 6.1l-2 2M17.9 17.9l-2-2M6.1 17.9l2-2" />
-    </svg>
-  );
-}
-function IconFootballMuted() {
-  return <IconFootballMutedLarge />
-}
 
 export default function Countdowns({ calendar, nowMs, todayDateStr, setTab }: Props) {
   const computedToday = todayDateStr || (()=>{ try{ return new Intl.DateTimeFormat("en-CA",{timeZone:HOUSEHOLD_TZ,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(nowMs)); }catch{ return new Date(nowMs).toISOString().slice(0,10);} })();
@@ -61,17 +49,21 @@ export default function Countdowns({ calendar, nowMs, todayDateStr, setTab }: Pr
       </div>
 
       <div className="space-y-3">
-        {pinnedEvents.slice(0,1).map((ev:any)=>{
+        {pinnedEvents.slice(0,2).map((ev:any)=>{
           const {days, overdue} = dueDiff(ev.dueAt);
           const absDays = Math.abs(days);
-          const kind = (ev as any).kind || (ev as any).eventKind || inferKindFromTitle(ev.title||"") || "sports";
-          const isSports = (kind||"").toLowerCase()==="sports" || /united/.test((ev.title||"").toLowerCase());
+          const kindId = ((ev as any).kind || (ev as any).eventKind || inferKindFromTitle(ev.title||"") || "other") as string;
+          const def = getKindDef(kindId);
+          const pal = def.light;
           return (
-            <button key={ev.id} onClick={()=> setTab("calendar")} className="group w-full text-left rounded-[22px] border bg-[#FFFEFB] px-5 pt-4 pb-5 min-h-[172px] relative overflow-hidden shadow-[0_12px_32px_rgba(60,40,20,0.12),0_1px_0_rgba(255,255,255,0.9)_inset] hover:shadow-[0_16px_38px_rgba(60,40,20,0.16)] transition-all" style={{borderColor:"#EDE2D6"}}>
-              {/* top pill - tangerine */}
+            <button key={ev.id} onClick={()=> setTab("calendar")} className="group w-full text-left rounded-[24px] border bg-[#FFFEFB] px-5 pt-4 pb-5 min-h-[172px] relative overflow-hidden shadow-[0_12px_32px_rgba(60,40,20,0.12),0_1px_0_rgba(255,255,255,0.9)_inset] hover:shadow-[0_18px_42px_rgba(60,40,20,0.16)] hover:-translate-y-[0.5px] transition-all text-left" style={{borderColor:"#E8DDD3"}}>
+              {/* pill */}
               <div className="flex items-start justify-between relative z-[2]">
-                <span className="inline-flex h-[28px] items-center rounded-full bg-[#FCE3D8] px-3.5 text-[12px] font-[700] text-[#C06A32] tracking-[-0.01em] border border-[#F1CAB0] shadow-[0_1px_0_rgba(255,255,255,0.7)_inset]">{overdue ? `${absDays}d ago` : `${absDays}d left`}</span>
-                <span className="h-[8px] w-[8px] rounded-full bg-[#F59E4B] mt-2 mr-1 shadow-[0_0_0_4px_rgba(245,158,75,0.18)] group-hover:shadow-[0_0_0_6px_rgba(245,158,75,0.22)] transition" />
+                <span className="inline-flex h-[28px] items-center rounded-full px-3.5 text-[12px] font-[700] tracking-[-0.01em] border shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"
+                  style={{ background: overdue ? "#FEE2E2" : `${pal.bg}`, color: overdue ? "#B91C1C" : pal.fg, borderColor: overdue ? "#FECACA" : `${pal.fg}22` }}>
+                  {overdue ? `${absDays}d ago` : `${absDays}d left`}
+                </span>
+                <span className="h-[8px] w-[8px] rounded-full mt-2 mr-1 transition-all" style={{ background: overdue ? "#EF4444" : "#F59E4B", boxShadow: overdue ? "0 0 0 4px rgba(239,68,68,0.18)" : "0 0 0 4px rgba(245,158,75,0.18)" }}/>
               </div>
 
               <div className="mt-3 flex items-baseline gap-1.5 relative z-[2]">
@@ -79,16 +71,26 @@ export default function Countdowns({ calendar, nowMs, todayDateStr, setTab }: Pr
                 <span className="text-[13px] font-[600] text-[#7C756E]">{overdue ? "overdue" : "days"}</span>
               </div>
 
-              <div className="mt-1 text-[15px] font-[700] text-[#191410] truncate pr-[118px] relative z-[2]" style={{fontFamily:'Fraunces, serif'}}>{ev.title}</div>
-              <div className="mt-0.5 text-[12.5px] font-[500] text-[#8E867F] pr-[118px] relative z-[2]">{fmtDay(ev.dueAt)} {(ev as any).location ? ` • ${(ev as any).location}` : ""}</div>
+              <div className="mt-1 text-[15.5px] font-[700] text-[#191410] truncate pr-[124px] relative z-[2]" style={{fontFamily:'Fraunces, serif', letterSpacing:"-0.015em"}}>{ev.title}</div>
+              <div className="mt-0.5 text-[12.5px] font-[500] text-[#8E867F] pr-[124px] relative z-[2] flex items-center gap-1.5">
+                <EventIcon kind={def.id} size={16} theme="light" variant="inline" />
+                {fmtDay(ev.dueAt)}{(ev as any).location ? ` • ${(ev as any).location}` : ""}
+              </div>
 
-              {/* large crisp washed illustration – 164px */}
-              <div className="pointer-events-none absolute right-[-10px] bottom-[-10px] rotate-[-6deg] select-none">
-                <div className="relative" style={{ width:164, height:164, filter: "drop-shadow(0 14px 20px rgba(100,60,20,0.12))" }}>
-                  <div className="absolute inset-[10px] rounded-full blur-[0.2px]" style={{ background:"radial-gradient(120% 90% at 35% 30%, #FFF8F0 0%, #FBE7CF 42%, #F7D9B6 78%)", opacity:0.78 }} />
-                  <div className="relative grid place-items-center w-full h-full"><IconFootballMuted/></div>
+              {/* large crisp boutique illustration — breaks out overlay edge with shadow */}
+              <div className="pointer-events-none absolute right-[-12px] bottom-[-14px] rotate-[-5deg] select-none group-hover:rotate-[-3deg] group-hover:scale-[1.02] transition-transform duration-500">
+                <div className="relative" style={{ width:164, height:164 }}>
+                  {/* warm wash blob behind */}
+                  <div className="absolute inset-[14px] rounded-[32px] rotate-[8deg]" style={{ background:`radial-gradient(120% 90% at 35% 30%, white 0%, ${pal.bg} 48%, ${pal.chipBg||pal.bg} 82%)`, opacity:0.88, filter:"blur(0.2px)" }} />
+                  {/* illustration */}
+                  <div className="relative w-full h-full grid place-items-center" style={{ filter:"drop-shadow(0 14px 22px rgba(80,45,18,0.14)) drop-shadow(0 2px 6px rgba(80,45,18,0.08))" }}>
+                    <EventIcon kind={def.id} size={120} variant="watermark" theme="light" />
+                  </div>
                 </div>
               </div>
+
+              {/* subtle grain cut */}
+              <div className="pointer-events-none absolute inset-0 rounded-[24px] opacity-[0.015]" style={{ backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.95' numOctaves='1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }}/>
             </button>
           )
         })}

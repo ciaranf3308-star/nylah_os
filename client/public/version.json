@@ -1,8 +1,8 @@
 {
-  "build": "v200-notes-restore",
-  "builtAt": "2026-08-08T13:14:26Z",
-  "changelog": "emergency restore: remove tombstone filter that hid all notes when local delete set corrupted, clear localStorage tombstone, back to v198 true-live delete logic",
-  "code": 200,
+  "build": "v201-fridge-cal-fixes",
+  "builtAt": "2026-08-08T13:21:14Z",
+  "changelog": "fridge note only pinned/unread, pinned only true pinned no fallback, calendar month nav syncs selected, agenda shows selected month events when changing month, day cells colored boxes with half-split for mixed attendees, needs-you awaiting-you fixed to show only awaiting current user with correct label, agenda row awaiting labels",
+  "code": 201,
   "mandatory": false,
-  "version": "200.0.0"
+  "version": "201.0.0"
 }

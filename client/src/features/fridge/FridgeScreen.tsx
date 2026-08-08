@@ -76,21 +76,16 @@ function FridgePage(props: FridgeProps | any) {
     }
   }, [(syncStatus as any)?.kind]);
 
+  // Fridge only shows truly relevant notes: unread from partner OR explicitly pinned
   const stickyPick = useMemo(() => {
     const unread = (activeNotes as any[]).filter((n) => n.author === partner && !((n.seenBy as any)?.[currentUser])).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     if (unread[0]) return { note: unread[0], label: `Unread` };
-    const pinned = (activeNotes as any[]).filter((n) => (n as any).pinned_at || (n as any).pinnedAt).sort((a: any, b: any) => {
+    const pinned = (activeNotes as any[]).filter((n) => (n as any).pinned_at || (n as any).pinnedAt || (n as any).isPinned || (n as any).pinned).sort((a: any, b: any) => {
       const pa = (a as any).pinned_at || (a as any).pinnedAt || a.createdAt;
       const pb = (b as any).pinned_at || (b as any).pinnedAt || b.createdAt;
       return new Date(pb).getTime() - new Date(pa).getTime();
     });
     if (pinned[0]) return { note: pinned[0], label: `Pinned` };
-    const love = (activeNotes as any[]).filter((n) => n.isLove).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    if (love[0]) return { note: love[0], label: `Love note` };
-    if (activeNotes.length > 0) {
-      const sorted = [...activeNotes].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      return { note: sorted[0], label: `Note` };
-    }
     return null;
   }, [activeNotes, currentUser, partner]);
 

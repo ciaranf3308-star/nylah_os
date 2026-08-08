@@ -48,17 +48,8 @@ export default function Countdowns({ calendar, nowMs, todayDateStr, setTab }: Pr
 
   const pinnedEvents = useMemo(()=>{
     const pins = (activeCalendar as any[]).filter((ev:any)=> ev.pinned_at || ev.pinnedAt || ev.isPinned || ev.pinned).sort((a:any,b:any)=> new Date(a.dueAt).getTime()-new Date(b.dueAt).getTime()).slice(0,2);
-    if(pins.length>0) return pins;
-    // fallback: nearest agreed future event in 14d to show countdown demo like reference
-    const in14 = nowMs + 14*86400000;
-    const nearest = (activeCalendar as any[]).filter((ev:any)=>{
-      const s:any=ev.status;
-      if(!(s==='agreed'||s==='accepted'||s==='yes'||s==='confirmed'||s==='proposed')) return false;
-      const ms=new Date(ev.dueAt).getTime();
-      return ms>nowMs && ms<=in14;
-    }).sort((a:any,b:any)=> new Date(a.dueAt).getTime()-new Date(b.dueAt).getTime()).slice(0,1);
-    return nearest as any[];
-  },[activeCalendar, nowMs]);
+    return pins;
+  },[activeCalendar]);
 
   if (pinnedEvents.length===0) return null;
 

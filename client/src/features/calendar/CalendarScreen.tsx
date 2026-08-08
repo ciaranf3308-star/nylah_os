@@ -593,6 +593,27 @@ function CalendarPageV2(props: any) {
     });
   }
 
+
+  // For agenda mode when viewing future month, show that month's events (fixes "changing month does nothing")
+  const monthKeyPrefix = `${y}-${String(m0+1).padStart(2,"0")}`;
+  const monthAllEvents = useMemo(()=> {
+    return combinedForMonth.filter((ev:any)=> {
+      const iso = (ev as any).start || (ev as any).dueAt;
+      const lk = localKeyFromIso(iso);
+      return !!lk && lk.startsWith(monthKeyPrefix);
+    }).sort((a:any,b:any)=> new Date((a as any).start|| (a as any).dueAt).getTime() - new Date((b as any).start|| (b as any).dueAt).getTime());
+  }, [combinedForMonth, monthKeyPrefix]);
+
+  const agendaMonthGrouped = useMemo(()=> {
+    const map = new Map<string, CalendarEvent[]>();
+    for(const ev of monthAllEvents){
+      const k = localKeyFromIso((ev as any).start || (ev as any).dueAt);
+      if(!k) continue;
+      if(!map.has(k)) map.set(k, []);
+      map.get(k)!.push(ev as any);
+    }
+    return Array.from(map.entries()).sort((a,b)=> a[0].localeCompare(b[0]));
+  }, [monthAllEvents]);
   const todayEvents = useMemo(()=> eventsForKey(todayKeyStr), [combinedForMonth, todayKeyStr, showHistory]);
   const tomorrowEvents = useMemo(()=> eventsForKey(tomorrowKeyStr), [combinedForMonth, tomorrowKeyStr, showHistory]);
   const laterEventsFlat = useMemo(()=> {
@@ -605,11 +626,19 @@ function CalendarPageV2(props: any) {
 
   function goPrevMonth(){
     const nm = new Date(viewMonth); nm.setMonth(nm.getMonth()-1);
-    setViewMonth(new Date(nm.getFullYear(), nm.getMonth(), 1));
+    const nv = new Date(nm.getFullYear(), nm.getMonth(), 1);
+    setViewMonth(nv);
+    const k = `${nv.getFullYear()}-${String(nv.getMonth()+1).padStart(2,"0")}-01`;
+    setSelected(k);
+    try{ localStorage.setItem("couple_v1_calendar_selected", k); }catch{}
   }
   function goNextMonth(){
     const nm = new Date(viewMonth); nm.setMonth(nm.getMonth()+1);
-    setViewMonth(new Date(nm.getFullYear(), nm.getMonth(), 1));
+    const nv = new Date(nm.getFullYear(), nm.getMonth(), 1);
+    setViewMonth(nv);
+    const k = `${nv.getFullYear()}-${String(nv.getMonth()+1).padStart(2,"0")}-01`;
+    setSelected(k);
+    try{ localStorage.setItem("couple_v1_calendar_selected", k); }catch{}
   }
   function goToday(){
     try {
@@ -623,6 +652,23 @@ function CalendarPageV2(props: any) {
       const d=new Date(); setViewMonth(new Date(d.getFullYear(), d.getMonth(),1)); setSelected(todayDublin);
     }
   }
+
+  // keep selected in sync when viewMonth jumps via picker
+  useEffect(()=>{
+    try{
+      const vmKey = `${viewMonth.getFullYear()}-${String(viewMonth.getMonth()+1).padStart(2,"0")}`;
+      if(!selected || !selected.startsWith(vmKey)){
+        // if selected not in this month, snap to 01 but only if month changed away from today? keep today if today in month
+        if(todayDublin.startsWith(vmKey)) { setSelected(todayDublin); }
+        else {
+          const k01 = `${vmKey}-01`;
+          setSelected(k01);
+          try{ localStorage.setItem("couple_v1_calendar_selected", k01); }catch{}
+        }
+      }
+    }catch{}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMonth]);
 
   // --- row components inline - V70 ownership clarity ---
   const AgendaRow = ({ ev, dateKey, compact }: { ev: CalendarEvent, dateKey?: string, compact?: boolean }) => {
@@ -649,6 +695,7 @@ function CalendarPageV2(props: any) {
       if (ev.status==="proposed") return proposer ? `by ${PERSONS[proposer as any]?.name||proposer}` : "Proposed";
       return ev.status;
     })();
+    const awaiting = (()=>{ const st=String((ev as any).status||''); if(st===`awaiting_${currentUser}`) return `Awaiting you`; if(st.startsWith('awaiting_')){ const who=st.replace('awaiting_',''); return `Awaiting ${who==='aisling'?'Aisling':'Ciarán'}`; } if(st==='proposed'){ const prop=(ev as any).proposer; if(prop && prop!==currentUser) return `Needs you`; if(prop && prop===currentUser) return `Awaiting ${prop==='aisling'?'Ciarán':'Aisling'}`; return "Proposed"; } if(st==='needs_discussion') return "Needs discussion"; return null; })();
     const sub = [loc, subStatus].filter(Boolean).join(" · ");
     return (
       <div className="w-full flex items-stretch gap-1.5">
@@ -766,6 +813,11 @@ function CalendarPageV2(props: any) {
                   const hasEv = evCount>0;
                   const isSel = c.isSelected;
                   const isToday = c.isToday;
+                  const attTypes = (()=>{ const s=new Set<string>(); for(const ev of dayEvs as any[]){ const at=(ev as any).attendees||["aisling","ciaran"]; if(at.length===2||at.length===0) s.add("both"); else s.add(at[0]); } return Array.from(s); })();
+                  const hasA = attTypes.includes("aisling"); const hasC = attTypes.includes("ciaran"); const hasB = attTypes.includes("both");
+                  const countCat = attTypes.length;
+                  const bgForCell = isSel ? '#121214' : (()=>{ if(!hasEv) return 'var(--card-bg)'; if(countCat===1){ if(hasA) return '#E9E6FF'; if(hasC) return '#FFE9E1'; if(hasB) return '#FFF2D8'; } if(hasA && hasC && !hasB) return 'linear-gradient(90deg, #E9E6FF 0 50%, #FFE9E1 50% 100%)'; if(hasA && hasB) return 'linear-gradient(90deg, #E9E6FF 0 50%, #FFF2D8 50% 100%)'; if(hasC && hasB) return 'linear-gradient(90deg, #FFE9E1 0 50%, #FFF2D8 50% 100%)'; if(hasA && hasC && hasB) return 'linear-gradient(90deg, #E9E6FF 0 33%, #FFE9E1 33% 66%, #FFF2D8 66% 100%)'; return '#F7EFE6'; })();
+                  const borderForCell = isSel ? '#121214' : isToday ? '#FF6B26' : hasEv ? (hasA && !hasC && !hasB ? '#C7BFFF' : hasC && !hasA && !hasB ? '#FFB59A' : '#E8DDD3') : 'var(--border)';
                   return (
                     <button
                       key={c.key}
@@ -774,23 +826,23 @@ function CalendarPageV2(props: any) {
                       className={"relative min-h-[44px] w-full rounded-[14px] grid place-items-center border transition-all active:scale-[0.96] py-2.5 " + (isSel ? "" : isToday ? "" : "")}
                       style={{
                         minHeight:44,
-                        background: isSel ? 'var(--text)' : isToday ? 'rgba(255,107,38,0.14)' : 'var(--card-bg)',
-                        color: isSel ? 'var(--app-bg)' : 'var(--text)',
-                        borderColor: isSel ? 'var(--text)' : isToday ? 'rgba(255,107,38,0.28)' : 'var(--border)',
-                        boxShadow: isSel ? '0 8px 20px rgba(0,0,0,0.22), 0 0 0 1px #121214 inset' : isToday ? '0 0 0 4px rgba(255,107,38,0.10), 0 4px 16px rgba(255,107,38,0.12)' : '0 1px 0 rgba(255,255,255,0.86) inset',
+                        background: bgForCell as any,
+                        color: isSel ? '#FFFEFB' : 'var(--text)',
+                        borderColor: borderForCell,
+                        borderWidth: hasEv && !isSel ? '1.5px' : '1px',
+                        boxShadow: isSel ? '0 8px 20px rgba(0,0,0,0.22), 0 0 0 1px #121214 inset' : isToday ? '0 0 0 4px rgba(255,107,38,0.12), 0 4px 16px rgba(255,107,38,0.12)' : hasEv ? '0 2px 8px rgba(0,0,0,0.06)' : '0 1px 0 rgba(255,255,255,0.86) inset',
                         fontFamily: 'Fraunces, var(--font-display)',
-                        fontWeight: isSel || isToday ? 600 : 500,
+                        fontWeight: isSel || isToday ? 700 : hasEv ? 600 : 500,
                         fontSize: '13px'
                       }}
                     >
                       <span className="leading-none">{c.day}</span>
                       {hasEv && (
-                        <span className="absolute bottom-[5px] left-1/2 -translate-x-1/2 flex gap-[2.5px] justify-center items-center">
+                        <span className="absolute bottom-[4px] left-1/2 -translate-x-1/2 flex gap-[3px] justify-center items-center">
                           {dayEvs.slice(0,3).map((ev:any,j:number)=> {
                             const at = (ev as any).attendees || ["aisling","ciaran"];
-                            const col = at.length===1 ? (at[0]==="aisling" ? "#A89FDA" : "#E07A5F") : "#8B7357";
-                            const pulse = isToday;
-                            return <span key={j} className="rounded-full" style={{ width:'5px', height:'5px', background:col, boxShadow: pulse?`0 0 6px ${col}88`: undefined, animation: pulse?'nylah-dot-subtle 2.8s infinite':undefined }} />;
+                            const col = at.length===1 ? (at[0]==="aisling" ? "#7B6EE6" : "#E07A5F") : "#8B7357";
+                            return <span key={j} className="rounded-full ring-1 ring-white/70" style={{ width:'6.5px', height:'6.5px', background:col }} />;
                           })}
                         </span>
                       )}
@@ -862,6 +914,31 @@ function CalendarPageV2(props: any) {
             </div>
           </div>
 
+          {/* When viewing a future month in agenda, show that month's events — fixes "changing month does nothing" */}
+          {(() => {
+            const vmKey = `${viewMonth.getFullYear()}-${String(viewMonth.getMonth()+1).padStart(2,"0")}`;
+            const todayVm = todayDublin.slice(0,7);
+            const isOtherMonth = vmKey !== todayVm;
+            if(isOtherMonth){
+              return (
+                <div className="space-y-3">
+                  <div className="rounded-[18px] border bg-[var(--card-bg)] px-4 py-3 flex items-center justify-between" style={{borderColor:"var(--border)"}}>
+                    <div className="text-[13px] font-[650]">Showing {viewMonth.toLocaleDateString("en-GB",{month:"long",year:"numeric"})}</div>
+                    <span className="text-[11px] text-[var(--muted)]">{monthAllEvents.length} events</span>
+                  </div>
+                  {agendaMonthGrouped.length===0 ? (
+                    <div className="rounded-[16px] border border-dashed bg-[var(--card-bg)] px-6 py-8 text-center text-[12px] text-[var(--muted)]">No events in {viewMonth.toLocaleDateString("en-GB",{month:"long"})}</div>
+                  ) : agendaMonthGrouped.map(([k, evs])=> (
+                    <div key={k} className="space-y-1.5">
+                      <div className="px-1 text-[11px] font-semibold tracking-[0.12em] uppercase text-[var(--muted)]">{toLongDateDublin(k).slice(0, -6)}</div>
+                      {evs.map(ev=> <AgendaRow key={ev.id+"-"+k} ev={ev as any} />)}
+                    </div>
+                  ))}
+                </div>
+              );
+            }
+            return null;
+          })()}
           <div className="rounded-[18px] border bg-[var(--card-bg)] px-3 py-3 flex items-center justify-between" style={{borderColor:"var(--border)"}}>
             <div className="flex items-center gap-2">
               <span className="grid h-[32px] w-[32px] place-items-center rounded-full border" style={{background:"#F9DCC0", borderColor:"#E8C5A6"}}>✦</span>

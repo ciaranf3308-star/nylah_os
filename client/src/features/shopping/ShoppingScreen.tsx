@@ -201,7 +201,7 @@ export function ShoppingScreen(props: any) {
   const nextRunLabel = tripFilter==="all" ? "Grocery run" : TRIPS.find(t=> t.id===tripFilter)?.label || "Grocery run";
 
   return (
-    <div className="w-full min-h-[100vh] bg-[#FFFBF8] pb-[128px]" style={{ fontFamily: "Inter, Instrument Sans, ui-sans" }}>
+    <div className="w-[100vw] ml-[calc(-50vw+50%)] min-h-[100vh] bg-[#FFFBF8] pb-[128px]" style={{ fontFamily: "Inter, Instrument Sans, ui-sans" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Instrument+Sans:wght@400;500;600&display=swap');
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -209,7 +209,7 @@ export function ShoppingScreen(props: any) {
       `}</style>
 
       {/* NEXT RUN card */}
-      <div className="w-full px-4 pt-5 max-w-[560px] mx-auto">
+      <div className="w-full px-5 pt-5">
         <div className="relative overflow-hidden rounded-[22px] px-5 pt-4 pb-4 border border-[#F4D8BF]/60" style={{ background:"linear-gradient(180deg,#FFE8D3 0%,#FFF1E5 100%)", boxShadow:"0 6px 24px rgba(0,0,0,0.05)" }}>
           {/* subtle wave */}
           <svg className="pointer-events-none absolute inset-0 w-full h-full opacity-60" viewBox="0 0 400 150" preserveAspectRatio="none"><path d="M 220 0 Q 260 40 220 80 T 220 160" stroke="#FFD4B8" strokeWidth="1.2" fill="none" opacity="0.6"/><path d="M 250 0 Q 290 45 250 85 T 250 160" stroke="#FFD4B8" strokeWidth="1" fill="none" opacity="0.4"/></svg>
@@ -233,7 +233,7 @@ export function ShoppingScreen(props: any) {
       </div>
 
       {/* add bar */}
-      <div className="w-full px-4 pt-4 max-w-[560px] mx-auto">
+      <div className="w-full px-5 pt-4">
         <div className="flex items-center gap-0 rounded-[18px] border bg-white px-2 h-[56px] shadow-[0_2px_10px_rgba(0,0,0,0.04)]" style={{ borderColor:"#E8DDD4" }}>
           <input ref={addInputRef} value={addText} onChange={e=> setAddText(e.target.value)} onKeyDown={e=> { if(e.key==='Enter'){ e.preventDefault(); if(addText.trim()) bulkAddFromText(addText); }}} placeholder="Add milk, eggs, sourdough..." className="flex-1 bg-transparent px-3 text-[14.5px] placeholder:text-[#9A8F89] outline-none" style={{ fontFamily:"Instrument Sans"}} />
           <div className="h-[28px] w-[1px] bg-[#EEE4DD] mx-1" />
@@ -245,7 +245,7 @@ export function ShoppingScreen(props: any) {
       </div>
 
       {/* filters */}
-      <div className="w-full max-w-[560px] mx-auto px-4 pt-3.5">
+      <div className="w-full px-5 pt-3.5">
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           {TRIPS.map(t=>{
             const activeChip = tripFilter===t.id;
@@ -260,7 +260,7 @@ export function ShoppingScreen(props: any) {
       </div>
 
       {/* To buy */}
-      <div className="w-full max-w-[560px] mx-auto px-4 pt-3">
+      <div className="w-full px-5 pt-3">
         <div className="flex items-center justify-between px-0.5 pb-2">
           <div className="text-[18px] font-[650] tracking-[-0.01em] text-[#1E1714]" style={{ fontFamily:"Fraunces, serif"}}>To buy</div>
           <span className="grid h-[22px] min-w-[22px] place-items-center rounded-full bg-[#EFE8E2] px-2 text-[11px] font-medium">{filteredTodo.length}</span>
@@ -285,7 +285,7 @@ export function ShoppingScreen(props: any) {
 
       {/* Buy again */}
       {buyAgain.length>0 && (
-        <div className="w-full max-w-[560px] mx-auto px-4 pt-5">
+        <div className="w-full px-5 pt-5">
           <div className="flex items-center justify-between pb-2">
             <div className="text-[16px] font-[600] text-[#1E1714]" style={{ fontFamily:"Fraunces, serif"}}>Buy again</div>
             <button onClick={()=> setBoughtOpen(o=>!o)} className="text-[12px] text-[#E05A1F] font-medium">{boughtOpen? "Hide" : "See all"}</button>
@@ -307,7 +307,7 @@ export function ShoppingScreen(props: any) {
       )}
 
       {/* Bought accordion */}
-      <div className="w-full max-w-[560px] mx-auto px-4 pt-4">
+      <div className="w-full px-5 pt-4">
         <button onClick={()=> setBoughtOpen(o=> !o)} className="w-full flex items-center justify-between rounded-[14px] border bg-[#EEEEE8] px-4 py-3 text-left" style={{ borderColor:"#E3DDD6"}}>
           <div className="flex items-center gap-3">
             <span className="grid h-[32px] w-[32px] place-items-center rounded-full bg-[#6E8D73] text-white">✓</span>
@@ -334,7 +334,7 @@ export function ShoppingScreen(props: any) {
       {/* Shop Mode */}
       {shopMode && createPortal(
         <div className="fixed inset-0 z-[80] bg-[#FFFBF8]">
-          <div className="w-full max-w-[560px] mx-auto px-5 pt-8 pb-6">
+          <div className="w-full px-5 pt-8 pb-6">
             <div className="flex items-center justify-between">
               <div className="text-[22px] font-[700]" style={{ fontFamily:"Fraunces, serif"}}>Shop mode</div>
               <button onClick={()=> setShopMode(false)} className="grid h-[36px] w-[36px] place-items-center rounded-full border bg-white" style={{ borderColor:"#E8DDD4"}}>✕</button>

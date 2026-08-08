@@ -1,8 +1,8 @@
 {
-  "build": "v194-onboard-tight-crop",
-  "builtAt": "2026-08-08T12:39:39Z",
-  "changelog": "onboard: tight crop focus 62% lower image to show mugs/table fully, eliminate huge cream gap, no white stripe, -86mt overlap into image, shelf card single \u2014 matches fridge boutique, fixes not-good screenshot",
-  "code": 194,
+  "build": "v195-shop-edge-to-edge",
+  "builtAt": "2026-08-08T12:40:41Z",
+  "changelog": "shop: edge-to-edge 100vw full-bleed like fridge (remove 560px centering + side borders), px-5 consistent, no boxed feel",
+  "code": 195,
   "mandatory": false,
-  "version": "194.0.0"
+  "version": "195.0.0"
 }

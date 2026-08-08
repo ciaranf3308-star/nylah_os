@@ -172,13 +172,14 @@ export async function remoteLoad(): Promise<RemoteData | null> {
     // Transitional merge: normalized may have 1 new event while legacy still holds 5 old events (ash-ciaran-2026)
     // FIX: Don't resurrect deleted calendar events. If normalized calendar has data, it's source of truth.
     // Only merge legacy calendar if normalized calendar is empty (true migration). Chores/shopping/notes still fallback.
+    // V186: chores/shopping/notes also must not resurrect after intentional delete-all. Only merge if ALL normalized empty (true fresh migrate) and legacy has data.
     if (hid === 'ash-ciaran-2026' || hid.startsWith('ash-')) {
       try {
         const { data: legacy, error: legErr } = await (sb as any).from(TABLE).select('*').eq('id', hid).maybeSingle()
         if (!legErr && legacy) {
           const lc = Array.isArray((legacy as any).calendar) ? (legacy as any).calendar : []
-          if (lc.length > 0 && calendar.length === 0) {
-            // only true migration case: normalized empty but legacy has data
+          if (lc.length > 0 && calendar.length === 0 && chores.length === 0 && shopping.length === 0 && notes.length === 0) {
+            // only true initial migration: all normalized empty
             const seen = new Set<string>(calendar.map((c:any)=> String(c.id)))
             for (const ev of lc) {
               if (!ev || !ev.id) continue
@@ -189,16 +190,12 @@ export async function remoteLoad(): Promise<RemoteData | null> {
               }
             }
           }
-          // same for chores/shopping/notes if normalized empty but legacy has them
-          if (chores.length === 0) {
+          const allEmpty = calendar.length===0 && chores.length===0 && shopping.length===0 && notes.length===0
+          if (allEmpty) {
             const lch = Array.isArray((legacy as any).chores) ? (legacy as any).chores : []
             if (lch.length>0) chores.push(...lch.filter((x:any)=> !x.deletedAt && !x.deleted_at))
-          }
-          if (shopping.length === 0) {
             const lsh = Array.isArray((legacy as any).shopping) ? (legacy as any).shopping : []
             if (lsh.length>0) shopping.push(...lsh.filter((x:any)=> !x.deletedAt && !x.deleted_at))
-          }
-          if (notes.length === 0) {
             const ln = Array.isArray((legacy as any).notes) ? (legacy as any).notes : []
             if (ln.length>0) notes.push(...ln.filter((x:any)=> !x.deletedAt && !x.deleted_at))
           }

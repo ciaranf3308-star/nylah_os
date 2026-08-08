@@ -1,8 +1,8 @@
 {
-  "build": "v185-calendar-delete-multiplayer",
-  "builtAt": "2026-08-08T12:23:00Z",
-  "changelog": "delete calendar true live: recurring occurrence override deleted true, single event hard delete + soft fallback, template whole series cascade, remoteSync no longer resurrects deleted via legacy merge, series/overrides/occurrence RLS allow nylah-% + delete",
-  "code": 185,
+  "build": "v186-chore-delete-true-live",
+  "builtAt": "2026-08-08T13:35:00Z",
+  "changelog": "chore delete true live: hard delete chores+occurrences+legacy couple_data, offline queue purge, legacy merge no resurrect single category when empty",
+  "code": 186,
   "mandatory": false,
-  "version": "185.0.0"
+  "version": "186.0.0"
 }

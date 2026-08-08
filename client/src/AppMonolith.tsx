@@ -3149,9 +3149,17 @@ function ChoresPage({
                         if(pct>=100){ 
                           clearInterval(holdRef.current); 
                           const nowISO=new Date().toISOString(); 
-                          setChores((pp:any)=> pp.map((x:any)=> x.id===editing.id ? {...x, deletedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser } : x)); 
+                          const delId = editing.id;
+                          setChores((pp:any)=> pp.map((x:any)=> x.id===delId ? {...x, deletedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser } : x)); 
                           setEditing(null); 
                           setHoldProgress(0);
+                          try{
+                            const hid = (():string|null=>{ try{ return (localStorage.getItem("couple_v1_household_id")||"").trim()||null }catch{return null}})();
+                            const sb = getSupabase();
+                            if (sb && hid) {
+                              (async()=>{ try{ await (sb as any).from('chores').delete().eq('id', delId).eq('household_id', hid);}catch{} try{ await (sb as any).from('chore_occurrences').delete().eq('id', delId).eq('household_id', hid);}catch{} try{ const {getQueue,persistQueue}=await import("./data/offlineQueue"); const q=await getQueue(); const n=q.filter((o:any)=>!(o.id===delId&&o.kind==='chore')); if(n.length!==q.length) await persistQueue(n as any);}catch{} })();
+                            }
+                          }catch{}
                           if(navigator.vibrate) try{navigator.vibrate([10,30,10])}catch{}
                         }
                       }, 16);
@@ -3170,9 +3178,17 @@ function ChoresPage({
                         if(pct>=100){ 
                           clearInterval(holdRef.current); 
                           const nowISO=new Date().toISOString(); 
-                          setChores((pp:any)=> pp.map((x:any)=> x.id===editing.id ? {...x, deletedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser } : x)); 
+                          const delId2 = editing.id;
+                          setChores((pp:any)=> pp.map((x:any)=> x.id===delId2 ? {...x, deletedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser } : x)); 
                           setEditing(null); 
                           setHoldProgress(0);
+                          try{
+                            const hid2 = (():string|null=>{ try{ return (localStorage.getItem("couple_v1_household_id")||"").trim()||null }catch{return null}})();
+                            const sb2 = getSupabase();
+                            if (sb2 && hid2) {
+                              (async()=>{ try{ await (sb2 as any).from('chores').delete().eq('id', delId2).eq('household_id', hid2);}catch{} try{ await (sb2 as any).from('chore_occurrences').delete().eq('id', delId2).eq('household_id', hid2);}catch{} try{ const {getQueue,persistQueue}=await import("./data/offlineQueue"); const q=await getQueue(); const n=q.filter((o:any)=>!(o.id===delId2&&o.kind==='chore')); if(n.length!==q.length) await persistQueue(n as any);}catch{} })();
+                            }
+                          }catch{}
                           if(navigator.vibrate) try{navigator.vibrate([10,30,10])}catch{}
                         }
                       }, 16);

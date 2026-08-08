@@ -1,8 +1,8 @@
 {
-  "build": "v184-calendar-boutique",
-  "code": 184,
-  "version": "184.0.0",
-  "changelog": "calendar pinned boutique card 164px crisp illustration 60% wash tangerine pill large 54px, grouping What\u2019s ahead + Today/Tomorrow/Later timeline + Pending 44px kind chip peach/sage/tan, fridge countdown 172px same card, dark polished, previous v183 shopping phrase fix",
+  "build": "v186-chore-delete-true-live",
+  "builtAt": "2026-08-08T13:35:00Z",
+  "changelog": "chore delete true live: hard delete chores+occurrences+legacy couple_data, offline queue purge, legacy merge no resurrect single category when empty",
+  "code": 186,
   "mandatory": false,
-  "builtAt": "2026-08-08T11:17:32Z"
+  "version": "186.0.0"
 }

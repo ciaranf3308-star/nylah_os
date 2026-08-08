@@ -5,6 +5,7 @@ import { ChoreIcon, ALL_CHORE_ICON_IDS, CATEGORY_MAP, ICON_CATEGORIES } from "..
 import type { ChoreIconId, IconCategory } from "../../lib/choreIcons";
 import { uid } from "../../shared/utils/helpers";
 import { toLocalKeyDublin, HOUSEHOLD_TZ } from "./choreScoring";
+import { getSupabase, getEffectiveRowId } from "../../lib/supabase";
 
 type Props = {
   active: ChoreV2[];
@@ -16,6 +17,35 @@ type Props = {
   toast: string|null;
   setToast: (s:string|null)=>void;
 };
+
+function hardDeleteChore(id: string) {
+  try {
+    const hid = getEffectiveRowId();
+    if (!hid) return;
+    const sb = getSupabase();
+    if (!sb) return;
+    // fire-and-forget: delete from normalized + occurrences + legacy couple_data + queue
+    (async () => {
+      try { await (sb as any).from('chores').delete().eq('id', id).eq('household_id', hid); } catch {}
+      try { await (sb as any).from('chore_occurrences').delete().eq('id', id).eq('household_id', hid); } catch {}
+      try {
+        const { data: row } = await (sb as any).from('couple_data').select('chores').eq('id', hid).maybeSingle();
+        if (row && Array.isArray((row as any).chores)) {
+          const filtered = (row as any).chores.filter((c:any)=> String(c.id)!==String(id));
+          if (filtered.length !== (row as any).chores.length) {
+            await (sb as any).from('couple_data').update({ chores: filtered, updated_at: new Date().toISOString() }).eq('id', hid);
+          }
+        }
+      } catch {}
+      try {
+        const { getQueue, persistQueue } = await import("../../data/offlineQueue");
+        const q = await getQueue();
+        const next = q.filter((o:any)=> !(o.id===id && o.kind==='chore'));
+        if (next.length !== q.length) await persistQueue(next as any);
+      } catch {}
+    })();
+  } catch {}
+}
 
 export function ChoreAdmin({ active, chores, setChores, currentUser, monthKey, templates, setToast }: Props) {
   const [editing, setEditing] = useState<ChoreV2|null>(null);
@@ -171,9 +201,12 @@ export function ChoreAdmin({ active, chores, setChores, currentUser, monthKey, t
                     if(pct>=100){ 
                       clearInterval(holdRef.current); 
                       const nowISO=new Date().toISOString(); 
-                      setChores((pp:any)=> pp.map((x:any)=> x.id===editing.id ? {...x, deletedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser } : x)); 
+                      const delId = editing.id;
+                      setChores((pp:any)=> pp.map((x:any)=> x.id===delId ? {...x, deletedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser } : x)); 
                       setEditing(null); 
                       setHoldProgress(0);
+                      hardDeleteChore(delId);
+                      try{ localStorage.setItem("couple_v1_last_local_write", nowISO);}catch{}
                       if(navigator.vibrate) try{navigator.vibrate([10,30,10])}catch{}
                     }
                   }, 16);
@@ -192,9 +225,12 @@ export function ChoreAdmin({ active, chores, setChores, currentUser, monthKey, t
                     if(pct>=100){ 
                       clearInterval(holdRef.current); 
                       const nowISO=new Date().toISOString(); 
-                      setChores((pp:any)=> pp.map((x:any)=> x.id===editing.id ? {...x, deletedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser } : x)); 
+                      const delId2 = editing.id;
+                      setChores((pp:any)=> pp.map((x:any)=> x.id===delId2 ? {...x, deletedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser } : x)); 
                       setEditing(null); 
                       setHoldProgress(0);
+                      hardDeleteChore(delId2);
+                      try{ localStorage.setItem("couple_v1_last_local_write", nowISO);}catch{}
                       if(navigator.vibrate) try{navigator.vibrate([10,30,10])}catch{}
                     }
                   }, 16);

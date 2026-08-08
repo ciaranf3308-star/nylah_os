@@ -1,8 +1,8 @@
 {
-  "build": "v199-notes-delete-100pc",
-  "builtAt": "2026-08-08T13:10:51Z",
-  "changelog": "notes delete 100%: tombstone deleted_ids localStorage to hide resurrects on reload until server confirms, prunes queue, matches pattern for reliable delete",
-  "code": 199,
+  "build": "v200-notes-restore",
+  "builtAt": "2026-08-08T13:14:26Z",
+  "changelog": "emergency restore: remove tombstone filter that hid all notes when local delete set corrupted, clear localStorage tombstone, back to v198 true-live delete logic",
+  "code": 200,
   "mandatory": false,
-  "version": "199.0.0"
+  "version": "200.0.0"
 }

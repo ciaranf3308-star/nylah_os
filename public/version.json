@@ -1,8 +1,8 @@
 {
-  "build": "v187-calendar-save-true-live",
-  "builtAt": "2026-08-08T11:47:29Z",
-  "changelog": "calendar save true live app-wide: direct hard create/update/delete via calendar_events normalized + legacy couple_data prune, enqueueOp chartered, safe queue no wipe on retries>=2, chore delete still hard live",
-  "code": 187,
+  "build": "v188-chore-create-true-live",
+  "builtAt": "2026-08-08T11:55:51Z",
+  "changelog": "chore create/update true live app-wide: direct hard create/update via chores normalized + queue, admin + deck add, calendar v187 carried",
+  "code": 188,
   "mandatory": false,
-  "version": "187.0.0"
+  "version": "188.0.0"
 }

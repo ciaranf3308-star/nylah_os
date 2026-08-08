@@ -19,6 +19,38 @@ import { ChoreOpen } from "./ChoreOpen";
 import { ChoreDone } from "./ChoreDone";
 import { ChoreAdmin } from "./ChoreAdmin";
 import { ChoreHistory } from "./ChoreHistory";
+import { getSupabase, getEffectiveRowId } from "../../lib/supabase";
+
+function hardPersistChore(chore:any, op:'create'|'update'|'delete'){
+  try{
+    const hid=getEffectiveRowId();
+    if(!hid) { console.warn('[chores hard] no hid'); return; }
+    const sb=getSupabase();
+    const id=String(chore?.id||'');
+    if(!id) return;
+    if(op==='delete'){
+      (async()=>{
+        try{ if(sb) await (sb as any).from('chores').delete().eq('id', id).eq('household_id', hid); }catch{}
+        try{ if(sb) await (sb as any).from('chore_occurrences').delete().eq('id', id).eq('household_id', hid); }catch{}
+        try{ if(sb){ const {data:row}=await (sb as any).from('couple_data').select('chores').eq('id', hid).maybeSingle(); if(row && Array.isArray((row as any).chores)){ const filtered=(row as any).chores.filter((c:any)=>String(c.id)!==id); if(filtered.length!==(row as any).chores.length) await (sb as any).from('couple_data').update({chores:filtered, updated_at:new Date().toISOString()}).eq('id', hid); } } }catch{}
+        try{ const {getQueue,persistQueue}=await import("../../data/offlineQueue"); const q=await getQueue(); const nxt=q.filter((o:any)=>!(o.id===id && o.kind==='chore')); if(nxt.length!==q.length) await persistQueue(nxt as any);}catch{}
+      })();
+      import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('chore','delete', id, hid, {id, deleted_at:new Date().toISOString()}); const {getQueue}=await import("../../data/offlineQueue"); const {default: sb2}=await import("../../lib/supabase").then(m=>({default:m.getSupabase()})); const q=await getQueue(); if(q.length>0){ const {drainOps}=await import("../../data/offlineQueue"); const cli=sb2; if(cli) await drainOps(cli as any); } }catch{} });
+      return;
+    }
+    const payload={...chore, household_id:hid, updated_at: chore?.updatedAt || chore?.updated_at || new Date().toISOString(), created_at: chore?.createdAt || chore?.created_at || new Date().toISOString()};
+    (async()=>{
+      try{
+        if(sb){
+          const row:any={ id, household_id:hid, data: payload, updated_at: payload.updated_at, created_at: payload.created_at };
+          if(payload.deletedAt || payload.deleted_at) row.deleted_at=payload.deletedAt||payload.deleted_at;
+          await (sb as any).from('chores').upsert(row, {onConflict:'id'});
+        }
+      }catch(e){ console.warn('[chores hard upsert fail]', e); }
+    })();
+    import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('chore', op, id, hid, payload); const {getQueue}=await import("../../data/offlineQueue"); const q=await getQueue(); if(q.length){ const {drainOps}=await import("../../data/offlineQueue"); const cli=sb; if(cli){ try{ await drainOps(cli as any);}catch{} } } }catch{} });
+  }catch(e){ console.warn('[hardPersistChore err]', e); }
+}
 
 function BottomSheet({ open, onClose, children, title }: { open: boolean; onClose: () => void; children: React.ReactNode; title?: string }) {
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -662,7 +694,7 @@ export default function ChoresScreen(props: any) {
               const mult = addBonus?1.15:1;
               const fd = addType==="one-off" ? undefined : (addWeekdays.some(Boolean) ? ["Mo","Tu","We","Th","Fr","Sa","Su"].filter((_,i)=>addWeekdays[i]).join(",") : addFreq);
               const nc:any={ id: uid("chk"), title:el.value.trim(), type:addType, frequency:addFreq, frequencyDetail: fd, createdAt:nowISO, updatedAt:nowISO, pain, basePoints:base, swipes:{aisling:null,ciaran:null}, status:"deck", assignedTo:null, multiplier:mult, timeWindowHours:24, icon: addIcon };
-              setChores((p:any)=> [nc, ...p]); setShowAdd(false);
+              setChores((p:any)=> [nc, ...p]); try{ hardPersistChore(nc,'create'); }catch{} setShowAdd(false);
               setAddPain(5); setAddBonus(false);
               triggerPointsPop(nc.id, base);
               setToast(`${nc.title} • ${base}pts ${addBonus?"1.15×":""} → deck`);

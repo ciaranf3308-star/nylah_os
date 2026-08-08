@@ -47,6 +47,16 @@ function hardDeleteChore(id: string) {
   } catch {}
 }
 
+function hardPersistChoreAdmin(chore:any, op:'create'|'update'){
+  try{
+    const hid=getEffectiveRowId(); if(!hid) return;
+    const sb=getSupabase(); const id=String(chore?.id||''); if(!id) return;
+    const payload={...chore, household_id:hid, updated_at: chore?.updatedAt||chore?.updated_at||new Date().toISOString(), created_at: chore?.createdAt||chore?.created_at||new Date().toISOString()};
+    (async()=>{ try{ if(sb){ const row:any={id, household_id:hid, data:payload, updated_at:payload.updated_at, created_at:payload.created_at}; if(payload.deletedAt||payload.deleted_at) row.deleted_at=payload.deletedAt||payload.deleted_at; await (sb as any).from('chores').upsert(row,{onConflict:'id'});} }catch{} })();
+    import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('chore', op, id, hid, payload); const {getQueue}=await import("../../data/offlineQueue"); const q=await getQueue(); if(q.length){ const {drainOps}=await import("../../data/offlineQueue"); const cli=sb; if(cli) try{await drainOps(cli as any);}catch{} } }catch{} });
+  }catch{}
+}
+
 export function ChoreAdmin({ active, chores, setChores, currentUser, monthKey, templates, setToast }: Props) {
   const [editing, setEditing] = useState<ChoreV2|null>(null);
   const [editTitle, setEditTitle] = useState("");
@@ -108,7 +118,7 @@ export function ChoreAdmin({ active, chores, setChores, currentUser, monthKey, t
       // This/Future split hint preserved: if future, update templateId too (semantic, not 720h)
       ...(futureEdit==="future" ? { templateId: editing.templateId || editing.id, futureScope: true } : {}),
     };
-    setChores((p:any)=> p.map((x:any)=> x.id===editing.id ? updated : x));
+    setChores((p:any)=> p.map((x:any)=> x.id===editing.id ? updated : x)); try{ hardPersistChoreAdmin(updated,'update'); }catch{}
     setEditing(null);
     if(navigator.vibrate){ try{navigator.vibrate(10)}catch{} }
   }
@@ -123,7 +133,7 @@ export function ChoreAdmin({ active, chores, setChores, currentUser, monthKey, t
             <button key={t.k} onClick={()=>{
               const nowISO=new Date().toISOString();
               const nc:any={ id: uid("chk"), title:t.title, type:"one-off", frequency: t.freq as any, createdAt:nowISO, updatedAt:nowISO, pain:6, basePoints:60, swipes:{aisling:null,ciaran:null}, status:"deck", assignedTo:null, multiplier:1, timeWindowHours:24, templateId:t.k, icon:(t as any).icon||"broom" };
-              setChores((p:any)=> [nc, ...p]);
+              setChores((p:any)=> [nc, ...p]); try{ hardPersistChoreAdmin(nc,'create'); }catch{}
               setToast(`${t.title} added`);
               setTimeout(()=>setToast(null),2500);
             }} className="h-[44px] rounded-[16px] border bg-[var(--card-bg)] text-[11px] font-semibold active:scale-[0.96] shadow-sm flex items-center justify-center gap-1" style={{borderColor:"var(--border)", minHeight:44, transition:"transform 180ms cubic-bezier(0.34,1.56,0.64,1)"}}><ChoreIcon id={t.icon} size={14} /> {t.k}</button>

@@ -136,6 +136,8 @@ export default function ChoresScreen(props: any) {
   const [addType, setAddType] = useState<"one-off"|"repeat">("one-off");
   const [showRules, setShowRules] = useState(false);
   const [reactionMap, setReactionMap] = useState<Record<string,string[]>>(()=>{ try{ const r=localStorage.getItem("couple_v1_chore_reactions"); return r?JSON.parse(r):{} }catch{return {}} });
+  const [undoStack, setUndoStack] = useState<ChoreV2[][]>([]);
+  const [lastSwipeToast, setLastSwipeToast] = useState<{dir:"left"|"right", title:string}|null>(null);
 
   const active = useMemo(()=> chores.filter(c=> !(c as any).deletedAt), [chores]);
 // one-time cleanup of test junk that survived earlier failed deletes (v186 test chore)
@@ -255,11 +257,48 @@ export default function ChoresScreen(props: any) {
         const ctx=new (window as any).AudioContext();
         const o=ctx.createOscillator(); const g=ctx.createGain();
         o.frequency.value= 440 + Math.min(pts*2, 320);
+        o.type="sine";
         o.connect(g); g.connect(ctx.destination);
-        g.gain.setValueAtTime(0.12, ctx.currentTime);
-        o.start(); o.stop(ctx.currentTime+0.12);
+        g.gain.setValueAtTime(0.14, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.22);
+        o.start(); o.stop(ctx.currentTime+0.22);
       }catch{}
     }
+  }
+
+  function pushUndoSnapshot(){
+    try{
+      setUndoStack(s=> {
+        const copy = [...chores] as any;
+        const nxt = [...s, copy];
+        return nxt.slice(-8);
+      });
+    }catch{}
+  }
+
+  function handleUndo(){
+    setUndoStack(s=>{
+      if(s.length===0) return s;
+      const last = s[s.length-1];
+      if(last){
+        setChores(last as any);
+        try{
+          // best-effort restore — rewrite last chores snapshot to DB queue
+          const hid=getEffectiveRowId();
+          if(hid){
+            const sb=getSupabase();
+            if(sb){
+              last.forEach((c:any)=>{
+                try{ (sb as any).from('chores').upsert({id:c.id, household_id:hid, data:c, updated_at:new Date().toISOString()}, {onConflict:'id'}); }catch{}
+              });
+            }
+          }
+        }catch{}
+        setToast("Undid last swipe");
+        setTimeout(()=> setToast(null),1600);
+      }
+      return s.slice(0,-1);
+    });
   }
 
   // Core delete — now primary action, not admin-only
@@ -283,6 +322,7 @@ export default function ChoresScreen(props: any) {
     const me = currentUser;
     const partner: PersonKey = me==="aisling"?"ciaran":"aisling";
     const nowISO=new Date().toISOString();
+    pushUndoSnapshot();
     const safeBaseSwipes = (currentCard.swipes as any) ?? {aisling:null, ciaran:null};
     const baseSwipes = safeBaseSwipes.a !== undefined || safeBaseSwipes.b !== undefined ? {aisling: safeBaseSwipes.a ?? null, ciaran: safeBaseSwipes.b ?? null} : safeBaseSwipes;
     if(dir==="right"){
@@ -293,19 +333,20 @@ export default function ChoresScreen(props: any) {
       if(otherSwipe==="right"){
         nextStatus="open";
         assigned=null;
-        setToast("RACE • first to do wins 1.15× bonus");
+        setToast("RACE • first to do wins 1.15× bonus — duel!");
       } else {
-        setToast(`${PERSONS[me].name} claimed ${currentCard.title} • ${currentCard.basePoints} pts`);
+        setLastSwipeToast({dir:"right", title: currentCard.title});
+        setToast(`${PERSONS[me].name} claimed ${currentCard.title} • ${currentCard.basePoints} pts — undo?`);
       }
       setChores((prev:any)=> prev.map((x:any)=> x.id===currentCard.id ? {...x, swipes: nextSwipes, status: nextStatus, assignedTo: assigned, updatedAt: nowISO, updatedBy: me, seen: true} : x));
       try{ hardPersistChore({...currentCard, swipes:nextSwipes, status:nextStatus, assignedTo:assigned, updatedAt:nowISO, updatedBy:me, seen:true},'update'); }catch{}
       setDragX(0);
-      setCombo(c=>c+1); triggerPointsPop(currentCard.id, currentCard.basePoints); if(nextStatus==="open") confettiByPoints(currentCard.basePoints);
+      setCombo(c=>c+1); triggerPointsPop(currentCard.id, currentCard.basePoints); if(nextStatus==="open") confettiByPoints(currentCard.basePoints+18);
       try{ import('../../lib/push').then(m=> (m as any).notifyOther(me as any, {title: `${(me==='aisling'?'Aisling':'Ciarán')} claimed ${currentCard.title}`, body: `${nextStatus==='open'?'Race — first wins 1.15×':'Your turn'}`, url: './?standalone'})) }catch{}
       try{ localStorage.setItem("couple_v1_last_local_write", nowISO); }catch{}
       try{ const cur = Number(localStorage.getItem("couple_v1_chore_streak")||0); localStorage.setItem("couple_v1_chore_streak", String(cur+1)); }catch{}
       if(navigator.vibrate){ try{navigator.vibrate(10)}catch{} }
-      setTimeout(()=> setToast(null), 2200);
+      setTimeout(()=> setToast(null), 2400);
       return;
     } else {
       const nextSwipes = { ...(baseSwipes as any), [me]: null } as any;
@@ -328,10 +369,11 @@ export default function ChoresScreen(props: any) {
       });
       setDragX(0);
       setCombo(0);
-      setToast(`Passed • ${currentCard.title} will resurface later`);
+      setLastSwipeToast({dir:"left", title: currentCard.title});
+      setToast(`Passed • ${currentCard.title} — will boomerang later • undo?`);
       try{ localStorage.setItem("couple_v1_last_local_write", nowISO); }catch{}
       if(navigator.vibrate){ try{navigator.vibrate([10,30])}catch{} }
-      setTimeout(()=> setToast(null), 1800);
+      setTimeout(()=> setToast(null), 2200);
       return;
     }
   }
@@ -440,6 +482,7 @@ export default function ChoresScreen(props: any) {
             setDragX={setDragX}
             setDragging={setDragging}
             onSwipe={handleSwipe}
+            onUndo={handleUndo}
             flippedId={flippedId}
             setFlippedId={setFlippedId as any}
             pointsPops={pointsPops}
@@ -451,7 +494,13 @@ export default function ChoresScreen(props: any) {
             showSkeletons={showSkeletons}
             setShowRules={setShowRules}
           />
-
+          {toast && undoStack.length>0 && lastSwipeToast && (
+            <div className="px-1 -mt-1">
+              <button onClick={handleUndo} className="w-full h-[40px] rounded-full border bg-[#FFFEFB] text-[12px] font-[580] flex items-center justify-center gap-2 shadow-sm active:scale-[0.99]" style={{borderColor:"#EDE2D2"}}>
+                <span className="h-2 w-2 rounded-full bg-[#E07A5F]" /> Undo {lastSwipeToast.dir==="right"?"claim":"pass"} — {lastSwipeToast.title.slice(0,18)} ↩
+              </button>
+            </div>
+          )}
           {feed.length>0 && (
             <div className="rounded-[22px] border bg-[var(--card-bg)] px-4 py-3 space-y-2" style={{borderColor:"var(--border)", boxShadow:"0 8px 24px rgba(0,0,0,0.06)"}}>
               <div className="text-[11px] uppercase tracking-[0.13em] text-[var(--muted)] font-semibold">Feed • 7d</div>

@@ -1,7 +1,8 @@
 import React from "react";
 
-// 20 chore-themed line-art icons — warm tactile doodle style matching DoodleBroom
-// All use currentColor, strokeWidth 1.6, round caps/joins, 24x24 viewBox
+// V210 — boutique 20 — upgraded from disgrace doodle to curated warm
+// Matches beirt boutique, not tech dashboard — washes 8-10%, 1.45px stroke
+
 export type ChoreIconId =
   | 'broom'
   | 'dishes'
@@ -29,44 +30,47 @@ type IconProps = { size?: number; className?: string; style?: React.CSSPropertie
 const baseProps = {
   fill: "none",
   stroke: "currentColor",
-  strokeWidth: 1.6,
+  strokeWidth: 1.45,
   strokeLinecap: "round" as const,
   strokeLinejoin: "round" as const,
 };
 
-const wrap = (children: React.ReactNode, size = 24) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" {...baseProps}>{children}</svg>
+const wrap = (children: React.ReactNode, size = 24, wash?: React.ReactNode) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...baseProps}>{wash}{children}</svg>
 );
 
-// Each icon as a function returning JSX
+const bg = (o=0.08) => <circle cx="12" cy="12.8" r="7.8" fill="currentColor" opacity={o}/>;
+
 export const CHORE_ICONS: Record<ChoreIconId, (props?: IconProps) => React.ReactElement> = {
-  broom: ({size=24}={}) => wrap(<><path d="M3 20 L11 12 M8 15 L10.5 17.5 M11 12 L18 5 L17 3.5 L14.5 2.5 L7.5 10 M14 8 L16.5 10.5" /><path d="M3 20 Q6 21.5 9 20 Q7 18 3 20" /></>, size),
-  dishes: ({size=24}={}) => wrap(<><ellipse cx="12" cy="7" rx="7" ry="2.2" /><path d="M5 7 V14 Q5 18 12 18 Q19 18 19 14 V7" /><path d="M8 11 Q12 13 16 11" /></>, size),
-  bins: ({size=24}={}) => wrap(<><path d="M6 6 H18 L17 20 H7 Z" /><path d="M4 6 H20" /><path d="M9 6 V4 H15 V6" /><path d="M10 10 V16 M14 10 V16" /></>, size),
-  laundry: ({size=24}={}) => wrap(<><path d="M4 7 H20 L19 20 H5 Z" /><circle cx="12" cy="13.5" r="4.5" /><circle cx="12" cy="13.5" r="1.8" /><path d="M8 7 V5 Q12 4 16 5 V7" /></>, size),
-  vacuum: ({size=24}={}) => wrap(<><path d="M15 3 L17 5 L11 16 L9 14 Z" /><path d="M9 14 L5 18 L6 20 L10 19 Z" /><path d="M17 5 L19 4.2 L20 6" /></>, size),
-  bathroom: ({size=24}={}) => wrap(<><path d="M7 6 H17 A2 2 0 0 1 19 8 V10 A6 6 0 0 1 12 16 A6 6 0 0 1 5 10 V8 A2 2 0 0 1 7 6 Z" /><path d="M9 16 V19 H15 V16" /><path d="M10 11 Q12 12 14 11" /></>, size),
-  cooking: ({size=24}={}) => wrap(<><path d="M4 9 H20 L19 13 Q18 19 12 19 Q6 19 5 13 Z" /><path d="M8 9 V6 H16 V9" /><path d="M9.5 14.5 Q12 15.5 14.5 14.5" /></>, size),
-  shopping: ({size=24}={}) => wrap(<><path d="M6 8 H18 L17 19 H7 Z" /><path d="M9 8 V6 A3 3 0 0 1 15 6 V8" /><path d="M9 12 H15" /></>, size),
-  dust: ({size=24}={}) => wrap(<><path d="M5 15 Q12 8 19 15" /><path d="M7 12 Q12 7 17 12" /><path d="M4 17 L20 17" strokeDasharray="1.5 2" /></>, size),
-  mop: ({size=24}={}) => wrap(<><path d="M14 4 L18 8 L8 18 Q6 19 4 17 Q6 15 8 13 L14 4" /><path d="M4 17 Q7 18.5 9.5 17" /></>, size),
-  windows: ({size=24}={}) => wrap(<><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M4 12 H20" /><path d="M12 4 V20" /><path d="M7 7 L11 11 M13 13 L17 17" opacity="0.5" /></>, size),
-  bed: ({size=24}={}) => wrap(<><path d="M4 13 H20 V19 H4 Z" /><path d="M4 13 Q12 9 20 13" /><path d="M7 10 Q9 8 11 10" /></>, size),
-  recycling: ({size=24}={}) => wrap(<><path d="M12 5 L15 9 H9 Z M16 14 L18.5 11 L20.5 14.5 L16 14 M8 14 L3.5 14.5 L5.5 11 L8 14" /><path d="M12 9 V14 M15.8 12.8 L13 14.5 M8.2 12.8 L11 14.5" /></>, size),
-  ironing: ({size=24}={}) => wrap(<><path d="M5 12 L14 6 L17 9 L8 16 Z" /><path d="M17 9 L19 11 L18 13 L15 11 Z" /><path d="M6 16 H12" /></>, size),
-  garden: ({size=24}={}) => wrap(<><path d="M12 4 Q13 7 12 10 Q11 7 12 4" /><path d="M12 10 Q9 12 8 16 Q12 15 12 10" /><path d="M12 10 Q15 12 16 16 Q12 15 12 10" /><path d="M8 18 Q12 20 16 18" /></>, size),
-  pet: ({size=24}={}) => wrap(<><ellipse cx="12" cy="14" rx="6" ry="5" /><circle cx="8" cy="8" r="1.5" /><circle cx="12" cy="7" r="1.5" /><circle cx="16" cy="8" r="1.5" /><circle cx="10" cy="12.5" r="0.8" fill="currentColor" /><circle cx="14" cy="12.5" r="0.8" fill="currentColor" /></>, size),
-  cleaning: ({size=24}={}) => wrap(<><path d="M7 7 L12 11 L18 5" /><circle cx="7" cy="7" r="1.2" fill="currentColor" stroke="none" /><circle cx="12" cy="11" r="1.2" fill="currentColor" stroke="none" /><circle cx="18" cy="5" r="1.2" fill="currentColor" stroke="none" /><path d="M6 16 Q9 13 12 16 Q15 19 18 16" /></>, size),
-  kitchen: ({size=24}={}) => wrap(<><path d="M8 3 V18 Q8 20 12 20 Q16 20 16 18 V3" /><path d="M8 6 H16" /><path d="M10 21 L14 21" /></>, size),
-  groceries: ({size=24}={}) => wrap(<><path d="M4 6 Q12 5 20 6 L18 18 H6 Z" /><path d="M8 10 L9 14 M12 10 L12.5 14 M16 10 L15 14" /><circle cx="10" cy="8" r="1" fill="currentColor" stroke="none" /></>, size),
-  tools: ({size=24}={}) => wrap(<><path d="M14.5 5.5 L17.5 8.5 L14 12 L10.5 15.5 L7 12 L11 8 Z" /><path d="M7 12 L4 18 L6 20 L12 17" /><circle cx="15.5" cy="6.5" r="1.2" /></>, size),
+  broom: ({size=24}={}) => wrap(<>
+    <path d="M18.6 4.2c-.6.4-1.5 1.1-2.9 2.4L9.2 13.1l-.8-.8L14.7 5.7c1.2-1.3 2-2.1 2.6-2.6.45-.38.92-.38 1.3 0 .4.37.4.9 0 1.35Z" fill="white" stroke="currentColor" strokeWidth="1.35"/>
+    <path d="M9.2 13.1l-1.7 1.8c-.65.7-1.7 1.5-2.9 2.2-.64.38-1.32.9-1.6 1.65-.14.38.12.8.5.92 1.1.34 2.1-.2 3.1-.8 1.05-.62 1.9-1.4 2.5-2.15l1.2-1.6-.2-1.9-1-.14Z" fill="currentColor" opacity="0.88"/>
+  </>, size, bg(0.06)),
+  dishes: ({size=24}={}) => wrap(<><ellipse cx="12" cy="7" rx="6.8" ry="2.3" fill="white" stroke="currentColor" strokeWidth="1.35"/><path d="M5.2 7.2V13.6Q5.2 17.8 12 17.8Q18.8 17.8 18.8 13.6V7.2" fill="white" stroke="currentColor" strokeWidth="1.35"/><path d="M7.8 11.3Q12 13 16.2 11.3" stroke="currentColor" strokeWidth="1" opacity="0.55"/></>, size, bg()),
+  bins: ({size=24}={}) => wrap(<><path d="M6 6.4H18L16.9 19.2H7.1L6 6.4Z" fill="white" stroke="currentColor" strokeWidth="1.35"/><path d="M4 6.4H20M9 6.4V4.5c0-.7.55-1.25 1.25-1.25h3.5c.7 0 1.25.55 1.25 1.25v1.9" stroke="currentColor" strokeWidth="1.25"/><path d="M10.2 10.6V15.9M13.8 10.6V15.9" stroke="currentColor" strokeWidth="1.1" opacity="0.85"/></>, size, bg()),
+  laundry: ({size=24}={}) => wrap(<><path d="M4.5 6.8H19.5L18.6 19.4H5.4L4.5 6.8Z" fill="white" stroke="currentColor" strokeWidth="1.35"/><circle cx="12" cy="13.3" r="4.2" fill="white" stroke="currentColor" strokeWidth="1.25"/><circle cx="12" cy="13.3" r="1.6" fill="currentColor" opacity="0.12" stroke="currentColor" strokeWidth="0.95"/><circle cx="12" cy="13.3" r="0.55" fill="currentColor"/></>, size, bg()),
+  vacuum: ({size=24}={}) => wrap(<><path d="M14.8 3.4l1.7 1.6-5.3 8.8-.9-.2-1.6-1.4L14.8 3.4Z" fill="white" stroke="currentColor" strokeWidth="1.3"/><path d="M8.7 12.2l-2.9 3.2c-.4.45-.7 1.1-.35 1.65.35.55.95.65 1.6.45l2.9-.9-.6-1.2-.6-1.2.95-2Z" fill="currentColor" opacity="0.16" stroke="currentColor" strokeWidth="1.15"/></>, size, bg(0.06)),
+  bathroom: ({size=24}={}) => wrap(<><path d="M7 6.2H17a2 2 0 0 1 2 2v1.6A6 6 0 0 1 12 16A6 6 0 0 1 5 9.8V8.2A2 2 0 0 1 7 6.2Z" fill="white" stroke="currentColor" strokeWidth="1.35"/><path d="M9 16V18.8H15V16" stroke="currentColor" strokeWidth="1.15"/></>, size, bg()),
+  cooking: ({size=24}={}) => wrap(<><path d="M4.2 9.1H19.8l-.9 3.7Q18 18.6 12 18.6Q6 18.6 5.1 12.8L4.2 9.1Z" fill="white" stroke="currentColor" strokeWidth="1.38"/><path d="M8 9.1V6.4c0-.75.6-1.35 1.35-1.35h5.3c.75 0 1.35.6 1.35 1.35v2.7" stroke="currentColor" strokeWidth="1.15"/></>, size, bg(0.09)),
+  shopping: ({size=24}={}) => wrap(<><path d="M6 8H18L16.9 18.9H7.1L6 8Z" fill="white" stroke="currentColor" strokeWidth="1.35"/><path d="M9 8V6A3 3 0 0 1 15 6V8" stroke="currentColor" strokeWidth="1.25"/><path d="M9.2 12.2H14.8" stroke="currentColor" strokeWidth="1.15"/></>, size, bg(0.09)),
+  dust: ({size=24}={}) => wrap(<><path d="M5 15.1Q12 8.2 19 15.1" stroke="currentColor" strokeWidth="1.25"/><path d="M7 12.1Q12 7.3 17 12.1" stroke="currentColor" strokeWidth="1.1" opacity="0.75"/><path d="M4 17.2H20" stroke="currentColor" strokeWidth="1" strokeDasharray="1.2 2.2" opacity="0.62"/></>, size, bg(0.06)),
+  mop: ({size=24}={}) => wrap(<><path d="M14.2 4.1L18.1 8.1L9.2 17.2Q7.6 18.6 5.5 18.2Q5.2 17.9 5.2 17.2Q6.9 15.9 8.2 14.4L14.2 4.1Z" fill="white" stroke="currentColor" strokeWidth="1.3"/><path d="M5.5 18.2Q7.8 19.6 9.8 18.1" stroke="currentColor" strokeWidth="1" fill="currentColor" opacity="0.14"/></>, size, bg(0.06)),
+  windows: ({size=24}={}) => wrap(<><rect x="4.2" y="4.2" width="15.6" height="15.6" rx="2.6" fill="white" stroke="currentColor" strokeWidth="1.35"/><path d="M4.2 12H19.8M12 4.2V19.8" stroke="currentColor" strokeWidth="1.05" opacity="0.65"/></>, size, bg(0.06)),
+  bed: ({size=24}={}) => wrap(<><path d="M4.2 13.1H19.8V18.6H4.2Z" fill="white" stroke="currentColor" strokeWidth="1.35"/><path d="M4.2 13.1Q12 9.2 19.8 13.1" fill="white" stroke="currentColor" strokeWidth="1.2"/><path d="M7 10.2Q9 8.2 11 10.2" stroke="currentColor" strokeWidth="1" opacity="0.68"/></>, size, bg()),
+  recycling: ({size=24}={}) => wrap(<><path d="M12 5L15 9H9Z" fill="white" stroke="currentColor" strokeWidth="1.2"/><path d="M15.8 13.8L18.2 10.9L20 14.1L15.8 13.8M8.2 13.8L4 14.1L5.8 10.9L8.2 13.8" stroke="currentColor" strokeWidth="1.15"/><path d="M12 9V13.5M15.2 12.6L13 14.2M8.8 12.6L11 14.2" stroke="currentColor" strokeWidth="1" opacity="0.78"/></>, size, bg(0.06)),
+  ironing: ({size=24}={}) => wrap(<><path d="M5.2 12L13.2 6.2L16.2 9.2L8.2 15.6H5.2Z" fill="white" stroke="currentColor" strokeWidth="1.32"/><path d="M16.2 9.2L18.6 11.6L17.7 13.1L15.1 11.2" fill="currentColor" opacity="0.12" stroke="currentColor" strokeWidth="1"/><path d="M6.2 16H11.8" stroke="currentColor" strokeWidth="1.05"/></>, size, bg()),
+  garden: ({size=24}={}) => wrap(<><path d="M12 10Q9.2 11.9 8.2 15.7Q11.8 14.9 12 10" fill="white" stroke="currentColor" strokeWidth="1.2"/><path d="M12 10Q14.8 11.9 15.8 15.7Q12.2 14.9 12 10" fill="white" stroke="currentColor" strokeWidth="1.2"/><path d="M8.2 17.8Q12 19.6 15.8 17.8" stroke="currentColor" strokeWidth="1.05"/></>, size, bg(0.09)),
+  pet: ({size=24}={}) => wrap(<><ellipse cx="12" cy="13.9" rx="5.8" ry="4.8" fill="white" stroke="currentColor" strokeWidth="1.35"/><circle cx="8.1" cy="8.1" r="1.45" fill="white" stroke="currentColor" strokeWidth="1.15"/><circle cx="12" cy="7.1" r="1.45" fill="white" stroke="currentColor" strokeWidth="1.15"/><circle cx="15.9" cy="8.1" r="1.45" fill="white" stroke="currentColor" strokeWidth="1.15"/><circle cx="10.2" cy="12.6" r="0.68" fill="currentColor"/><circle cx="13.8" cy="12.6" r="0.68" fill="currentColor"/></>, size, bg(0.09)),
+  cleaning: ({size=24}={}) => wrap(<><path d="M7 7L11.8 11.2L17.8 5.2" stroke="currentColor" strokeWidth="1.45"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="12" cy="11" r="1.2" fill="currentColor"/><circle cx="18" cy="5" r="1.2" fill="currentColor"/><path d="M6 16Q9 13 12 16Q15 19 18 16" stroke="currentColor" strokeWidth="1.1" opacity="0.65"/></>, size, bg()),
+  kitchen: ({size=24}={}) => wrap(<><path d="M8.2 3.2V17.6Q8.2 19.6 12 19.6Q15.8 19.6 15.8 17.6V3.2Z" fill="white" stroke="currentColor" strokeWidth="1.35"/><path d="M8.2 6.2H15.8" stroke="currentColor" strokeWidth="1.15"/><path d="M10.2 20.4H13.8" stroke="currentColor" strokeWidth="1.15"/></>, size, bg(0.06)),
+  groceries: ({size=24}={}) => wrap(<><path d="M4.2 6.2Q12 5 19.8 6.2L18 17.8H6L4.2 6.2Z" fill="white" stroke="currentColor" strokeWidth="1.32"/><path d="M8.2 10L9.2 13.8M12.2 10L12.7 13.8M16.2 10L15.2 13.8" stroke="currentColor" strokeWidth="1.05"/></>, size, bg(0.09)),
+  tools: ({size=24}={}) => wrap(<><path d="M14.5 5.5L17.5 8.5L14 12L10.5 15.5L7 12L11 8Z" fill="white" stroke="currentColor" strokeWidth="1.3"/><path d="M7 12L4.2 17.8L6 19.6L11.8 17" stroke="currentColor" strokeWidth="1.15"/><circle cx="15.5" cy="6.5" r="0.95" fill="white" stroke="currentColor" strokeWidth="1.05"/></>, size, bg()),
 };
 
 export function ChoreIcon({ id, size = 28, className, style }: { id: ChoreIconId | string; size?: number; className?: string; style?: React.CSSProperties }) {
   const key = (typeof id === 'string' ? id : 'broom') as ChoreIconId;
   const fn = (CHORE_ICONS as any)[key] || CHORE_ICONS.broom;
   const el = fn({ size, className, style });
-  // inject className/style if provided
   if (!className && !style) return el;
   return (
     <span className={className} style={style as any} aria-hidden="true">
@@ -75,7 +79,6 @@ export function ChoreIcon({ id, size = 28, className, style }: { id: ChoreIconId
   );
 }
 
-// Default mapping for legacy templates
 export const CHORE_ICON_BY_TEMPLATE: Record<string, ChoreIconId> = {
   Bins: 'bins',
   Dishes: 'dishes',

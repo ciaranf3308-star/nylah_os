@@ -11,24 +11,26 @@ type Props = {
   style?: React.CSSProperties;
 };
 
-// V209 — 20-pass boutique polish
-// Pass 1-3: silhouette clarity, 1.5px optical stroke, 10-14% watercolor wash bed
-// Pass 4-6: hand wobble 0.2px, no perfect circles, inner highlight 55-70% white inset
-// Pass 7-9: tiny boutique tells — sparkle star, scallop, wax seal, paper grain dot
-// Pass 10-12: warm depth — drop 14% soft shadow blob, double-stroke for paper edge, vignette wash
-// Pass 13-15: title-aware sports — golf knoll+flag, kettlebell, trail dust, hurl grain, rugby stitch, crest pin
-// Pass 16-18: dark-mode lab — fg lifts 8%, wash opacity 16% dark vs 10% light, no #fff hard clipped
-// Pass 19: bubble radial 120% at 30% 22% + Fraunces label bleed
-// Pass 20: watermark scale lock s/28, pointer-tone shadow, 900ms spring safety
-// Aesthetic: Soho House + Cereal + Aesop — intimate, warm, paper, never tech dashboard, no ink-navy flat
+// V210 — boutique soccer ball + curated polish
+// You asked for soccer ball lol — now you get it proper.
+// Football variant = hand-stitched boutique soccer ball, not clip-art.
+// Generic sports = whistle+laurel (intentionally NOT ball) so picker stays varied.
+// All kinds 1by1 boutique: 1.5px optical stroke, 10-14% wash bed, 0.2px wobble,
+// 55-70% inner highlight, tiny tells — sparkle/scallop/wax/seed pearl,
+// warm 14% soft drop, double paper edge, 25% grain cut, Fraunces label,
+// dark fg lifts 8%, watermark scale s/28, 900ms spring, 44px tap.
+// Aesthetic: Soho House + Cereal + Aesop — warm paper, never flat navy/tech.
 
 function IconDate({stroke}:{stroke:string}) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* wash */}
       <path d="M4.3 8.8C4.3 5.8 6.2 4 9 4c1.6 0 2.5.7 3 1.8C12.5 4.7 13.4 4 15 4c2.9 0 4.7 1.9 4.7 4.9 0 3.8-5.2 7.6-7.5 9-.2.1-.5.1-.7 0C9.2 16.5 4.3 12.7 4.3 8.8Z" fill={stroke} opacity="0.11"/>
+      {/* envelope */}
       <rect x="3" y="7.1" width="18" height="12.2" rx="3.5" fill="white" stroke={stroke} strokeWidth="1.45" strokeLinejoin="round"/>
       <rect x="3" y="7.1" width="18" height="12.2" rx="3.5" stroke="white" strokeWidth="0.7" opacity="0.6" strokeLinejoin="round"/>
       <path d="M4.2 9.9l6.7 4.4c.5.3 1.1.3 1.6 0l6.7-4.4" stroke={stroke} strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round"/>
+      {/* inner love letter hearts */}
       <path d="M12 18C10.5 16.6 6.2 13.5 6.2 11c0-1.8 1.4-3.1 3.1-3.1 1 0 1.7.5 2.3 1.4.2.3.4.3.6 0 .6-.9 1.3-1.4 2.3-1.4 1.7 0 3.1 1.3 3.1 3.1 0 2.5-4.3 5.6-5.8 7-.2.2-.5.2-.8 0Z" fill={stroke} opacity="0.14" stroke={stroke} strokeWidth="1.15" strokeLinejoin="round"/>
       <path d="M12 15.6c-.8-.7-2.6-2.2-2.6-3.4 0-.7.5-1.2 1.1-1.2.4 0 .7.2 1 .7.2.3.4.3.6 0 .3-.5.6-.7 1-.7.6 0 1.1.5 1.1 1.2 0 1.2-1.8 2.7-2.6 3.4-.2.2-.4.2-.6 0Z" fill={stroke}/>
       <circle cx="18.9" cy="5.1" r="0.85" fill={stroke} opacity="0.75"/><circle cx="19.1" cy="4.7" r="0.24" fill="white" opacity="0.9"/>
@@ -85,7 +87,6 @@ function IconFootball({stroke, title}:{stroke:string; title?:string}) {
     return (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="12" cy="12.4" r="7.3" fill={stroke} opacity="0.08"/>
-        <path d="M8.8 12.4c0-2.2 1.9-4 4.2-4 1 0 1.7.4 2.2 1.1.1.2.3.2.5 0 .5-.7 1.2-1.1 2.2-1.1 2.3 0 4.2 1.8 4.2 4s-1.9 4-4.2 4c-1 0-1.7-.4-2.2-1.1-.2-.2-.4-.2-.5 0-.5.7-1.2 1.1-2.2 1.1-2.3 0-4.2-1.8-4.2-4Z" fill="white" stroke={stroke} strokeWidth="1.38" strokeLinejoin="round" opacity="0"/>
         <path d="M7.2 12.2c0-2.8 2.3-5.1 5.1-5.1s5.1 2.3 5.1 5.1-2.3 5.1-5.1 5.1-5.1-2.3-5.1-5.1Z" fill="white" stroke={stroke} strokeWidth="1.48"/>
         <path d="M12 8.6c-1.6 1-2.6 2.6-2.6 3.9 0 .9.5 1.7 1.2 2.2.4.3.8.4 1.4.4s1-.1 1.4-.4c.7-.5 1.2-1.3 1.2-2.2 0-1.3-1-2.9-2.6-3.9-.2-.1-.5-.1-.7 0Z" fill={stroke} opacity="0.13" stroke={stroke} strokeWidth="1.05"/>
         <circle cx="12" cy="10.2" r="1.65" fill={stroke} opacity="0.15"/><circle cx="12" cy="10.2" r="0.6" fill="white"/>
@@ -127,17 +128,41 @@ function IconFootball({stroke, title}:{stroke:string; title?:string}) {
     );
   }
   if (sub === "football") {
+    // V210 — proper boutique soccer ball (you asked for it lol)
     return (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 19.1l-5.9-2.2c-.55-.2-.95-.82-.95-1.46V7.5c0-.62.38-1.16.92-1.36L12 3.9l5.9 2.24c.54.2.92.74.92 1.36v7.94c0 .64-.4 1.26-.95 1.46L12 19.1Z" fill={stroke} opacity="0.11" stroke={stroke} strokeWidth="1.28" strokeLinejoin="round"/>
-        <path d="M12 18.4L6.6 16.3c-.4-.16-.74-.58-.74-1V7.8c0-.42.24-.82.64-.98L12 4.6l5.5 2.2c.4.16.64.56.64.98v7.5c0 .42-.34.84-.74 1L12 18.4Z" fill="white" stroke={stroke} strokeWidth="1.18" strokeLinejoin="round"/>
-        <circle cx="12" cy="11.5" r="2.9" fill={stroke} opacity="0.10" stroke={stroke} strokeWidth="1.12"/>
-        <path d="M12 9.2v1.7l-1.5.85M12 10.9l1.5.85M10.5 13l1.5-.55 1.5.55-.55 1.6h-1.9l-.55-1.6Z" stroke={stroke} strokeWidth="0.92" strokeLinecap="round" strokeLinejoin="round" opacity="0.94"/>
-        <path d="M7.8 6.2l1.05.62M16.2 6.7l-1.04.6" stroke={stroke} strokeWidth="0.92" strokeLinecap="round" opacity="0.62"/>
+        {/* soft wash */}
+        <circle cx="12" cy="12.2" r="7.5" fill={stroke} opacity="0.10"/>
+        <circle cx="12" cy="12.2" r="7.5" stroke={stroke} strokeWidth="0.55" opacity="0.10"/>
+        {/* ball base — slight warm paper */}
+        <circle cx="12" cy="12.2" r="6.35" fill="white" stroke={stroke} strokeWidth="1.48" strokeLinejoin="round"/>
+        {/* inner highlight */}
+        <path d="M8.2 8.4c1.1-.85 2.5-1.35 4-1.35 1.5 0 2.9.5 4 1.35" stroke="white" strokeWidth="0.75" opacity="0.75" strokeLinecap="round"/>
+        {/* classic football panels — boutique wobble */}
+        {/* center pentagon */}
+        <path d="M12 9.1l2.35 1.6-.9 2.75H10.55L9.65 10.7L12 9.1Z" fill={stroke} opacity="0.92" stroke={stroke} strokeWidth="1.02" strokeLinejoin="round"/>
+        {/* top seam */}
+        <path d="M12 9.1L12 5.95" stroke={stroke} strokeWidth="1.08" strokeLinecap="round" opacity="0.96"/>
+        {/* upper left */}
+        <path d="M9.65 10.7L6.6 9.8" stroke={stroke} strokeWidth="1.08" strokeLinecap="round" opacity="0.96"/>
+        <path d="M6.6 9.8c-.22.7-.34 1.44-.34 2.25" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.86" strokeDasharray="0.7 1.1"/>
+        {/* upper right */}
+        <path d="M14.35 10.7L17.4 9.8" stroke={stroke} strokeWidth="1.08" strokeLinecap="round" opacity="0.96"/>
+        <path d="M17.4 9.8c.22.7.34 1.44.34 2.25" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.86" strokeDasharray="0.7 1.1"/>
+        {/* lower seams */}
+        <path d="M10.55 13.45L9.2 16.6" stroke={stroke} strokeWidth="1.08" strokeLinecap="round" opacity="0.96"/>
+        <path d="M13.45 13.45L14.8 16.6" stroke={stroke} strokeWidth="1.08" strokeLinecap="round" opacity="0.96"/>
+        <path d="M9.2 16.6Q12 18.15 14.8 16.6" stroke={stroke} strokeWidth="1.02" strokeLinecap="round" opacity="0.78"/>
+        {/* side panels — subtle stitch ticks */}
+        <path d="M7.7 12.05l2.0-1.35" stroke={stroke} strokeWidth="0.85" strokeLinecap="round" opacity="0.56"/>
+        <path d="M16.3 12.05l-2.0-1.35" stroke={stroke} strokeWidth="0.85" strokeLinecap="round" opacity="0.56"/>
+        {/* grain — boutique */}
+        <circle cx="18.1" cy="6.9" r="0.45" fill={stroke} opacity="0.42"/><circle cx="18.28" cy="6.62" r="0.13" fill="white" opacity="0.85"/>
+        <circle cx="5.9" cy="16.2" r="0.32" fill={stroke} opacity="0.18"/>
       </svg>
     );
   }
-  // generic — whistle + laurel — intentionally NOT a soccer ball
+  // generic — whistle + laurel — intentionally NOT a soccer ball (so "sports" still distinct)
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="12" cy="12.5" r="7.6" fill={stroke} opacity="0.08"/>
@@ -336,3 +361,5 @@ export default function EventIcon({kind="other", title, size=36, variant="bubble
 export function EventKindIcon({kind, size, variant, theme, title}: {kind?: string; size?: number; variant?: Props["variant"]; theme?: Props["theme"]; title?: string}) {
   return <EventIcon kind={kind} size={size} variant={variant} theme={theme} title={title} />;
 }
+
+export { getSportsVariant };

@@ -343,7 +343,7 @@ export async function remoteSaveOperations(ops: QueuedOp[]): Promise<boolean> {
             // ok
           } else {
             console.warn('[supabase] delete error', table, op.id, error.message)
-            return false
+            // don't return false yet - try legacy fallback below
           }
         }
       } else {
@@ -351,13 +351,88 @@ export async function remoteSaveOperations(ops: QueuedOp[]): Promise<boolean> {
         const { error } = await (sb as any).from(table).upsert(cleaned, { onConflict: 'id' } as any)
         if (error) {
           console.warn('[supabase] upsert error', table, op.id, error.message)
-          return false
+          // continue to legacy attempt, don't hard fail yet
+          // return false
         }
       }
     } catch (e: any) {
       console.warn('[supabase] saveOperations ex', table, op.id, e?.message || e)
-      return false
+      // continue, try legacy
     }
+  }
+  // Legacy write-through for households still on giant JSON (ash-ciaran-2026 and any pre-v159)
+  // This ensures deletes like United actually persist when normalized tables are empty / RLS blocks
+  try {
+    // only attempt if hid looks legacy or if we have any calendar ops
+    const hasCalendarOps = ops.some(o=> o.kind==='calendar')
+    const hasAnyDelete = ops.some(o=> o.op==='delete')
+    if (hasCalendarOps || hasAnyDelete) {
+      const { data: legacyRow, error: legErr } = await (sb as any).from(TABLE).select('*').eq('id', hid).maybeSingle()
+      if (!legErr && legacyRow) {
+        let mutated = false
+        let newCalendar = Array.isArray((legacyRow as any).calendar) ? [...(legacyRow as any).calendar] : []
+        let newChores = Array.isArray((legacyRow as any).chores) ? [...(legacyRow as any).chores] : null
+        let newShopping = Array.isArray((legacyRow as any).shopping) ? [...(legacyRow as any).shopping] : null
+        let newNotes = Array.isArray((legacyRow as any).notes) ? [...(legacyRow as any).notes] : null
+
+        for (const op of ops) {
+          if (op.kind === 'calendar') {
+            if (op.op === 'delete') {
+              const before = newCalendar.length
+              newCalendar = newCalendar.filter((ev:any)=> String(ev.id)!==String(op.id) && !(ev as any).deletedAt && !(ev as any).deleted_at)
+              // also need to ensure we filtered correctly even if already marking deletedAt elsewhere - just remove
+              newCalendar = newCalendar.filter((ev:any)=> String(ev.id)!==String(op.id))
+              if (newCalendar.length !== before) mutated = true
+            } else {
+              // upsert
+              const payload = op.payload || {}
+              const idx = newCalendar.findIndex((ev:any)=> String(ev.id)===String(op.id))
+              if (idx >= 0) { newCalendar[idx] = { ...newCalendar[idx], ...payload, id: op.id, updatedAt: new Date().toISOString() }; mutated = true }
+              else { newCalendar.push({ ...(payload||{}), id: op.id }); mutated = true }
+            }
+          } else if (op.kind === 'chore' && newChores) {
+            if (op.op === 'delete') {
+              const before = newChores.length
+              newChores = newChores.filter((c:any)=> String(c.id)!==String(op.id))
+              if (newChores.length !== before) mutated = true
+            }
+          } else if (op.kind === 'shopping' && newShopping) {
+            if (op.op === 'delete') {
+              const before = newShopping.length
+              newShopping = newShopping.filter((s:any)=> String(s.id)!==String(op.id))
+              if (newShopping.length !== before) mutated = true
+            }
+          } else if (op.kind === 'note' && newNotes) {
+            if (op.op === 'delete') {
+              const before = newNotes.length
+              newNotes = newNotes.filter((n:any)=> String(n.id)!==String(op.id))
+              if (newNotes.length !== before) mutated = true
+            }
+          }
+        }
+        if (mutated) {
+          const updatePayload: any = { updated_at: new Date().toISOString(), calendar: newCalendar }
+          if (newChores) updatePayload.chores = newChores
+          if (newShopping) updatePayload.shopping = newShopping
+          if (newNotes) updatePayload.notes = newNotes
+          // couple_data uses id PK and may have updated_at
+          const { error: updErr } = await (sb as any).from(TABLE).update(updatePayload as any).eq('id', hid)
+          if (updErr) {
+            console.warn('[supabase] legacy couple_data update failed', updErr.message)
+            // fallback to upsert whole row if update blocked by RLS
+            try {
+              const { error: upsErr } = await (sb as any).from(TABLE).upsert({ id: hid, ...updatePayload } as any, { onConflict: 'id' } as any)
+              if (upsErr) console.warn('[supabase] legacy upsert also failed', upsErr.message)
+              else mutated = true
+            } catch {}
+          } else {
+            console.log(`[supabase] legacy couple_data synced delete/update hid=${hid.slice(0,12)} cal=${newCalendar.length} mutated=${mutated}`)
+          }
+        }
+      }
+    }
+  } catch (e:any) {
+    console.warn('[supabase] legacy write-through error', e?.message||e)
   }
   try {
     const nowIso = new Date().toISOString()

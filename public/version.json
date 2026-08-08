@@ -1,8 +1,8 @@
 {
-  "build": "v219-scroll-fix-ptr",
-  "builtAt": "2026-08-08T19:22:00Z",
-  "changelog": "V219 fix scrolling broken: remove flex-1 overflow constraints in standalone so window scrolls naturally, remove preventDefault that blocked scroll, custom PTR now passive non-blocking",
-  "code": 219,
+  "build": "v220-scroll-rescue",
+  "builtAt": "2026-08-08T19:28:00Z",
+  "changelog": "V220 rescue scrolling: remove all nested overflow-hidden h-800px traps, standalone and browser both use window scroll natural flow, strip custom PTR handlers that blocked touch, fixed centered nav 68px 22px remains",
+  "code": 220,
   "mandatory": false,
-  "version": "219.0.0"
+  "version": "220.0.0"
 }

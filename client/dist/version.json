@@ -1,8 +1,8 @@
 {
-  "build": "v216-boutique-nav-fix",
-  "builtAt": "2026-08-08T19:05:00Z",
-  "changelog": "V216 fix nav disappearing: restore fixed left0 right0 margin auto centered width calc(100%-24) max392, escapes phone overflow-hidden, keeps floating 68px 22px dock + tab persistence + boutique SVG",
-  "code": 216,
+  "build": "v217-allow-pull-refresh",
+  "builtAt": "2026-08-08T19:10:00Z",
+  "changelog": "V217 allow native pull-to-refresh: revert overscroll-behavior contain to auto and touch-action pan-y to auto, tab persistence via LS+URL keeps current tab on reload, nav stays fixed centered",
+  "code": 217,
   "mandatory": false,
-  "version": "216.0.0"
+  "version": "217.0.0"
 }

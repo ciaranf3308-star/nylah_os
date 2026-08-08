@@ -206,17 +206,17 @@ html[data-theme="ink"] #root,
   background: #121214 !important;
 }
 
-/* pull-to-refresh stickiness: prevent scroll chain reset + keep overscroll contained */
+/* pull-to-refresh: allow native drag-to-refresh, tab persistence keeps you on same tab via LS+?tab */
 html, body {
-  overscroll-behavior-y: contain;
+  overscroll-behavior-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 #root {
-  overscroll-behavior-y: contain;
+  overscroll-behavior-y: auto;
 }
 .hatch-space-root, [data-hatch-space-root] {
-  overscroll-behavior-y: contain;
-  touch-action: pan-y;
+  overscroll-behavior-y: auto;
+  touch-action: auto;
 }
 
 /* ========== 4) COMPONENTS ========== */

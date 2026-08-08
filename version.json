@@ -1,8 +1,8 @@
 {
-  "build": "v221-football-boutique",
-  "builtAt": "2026-08-08T19:40:00Z",
-  "changelog": "V221 football boutique v2: obviously football not dust, warm stitched leather panels centre pentagon deep terracotta, solid seams, paper highlight, watermark opacity 0.88 for football so pinned card crisp, scroll rescue kept",
-  "code": 221,
+  "build": "v222-football-worldclass",
+  "builtAt": "2026-08-08T19:48:00Z",
+  "changelog": "V222 world-class football: spherical construction 72° rhythm, letterpress double rim, tapered curved seams, 11 o'clock paper crescent, true penta grain, no dasharray, sync scroll rescue kept",
+  "code": 222,
   "mandatory": false,
-  "version": "221.0.0"
+  "version": "222.0.0"
 }

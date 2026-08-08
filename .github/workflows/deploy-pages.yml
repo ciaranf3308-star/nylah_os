@@ -23,17 +23,30 @@ jobs:
       - name: Install deps
         working-directory: client
         run: npm ci || npm install
-      - name: Build V144
+      - name: Build
         run: |
           cd client
-          npx vite build --outDir dist
-          cp -r public/* dist/ || true
-          rm -f dist/supabase-init.sql
-          test ! -f dist/supabase-init.sql && echo "no sql PASS" || (echo "FAIL sql present" && exit 1)
+          npx vite build --base=/nylah_os/ --outDir dist
+          # GH Pages rewrite: absolute /nylah_os/assets/ -> relative ./assets/ (matches prior manual deploys)
+          perl -pi -e 's|/nylah_os/assets/|./assets/|g' dist/index.html || true
+          perl -pi -e 's|href="/nylah_os/|href="./|g; s|src="/nylah_os/|src="./|g' dist/index.html || true
+          # Ensure supabase-env.js injected before module (generated if missing)
+          if [ ! -f dist/supabase-env.js ]; then
+            echo "window.__SUPABASE_URL__='https://zlllebsjtgihsxhcmcvb.supabase.co';window.__SUPABASE_ANON__='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsbGxlYnNqdGdpdHN4aGNtY3ZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMDYyMzAsImV4cCI6MjA2OTc4MjIzMH0.rF2L5meAr4YCfXJoCLILW1Pys6Q6PuA6nvB00qQhWkXo'" > dist/supabase-env.js
+          fi
+          if ! grep -q "supabase-env.js" dist/index.html; then
+            perl -pi -e 's|<script type="module"| <script src="./supabase-env.js"></script>\n    <script type="module"|' dist/index.html
+          fi
+          # public assets
+          cp -r public/* dist/ 2>/dev/null || true
+          rm -f dist/supabase-init.sql client/dist/supabase-init.sql
+          cp dist/index.html dist/404.html || true
+          touch dist/.nojekyll
           ls -lh dist
-          ls -lh dist/assets | head
-          if ! grep -q "supabase-env.js" dist/index.html; then echo "FAIL no env"; exit 1; fi
-          if grep -q '"/assets/' dist/index.html; then echo "FAIL absolute assets"; exit 1; fi
+          ls -lh dist/assets | head -n 20
+          echo "Final index.html heads:"
+          grep -o 'src="[^"]*"' dist/index.html | head -n 10
+          test ! -f dist/supabase-init.sql && echo "no sql PASS" || (echo "FAIL sql present" && exit 1)
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact

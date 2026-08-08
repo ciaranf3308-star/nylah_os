@@ -1,8 +1,8 @@
 {
-  "build": "v196-notes-boutique-ux",
-  "builtAt": "2026-08-08T12:50:02Z",
-  "changelog": "notes boutique overhaul: header card warm tape + search All +, featured polaroid with FROM chip + lined paper + script moments, older pill rows, 100vw edge-to-edge like fridge/shop, bottom peach/sage arches from asset",
-  "code": 196,
+  "build": "v197-notes-fix-dupe-and-arch",
+  "builtAt": "2026-08-08T12:52:15Z",
+  "changelog": "notes fix: remove dupe Notes header, lined paper behind not over, no pin emoji clipping, arches subtle behind (0.4 opacity no covering), tighten older rows",
+  "code": 197,
   "mandatory": false,
-  "version": "196.0.0"
+  "version": "197.0.0"
 }

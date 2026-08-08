@@ -108,20 +108,13 @@ function NotesMemoPage(props: any) {
   }
 
   return (
-    <div className="w-[100vw] ml-[calc(-50vw+50%)] min-h-[100vh] bg-[#FFFBF6] pb-[136px] relative overflow-hidden">
+    <div className="w-[100vw] ml-[calc(-50vw+50%)] min-h-[100vh] bg-[#FFFBF6] pb-[128px] relative overflow-hidden">
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Pinyon+Script&display=swap');`}</style>
 
-      {/* Top header — serif Notes + C pill, like fridge/shop */}
-      <div className="w-full px-5 pt-5 flex items-start justify-between">
-        <h1 className="text-[40px] leading-[0.95] font-[700] tracking-[-0.02em] text-[#221B18]" style={{fontFamily:"Fraunces, serif"}}>Notes</h1>
-        <div className="grid h-10 w-10 place-items-center rounded-full bg-[#FBDBC0] text-[#4B3730] text-[14px] font-semibold">C</div>
-      </div>
-
-      {/* Header card — warm paper + tape */}
-      <div className="w-full px-5 pt-3">
-        <div className="relative overflow-hidden rounded-[20px] border border-[#F2DDC4]/70 px-5 pt-5 pb-4" style={{background:"linear-gradient(180deg,#FEECD6 0%,#FEF5E7 100%)", boxShadow:"0 8px 24px rgba(0,0,0,0.06)"}}>
-          {/* paper texture right */}
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-[56%] opacity-[0.94]" style={{backgroundImage:"linear-gradient(90deg,#FFFEFB 0%, #FFFBF2 100%)", clipPath:"polygon(16% 0, 100% 0, 100% 100%, 0% 100%)"}} />
+      {/* Header card only — single (fixes dupe header) */}
+      <div className="w-full px-5 pt-5">
+        <div className="relative overflow-hidden rounded-[20px] border border-[#F2DDC4]/80 px-5 pt-5 pb-4" style={{background:"linear-gradient(180deg,#FEECD6 0%,#FEF5E7 100%)", boxShadow:"0 8px 24px rgba(0,0,0,0.05)"}}>
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-[56%]" style={{background:"linear-gradient(90deg,#FFFEFB 0%, #FFFBF2 100%)", clipPath:"polygon(16% 0, 100% 0, 100% 100%, 0% 100%)"}} />
           <div className="pointer-events-none absolute right-[46px] top-[14px] w-[98px] h-[28px] bg-[#E2C1A3] rotate-[-8deg] rounded-[3px] opacity-90 shadow-sm" style={{transform:"rotate(-9deg)"}} />
           <div className="pointer-events-none absolute right-[28px] top-[22px] text-[#E07A5F] text-[22px]">♡</div>
           <div className="relative z-[1]">
@@ -133,45 +126,45 @@ function NotesMemoPage(props: any) {
               <span className="text-[#A08F82]">⌕</span>
               <input value={query} onChange={e=> setQuery(e.target.value)} placeholder="Search notes..." className="flex-1 bg-transparent text-[13px] outline-none placeholder:text-[#A89A8F]" />
             </div>
-            <div className="relative">
-              <select value={filter} onChange={e=> setFilter(e.target.value as any)} className="h-[44px] rounded-[12px] border bg-white px-3 pr-7 text-[13px] font-medium appearance-none" style={{borderColor:"#E9DDD4"}}><option value="all">All</option><option value="unread">Unread</option><option value="pinned">Pinned</option><option value="love">Love</option><option value="archive">Archive</option></select>
-              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px]">▼</span>
+            <div className="relative shrink-0">
+              <select value={filter} onChange={e=> setFilter(e.target.value as any)} className="h-[44px] rounded-[12px] border bg-white pl-3 pr-7 text-[12.5px] font-medium appearance-none" style={{borderColor:"#E9DDD4"}}><option value="all">All</option><option value="unread">Unread</option><option value="pinned">Pinned</option><option value="love">Love</option><option value="archive">Archive</option></select>
+              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px]">▼</span>
             </div>
-            <button onClick={()=> setShowAdd(true)} className="grid h-[44px] w-[44px] place-items-center rounded-full bg-[#101214] text-white text-[20px] active:scale-[0.96]">+</button>
+            <button onClick={()=> setShowAdd(true)} className="grid h-[44px] w-[44px] place-items-center rounded-full bg-[#101214] text-white text-[20px] shrink-0 active:scale-[0.96]">+</button>
           </div>
         </div>
       </div>
 
-      {/* Featured polaroid */}
+      {/* Featured — lined paper BEHIND content, not over */}
       {featured ? (
         <div className="w-full px-5 pt-4">
-          <div className="relative rounded-[18px] border bg-white px-0 py-0 overflow-hidden shadow-[0_10px_28px_rgba(0,0,0,0.07)]" style={{borderColor:"#F2E5DC"}}>
-            <div className="absolute right-3 top-3 z-[2] h-[10px] w-[42px] rounded-full bg-white/70 border border-[#E9DDD4] shadow-sm" />
-            <div className="px-5 pt-4 pb-1 flex items-center justify-between">
-              <div className="text-[11px] tracking-[0.16em] font-semibold uppercase text-[#6B8D7A] flex items-center gap-1.5">FROM {(PERSONS[featured.author as any]?.name||featured.author||"Ciaran").toUpperCase()} <span className="text-[#E07A5F]">♥</span></div>
-              <button onClick={()=> setSelected(featured)} className="grid h-[28px] w-[28px] place-items-center rounded-full bg-[#F9F1EA] text-[#A8A0A0]">⋯</button>
-            </div>
-            <div className="px-5 pb-4 grid grid-cols-[148px_1fr] gap-4">
-              <div className="relative">
-                <div className="pointer-events-none absolute -left-2 -top-2 w-[36px] h-[18px] bg-[#E9D5C0]/80 rotate-[-14deg] rounded-[2px]" />
-                {featured.photoDataUrl ? (
-                  <div className="rounded-[8px] bg-white p-1.5 shadow-[0_6px_18px_rgba(0,0,0,0.12)] -rotate-1" style={{transform:"rotate(-2.5deg)"}}>
-                    <img src={featured.photoDataUrl} alt="" className="w-[132px] h-[118px] rounded-[4px] object-cover" />
-                    <div className="pt-1 text-right pr-1 text-[#A8C5B5] text-[14px]">♡</div>
-                  </div>
-                ) : (
-                  <div className="rounded-[8px] bg-white p-2 shadow-sm border border-[#EFE6DC] -rotate-1 text-[11px] text-[#8A7E77]">No photo</div>
-                )}
-                <div className="mt-2 text-[11.5px] text-[#7A706A]">{relTime(featured.createdAt, nowMs)} • <span className="text-[#D07A41]">{featured.isLove?"Love":"Note"}</span></div>
+          <div className="relative rounded-[18px] border bg-white overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.06)]" style={{borderColor:"#F0E2D4"}}>
+            {/* faint lines behind */}
+            <div className="pointer-events-none absolute inset-0 z-0" style={{backgroundImage:"repeating-linear-gradient(0deg, transparent 0 30px, #F7EDE3 30px 31px)", top:"0px", opacity:0.7}} />
+            <div className="relative z-[1]">
+              <div className="px-5 pt-4 pb-1 flex items-center justify-between">
+                <div className="text-[11px] tracking-[0.16em] font-semibold uppercase text-[#6B8D7A] flex items-center gap-1.5">FROM {(PERSONS[featured.author as any]?.name||featured.author||"Ciaran").toUpperCase()} <span className="text-[#E07A5F]">♥</span></div>
+                <button onClick={()=> setSelected(featured)} className="grid h-[28px] w-[28px] place-items-center rounded-full bg-[#F9F1EA] text-[#A89E96]">⋯</button>
               </div>
-              <div className="min-w-0">
-                <div className="text-[16px] font-[650] leading-[1.25] tracking-[-0.01em] text-[#1E1714] line-clamp-2" style={{fontFamily:"Fraunces, serif"}}>{featured.body}</div>
-                <div className="mt-2 pt-1 text-[14px] leading-[1.55] text-[#6B5E57] italic" style={{fontFamily:"Pinyon Script, cursive"}}>Those little moments<br/>that mean<br/>everything.</div>
-                <div className="mt-1 text-[#E6A090] text-[18px]">♡</div>
+              <div className="px-5 pb-4 grid grid-cols-[132px_1fr] gap-4">
+                <div className="relative">
+                  <div className="pointer-events-none absolute -left-2 -top-2 w-[36px] h-[18px] bg-[#E9D5C0]/80 rotate-[-14deg] rounded-[2px]" />
+                  {featured.photoDataUrl ? (
+                    <div className="rounded-[8px] bg-white p-1 shadow-[0_5px_14px_rgba(0,0,0,0.11)]" style={{transform:"rotate(-2deg)"}}>
+                      <img src={featured.photoDataUrl} alt="" className="w-[122px] h-[108px] rounded-[4px] object-cover" />
+                      <div className="pt-1 text-right pr-1 text-[#A8C5B5] text-[13px]">♡</div>
+                    </div>
+                  ) : (
+                    <div className="rounded-[8px] bg-white/80 border border-dashed border-[#E8D8C8] px-2 py-6 text-center text-[11px] text-[#9A8D85]">No photo</div>
+                  )}
+                  <div className="mt-2 text-[11px] text-[#7A706A]">{relTime(featured.createdAt, nowMs)} • <span className="text-[#D07A41]">{featured.isLove?"Love":"Note"}</span></div>
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[16px] font-[650] leading-[1.25] text-[#221B18] line-clamp-2" style={{fontFamily:"Fraunces, serif"}}>{featured.body}</div>
+                  <div className="mt-2 text-[13.5px] leading-[1.45] text-[#6B5E57] italic" style={{fontFamily:"Pinyon Script, cursive"}}>Those little moments<br/>that mean<br/>everything.</div>
+                </div>
               </div>
             </div>
-            {/* lined paper bg */}
-            <div className="pointer-events-none absolute inset-0 opacity-[0.45]" style={{backgroundImage:"repeating-linear-gradient(0deg, transparent 0 29px, #F2E6DC 29px 30px)", top:"56px"}} />
           </div>
         </div>
       ) : (
@@ -183,21 +176,19 @@ function NotesMemoPage(props: any) {
         <div className="text-[12px] tracking-[0.14em] font-semibold uppercase text-[#6D645D] pb-2">Older</div>
         <div className="grid gap-2.5">
           {older.map(n=> (
-            <button key={n.id} onClick={()=> setSelected(n)} className="w-full text-left flex items-center gap-3 rounded-[14px] border bg-white px-3 py-3 min-h-[56px]" style={{borderColor:"#E8DDD4"}}>
-              <span className="grid h-[36px] w-[36px] place-items-center rounded-full text-[12px] font-bold text-white shrink-0" style={{background: (PERSONS[n.author as any]?.accent2||"#8B9EB5")}}>{(PERSONS[n.author as any]?.initial||n.author?.slice(0,1)||"?")?.toUpperCase()}</span>
-              <span className="flex-1 min-w-0"><span className="block text-[13.5px] font-medium truncate">{n.body}</span><span className="block text-[11.5px] text-[#7A706A]">{relTime(n.createdAt, nowMs)} • {(PERSONS[n.author as any]?.name?.includes("Personal")?"Personal": n.isLove?"Love": n.category||"Personal")}</span></span>
+            <button key={n.id} onClick={()=> setSelected(n)} className="w-full text-left flex items-center gap-3 rounded-[14px] border bg-white px-3 py-3" style={{borderColor:"#E8DDD4"}}>
+              <span className="grid h-[36px] w-[36px] place-items-center rounded-full text-[12px] font-bold text-white shrink-0" style={{background: (PERSONS[n.author as any]?.accent2||"#9CB0D9")}}>{(PERSONS[n.author as any]?.initial||n.author?.slice(0,1)||"?")?.toUpperCase()}</span>
+              <span className="flex-1 min-w-0"><span className="block text-[13px] font-medium truncate">{n.body}</span><span className="block text-[11px] text-[#7A706A]">{relTime(n.createdAt, nowMs)} • Personal</span></span>
               <span className="grid h-[22px] w-[22px] place-items-center text-[#9AA0A6]">›</span>
-              <span className="text-[18px]">{n.isLove ? "📌" : n.photoDataUrl ? "📎" : "🔖"}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* bottom ambient arches behind nav — using your asset */}
-      <div className="pointer-events-none absolute bottom-[56px] left-0 right-0 h-[240px] overflow-hidden opacity-[0.58]">
-        <div className="absolute -left-[28%] bottom-[-26%] w-[78%] h-[286px] rounded-full" style={{background:"#F1C9A6"}} />
-        <div className="absolute -right-[18%] bottom-[-18%] w-[62%] h-[244px] rounded-full" style={{background:"#C7D6C9"}} />
-        <div className="absolute left-[-8%] bottom-[28px] w-[132px] h-[172px] rounded-t-[86px] opacity-70" style={{background:"linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(60,40,30,0.14) 100%)", filter:"blur(0.2px)"}} />
+      {/* bottom arches — subtle, behind, not covering list */}
+      <div className="pointer-events-none absolute bottom-[64px] left-0 right-0 h-[200px] overflow-hidden opacity-40 z-0">
+        <div className="absolute -left-[26%] bottom-[-32%] w-[74%] h-[260px] rounded-full" style={{background:"#F1C9A6"}} />
+        <div className="absolute -right-[22%] bottom-[-22%] w-[60%] h-[220px] rounded-full" style={{background:"#C7D6C9"}} />
       </div>
 
       {/* sheets */}

@@ -1,8 +1,8 @@
 {
-  "build": "v206-db-restore-plus-blank-fix",
-  "builtAt": "2026-08-08T13:42:00Z",
-  "changelog": "restore DB 16/3/12/8 from backup, fix wipe param strict ?wipe=1 only (prevents accidental blank), keep all V201-V205 features: half-split calendar, stickyPick unread/pinned, NeedsYou awaiting, monthly 1-31 dropdown, planner buckets, true-live pins",
-  "code": 206,
+  "build": "v207-fix-join-recover-blank",
+  "builtAt": "2026-08-08T14:52:00Z",
+  "changelog": "fix EventIcon JSX stray quote + allow ash-ciaran-2026 / ASHCI direct join recovery, welcome restore button, blank-empty fix — DB 16/3/12/8 intact",
+  "code": 207,
   "mandatory": false,
-  "version": "206.0.0"
+  "version": "207.0.0"
 }

@@ -1,8 +1,1 @@
-{
-  "build": "v210-boutique-svg-soccer",
-  "builtAt": "2026-08-08T15:55:00Z",
-  "changelog": "V210 boutique: soccer ball proper for football (hand-stitched boutique ball, seams, highlight), chores + calendar picker SVGs curated 1by1 boutique (washes 8-12%, 1.45px optical, scallops/seed pearls, double paper edge, 25% grain cut) — disgrace fixed, generic sports stays whistle+laurel distinct",
-  "code": 210,
-  "mandatory": false,
-  "version": "210.0.0"
-}
+{"build":"v211-game-arena","builtAt":"2026-08-08T16:48:00Z","changelog":"V211 game arena: deck arena stack depth x2, velocity runway, double-tap insta-claim, keys ←/→, z undo, combo flame HUD, undo 8 deep toast, coach tutorial 10s, empty 🎉 celebration, mine quest-log urgency bars, championship compact duel HUD live dot cap rail collapsible seasons, juicier haptics + WebAudio gain ramp — way more fun & user-focused","code":211,"mandatory":false,"version":"211.0.0"}

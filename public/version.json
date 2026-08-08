@@ -1,8 +1,8 @@
 {
-  "build": "v205-boutique-event-icons",
-  "builtAt": "2026-08-08T13:32:56Z",
-  "changelog": "beautiful boutique event SVGs: hand-illustrated heart/plane/ball/vinyl/cake etc, warm watercolor washes, large crisp 164px pinned illustrations, unified Upcoming/Agenda/Calendar",
-  "code": 205,
+  "build": "v206-db-restore-plus-blank-fix",
+  "builtAt": "2026-08-08T13:42:00Z",
+  "changelog": "restore DB 16/3/12/8 from backup, fix wipe param strict ?wipe=1 only (prevents accidental blank), keep all V201-V205 features: half-split calendar, stickyPick unread/pinned, NeedsYou awaiting, monthly 1-31 dropdown, planner buckets, true-live pins",
+  "code": 206,
   "mandatory": false,
-  "version": "205.0.0"
+  "version": "206.0.0"
 }

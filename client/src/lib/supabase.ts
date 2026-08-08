@@ -207,7 +207,9 @@ export async function handleWipeQueryParam(): Promise<boolean> {
     if (typeof window === 'undefined' || typeof location === 'undefined') return false
     const sp = new URLSearchParams(location.search)
     const wipe = sp.get("wipe")
-    if (wipe === "1" || wipe === "" || sp.has("wipe")) {
+    // Strict: only wipe=1 triggers full wipe. Empty ?wipe must not nuke (accidental link)
+    // Prevents "app blank" after stray wipe param
+    if (wipe === "1") {
       await clearAllLocalData().catch(()=>{})
       sp.delete("wipe")
       try {

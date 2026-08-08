@@ -3,6 +3,22 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import type { PersonKey, ShoppingItemV2, ShoppingTrip } from "../../types";
 import { uid } from "../../shared/utils/helpers";
+import { getSupabase, getEffectiveRowId } from "../../lib/supabase";
+
+function hardPersistShopping(item:any, op:'create'|'update'|'delete'){
+  try{
+    const hid=getEffectiveRowId(); if(!hid) return;
+    const sb=getSupabase(); const id=String(item?.id||''); if(!id) return;
+    const payload={...item, household_id:hid, updated_at: item?.updatedAt||item?.updated_at||new Date().toISOString(), created_at: item?.createdAt||item?.created_at||new Date().toISOString()};
+    if(op==='delete'){
+      (async()=>{ try{ if(sb) await (sb as any).from('shopping_items').delete().eq('id',id).eq('household_id',hid);}catch{} try{ const {getQueue,persistQueue}=await import("../../data/offlineQueue"); const q=await getQueue(); const nxt=q.filter((o:any)=>!(o.id===id && o.kind==='shopping')); if(nxt.length!==q.length) await persistQueue(nxt as any);}catch{} })();
+      import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('shopping','delete', id, hid, {id, deleted_at:new Date().toISOString()}); const {getQueue}=await import("../../data/offlineQueue"); const q=await getQueue(); if(q.length){ const {drainOps}=await import("../../data/offlineQueue"); const cli=sb; if(cli) try{ await drainOps(cli as any);}catch{}} }catch{} });
+      return;
+    }
+    (async()=>{ try{ if(sb){ const row:any={id, household_id:hid, data:payload, updated_at:payload.updated_at, created_at:payload.created_at}; if(payload.deletedAt||payload.deleted_at) row.deleted_at=payload.deletedAt||payload.deleted_at; await (sb as any).from('shopping_items').upsert(row,{onConflict:'id'});} }catch{} })();
+    import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('shopping', op, id, hid, payload); const {getQueue}=await import("../../data/offlineQueue"); const q=await getQueue(); if(q.length){ const {drainOps}=await import("../../data/offlineQueue"); const cli=sb; if(cli) try{ await drainOps(cli as any);}catch{} } }catch{} });
+  }catch{}
+}
 
 type TripDef = { id: ShoppingTrip | "all"; label: string; short: string; hint: string; icon: string; dot: string };
 const TRIPS: TripDef[] = [
@@ -285,6 +301,7 @@ export function ShoppingScreen(props: any) {
       updatedBy: who,
     } as any));
     safeSet((prev: any) => [...newItems, ...(Array.isArray(prev) ? prev : [])]);
+    try{ newItems.forEach((ni:any)=> hardPersistShopping(ni,'create')); }catch{}
     setAddText("");
     try { addInputRef.current?.focus(); } catch {}
   }
@@ -296,6 +313,7 @@ export function ShoppingScreen(props: any) {
     safeSet((prev: any) =>
       (Array.isArray(prev) ? prev : []).map((x: any) => x.id === it.id ? { ...x, purchased: true, lastDoneAt: nowISO, updatedAt: nowISO, updatedBy: who, status: "purchased" } : x)
     );
+    try{ hardPersistShopping({...it, purchased:true, lastDoneAt:nowISO, updatedAt:nowISO, updatedBy:who, status:"purchased"},'update'); }catch{}
     try { (navigator as any)?.vibrate?.(10); } catch {}
   }
 
@@ -304,6 +322,7 @@ export function ShoppingScreen(props: any) {
     safeSet((prev: any) =>
       (Array.isArray(prev) ? prev : []).map((x: any) => x.id === it.id ? { ...x, purchased: false, updatedAt: nowISO, updatedBy: who, status: "active" } : x)
     );
+    try{ hardPersistShopping({...it, purchased:false, updatedAt:nowISO, updatedBy:who, status:"active"},'update'); }catch{}
   }
 
   function requestDelete(it: ShoppingItemV2) {
@@ -321,6 +340,7 @@ export function ShoppingScreen(props: any) {
       const arr = Array.isArray(prev) ? prev : [];
       return arr.map((x: any) => x.id === it.id ? { ...x, deletedAt: nowISO, archivedAt: nowISO, status: "deleted", updatedAt: nowISO, updatedBy: who } : x).filter((x: any) => !x.deletedAt);
     });
+    try{ hardPersistShopping({id:it.id, deletedAt:nowISO, updatedAt:nowISO}, 'delete'); }catch{}
     setConfirmItem(null);
   }
 

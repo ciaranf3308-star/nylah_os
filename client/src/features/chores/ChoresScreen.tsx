@@ -271,6 +271,7 @@ export default function ChoresScreen(props: any) {
         setToast(`${PERSONS[me].name} claimed ${currentCard.title} • ${currentCard.basePoints} pts`);
       }
       setChores((prev:any)=> prev.map((x:any)=> x.id===currentCard.id ? {...x, swipes: nextSwipes, status: nextStatus, assignedTo: assigned, updatedAt: nowISO, updatedBy: me, seen: true} : x));
+      try{ hardPersistChore({...currentCard, swipes:nextSwipes, status:nextStatus, assignedTo:assigned, updatedAt:nowISO, updatedBy:me, seen:true},'update'); }catch{}
       setDragX(0);
       setCombo(c=>c+1); triggerPointsPop(currentCard.id, currentCard.basePoints); if(nextStatus==="open") confettiByPoints(currentCard.basePoints);
       try{ import('../../lib/push').then(m=> (m as any).notifyOther(me as any, {title: `${(me==='aisling'?'Aisling':'Ciarán')} claimed ${currentCard.title}`, body: `${nextStatus==='open'?'Race — first wins 1.15×':'Your turn'}`, url: './?standalone'})) }catch{}
@@ -333,6 +334,7 @@ export default function ChoresScreen(props: any) {
     const nowISO=new Date().toISOString();
     // Server confirmed - now update local UI only
     setChores((p:any)=> p.map((x:any)=> x.id===c.id ? {...x, status:"done", completedBy:currentUser, completedAt:nowISO, updatedAt:nowISO, updatedBy:currentUser} : x));
+    try{ hardPersistChore({...c, status:"done", completedBy:currentUser, completedAt:nowISO, updatedAt:nowISO, updatedBy:currentUser},'update'); }catch{}
     // Only award points after confirmation
     triggerPointsPop(c.id, effectivePoints(c,false));
     confettiByPoints(effectivePoints(c,false));
@@ -343,12 +345,14 @@ export default function ChoresScreen(props: any) {
     const nowISO=new Date().toISOString();
     const d=new Date(nowMs+48*3600000).toISOString();
     setChores((p:any)=> p.map((x:any)=> x.id===c.id ? {...x, dueAt:d, updatedAt:nowISO}:x));
+    try{ hardPersistChore({...c, dueAt:d, updatedAt:nowISO},'update'); }catch{}
     setToast("Snoozed 48h"); setTimeout(()=>setToast(null),2000);
   };
   const onSwap = (c:any)=>{
     const nowISO=new Date().toISOString();
     const other:PersonKey=currentUser==="aisling"?"ciaran":"aisling";
     setChores((p:any)=> p.map((x:any)=> x.id===c.id ? {...x, assignedTo: (x.assignedTo===currentUser? other: currentUser) as any, updatedAt:nowISO}:x));
+    try{ const otherK:PersonKey=currentUser==="aisling"?"ciaran":"aisling"; hardPersistChore({...c, assignedTo:(c.assignedTo===currentUser? otherK: currentUser) as any, updatedAt:nowISO},'update'); }catch{}
     setToast("Delegated"); setTimeout(()=>setToast(null),2000);
   };
 

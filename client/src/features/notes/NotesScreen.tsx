@@ -4,6 +4,22 @@ import type { PersonKey, NoteMemo } from "../../types";
 import { PERSONS } from "../../constants/themes";
 import { uid, relTime, rotForId } from "../../shared/utils/helpers";
 import { resizeToDataUrl, createThumbnail } from "../../lib/images";
+import { getSupabase, getEffectiveRowId } from "../../lib/supabase";
+
+function hardPersistNote(note:any, op:'create'|'update'|'delete'){
+  try{
+    const hid=getEffectiveRowId(); if(!hid) return;
+    const sb=getSupabase(); const id=String(note?.id||''); if(!id) return;
+    const payload={...note, household_id:hid, updated_at: note?.updatedAt||note?.updated_at||new Date().toISOString(), created_at: note?.createdAt||note?.created_at||new Date().toISOString()};
+    if(op==='delete'){
+      (async()=>{ try{ if(sb) await (sb as any).from('notes').delete().eq('id',id).eq('household_id',hid);}catch{} try{ const {getQueue,persistQueue}=await import("../../data/offlineQueue"); const q=await getQueue(); const nxt=q.filter((o:any)=>!(o.id===id && o.kind==='note')); if(nxt.length!==q.length) await persistQueue(nxt as any);}catch{} })();
+      import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('note','delete', id, hid, {id, deleted_at:new Date().toISOString()}); const {getQueue}=await import("../../data/offlineQueue"); const q=await getQueue(); if(q.length){ const {drainOps}=await import("../../data/offlineQueue"); const cli=sb; if(cli) try{ await drainOps(cli as any);}catch{}} }catch{} });
+      return;
+    }
+    (async()=>{ try{ if(sb){ const row:any={id, household_id:hid, data:payload, updated_at:payload.updated_at, created_at:payload.created_at}; if(payload.deletedAt||payload.deleted_at) row.deleted_at=payload.deletedAt||payload.deleted_at; await (sb as any).from('notes').upsert(row,{onConflict:'id'});} }catch{} })();
+    import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('note', op, id, hid, payload); const {getQueue}=await import("../../data/offlineQueue"); const q=await getQueue(); if(q.length){ const {drainOps}=await import("../../data/offlineQueue"); const cli=sb; if(cli) try{ await drainOps(cli as any);}catch{} } }catch{} });
+  }catch{}
+}
 
 // BottomSheet extracted verbatim from AppMonolith — boutique tokens preserved
 function BottomSheet({ open, onClose, children, title }: { open: boolean; onClose: () => void; children: React.ReactNode; title?: string }) {
@@ -151,7 +167,7 @@ function NotesMemoPage(props: any) {
       rotation: rotForId(uid("r")),
       updatedAt: new Date().toISOString(),
     } as any;
-    setNotes((p:any)=> [n, ...p]);
+    setNotes((p:any)=> [n, ...p]); try{ hardPersistNote(n,'create'); }catch{}
     setAddBody(""); setAddIsLove(false); setAddPhotoDataUrl(undefined); setAddThumbDataUrl(undefined); setShowAdd(false);
   }
 
@@ -261,8 +277,8 @@ function NotesMemoPage(props: any) {
             {selected.photoDataUrl && <img src={selected.photoDataUrl} alt="" className="w-full rounded-[12px] border" style={{borderColor:"var(--border)"}} />}
             <div className="text-[11px] text-[var(--muted)]">{relTime(selected.createdAt, nowMs)}</div>
             <div className="flex gap-2">
-              <button onClick={()=> { (() => { const nowISO=new Date().toISOString(); return setNotes((p:any)=> p.map((x:any)=> x.id===selected.id ? {...x, pinned_at: (x as any).pinned_at ? null : nowISO, pinnedAt: (x as any).pinned_at ? null : nowISO, updatedAt: nowISO, updatedBy: currentUser } : x)) })(); setSelected(null); }} className="flex-1 h-[44px] rounded-[16px] border bg-[var(--card-bg)] text-[12px]">Pin</button>
-              <button onClick={()=> { (() => { const nowISO=new Date().toISOString(); return setNotes((p:any)=> p.map((x:any)=> x.id===selected.id ? {...x, archived_at: nowISO, archivedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser } : x)) })(); setSelected(null); }} className="flex-1 h-[44px] rounded-[16px] border bg-[var(--card-bg)] text-[12px] text-[#B91C1C]">Archive</button>
+              <button onClick={()=> { (() => { const nowISO=new Date().toISOString(); const upd=(selected as any).pinned_at || (selected as any).pinnedAt ? null : nowISO; const next={...selected, pinned_at: upd, pinnedAt: upd, updatedAt:nowISO, updatedBy:currentUser}; try{ hardPersistNote(next,'update'); }catch{}; return setNotes((p:any)=> p.map((x:any)=> x.id===selected.id ? {...x, pinned_at: (x as any).pinned_at ? null : nowISO, pinnedAt: (x as any).pinned_at ? null : nowISO, updatedAt: nowISO, updatedBy: currentUser } : x)) })(); setSelected(null); }} className="flex-1 h-[44px] rounded-[16px] border bg-[var(--card-bg)] text-[12px]">Pin</button>
+              <button onClick={()=> { (() => { const nowISO=new Date().toISOString(); const next={...selected, archived_at: nowISO, archivedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser}; try{ hardPersistNote(next,'update'); }catch{}; return setNotes((p:any)=> p.map((x:any)=> x.id===selected.id ? {...x, archived_at: nowISO, archivedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser } : x)) })(); setSelected(null); }} className="flex-1 h-[44px] rounded-[16px] border bg-[var(--card-bg)] text-[12px] text-[#B91C1C]">Archive</button>
             </div>
           </div>
         )}

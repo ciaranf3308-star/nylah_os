@@ -191,7 +191,12 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
   const doJoinLookup = async () => {
     setError("");
     const rawInput = joinCode.trim();
-    const isFullHid = rawInput.toLowerCase().startsWith("nylah-") && rawInput.length >= 8;
+    // V207 emergency fix: allow direct household id like ash-ciaran-2026 or nylah-xxxxxx. Previous logic only allowed nylah- which broke recovery for legacy household.
+    const lower = rawInput.toLowerCase().trim();
+    const isNyDirect = lower.startsWith("nylah-") && lower.length >= 8;
+    const isLegacyDirect = lower.includes("-") && (lower==="ash-ciaran-2026" || lower.startsWith("ash-") || lower.length>=8) && !/^[A-Z0-9]+$/.test(rawInput.toUpperCase().replace(/[^A-Z0-9]/g,"")) || lower==="ash-ciaran-2026" || lower.startsWith("ash-ciaran");
+    const isAnyHid = isNyDirect || isLegacyDirect || (lower.includes("-") && lower.length>=6 && lower.length<=40 && /^[a-z0-9-]+$/.test(lower));
+    const isFullHid = isAnyHid;
     const codeClean = rawInput.toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,32);
     if (!isFullHid && codeClean.replace(/[^A-Z0-9]/g,"").length < 4) { setError("Enter the 6-letter code or household ID"); return; }
     setJoining(true);
@@ -200,8 +205,18 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
       let code = "";
       if (isFullHid) {
         const hid = rawInput.toLowerCase().trim();
+        // direct HID path — try literal first, then nylah- derived if looks like code
         hidCandidates = [hid];
-        code = hid.includes("nylah-") ? hid.split("nylah-")[1]?.slice(0,6).toUpperCase() || "" : hid.slice(0,6).toUpperCase();
+        if (hid.startsWith("nylah-")) {
+          code = hid.split("nylah-")[1]?.slice(0,6).toUpperCase() || "" ;
+          // also include code-only variant for invite lookup
+          hidCandidates.push(hid.slice(5)); // without dash?
+        } else {
+          // legacy ash-ciaran — code is ASHCI from households, but try uppercase slice
+          code = rawInput.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6);
+          // also try known code mapping for ash-ciaran
+          if (hid.includes("ash-ciaran")) code = "ASHCI";
+        }
       } else {
         code = rawInput.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6);
         const hid = `nylah-${code.toLowerCase()}`;
@@ -445,11 +460,13 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
               <span className="flex-1 text-left text-[13.5px]">I have a code</span>
               <span className="pr-2 opacity-70">›</span>
             </button>
+            {/* V207 emergency restore hint for ash-ciaran primary */}
+            <button onClick={()=>{ setJoinCode("ASHCI"); setStep("join_code"); }} className="mt-2 w-full text-[10.5px] text-white/60 underline text-center">Lost your space? Restore Aisling & Ciaran (ASHCI / ash-ciaran-2026)</button>
           </div>
         </div>
       </div>
     );
-  }
+  }                                     
 
 
   return (

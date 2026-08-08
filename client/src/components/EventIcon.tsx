@@ -79,7 +79,7 @@ function IconMusic({stroke}:{stroke:string}) {
       {/* floating note */}
       <g transform="translate(14.2 4.8)">
         <path d="M2.2 6.2V1.1c0-.4.3-.7.7-.5L5.3 2c.3.2.4.5.2.8L4 5" stroke={stroke} strokeWidth="1" strokeLinecap="round" fill="none"/>
-        <circle cx="1.3" cy="6.4" r="1.1" fill={stroke}"/>
+        <circle cx="1.3" cy="6.4" r="1.1" fill={stroke} />
       </g>
     </svg>
   );

@@ -1,8 +1,8 @@
 {
-  "build": "v207-fix-join-recover-blank",
-  "builtAt": "2026-08-08T14:52:00Z",
-  "changelog": "fix EventIcon JSX stray quote + allow ash-ciaran-2026 / ASHCI direct join recovery, welcome restore button, blank-empty fix — DB 16/3/12/8 intact",
-  "code": 207,
+  "build": "v208-curated-event-icons",
+  "builtAt": "2026-08-08T14:18:22Z",
+  "changelog": "curated 1by1 boutique event icons — each kind has distinct illustration, sports sub-variants golf/gym/run/gaa/rugby/football + generic whistle not soccer ball always, title-aware, warm pastel Habit + Hume",
+  "code": 208,
   "mandatory": false,
-  "version": "207.0.0"
+  "version": "208.0.0"
 }

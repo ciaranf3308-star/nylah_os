@@ -43,7 +43,7 @@ function PinnedCalendarCard({ ev, nowMs, onClear, onTap, tz }: { ev:any, nowMs:n
         <div className="relative" style={{ width:164, height:164 }}>
           <div className="absolute inset-[12px] rounded-[28px] rotate-[8deg]" style={{ background:`radial-gradient(115% 90% at 32% 28%, white 0%, ${pal.bg} 48%, ${pal.chipBg||pal.bg} 82%)`, opacity:0.88 }} />
           <div className="relative w-full h-full grid place-items-center" style={{filter:"drop-shadow(0 14px 22px rgba(80,45,18,0.14))"}}>
-            <EventIcon kind={kind} size={118} variant="watermark" theme="light"/>
+            <EventIcon kind={kind} title={title} size={118} variant="watermark" theme="light"/>
           </div>
         </div>
       </div>

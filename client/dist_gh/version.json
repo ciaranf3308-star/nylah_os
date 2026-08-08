@@ -1,1 +1,8 @@
-{"build":"v132-beirt-logo-transparent","code":132,"changelog":"New transparent Beirt logo — beige house + mint + orange on black #121214, maskable-safe centered"}
+{
+  "build": "v208-curated-event-icons",
+  "builtAt": "2026-08-08T14:18:22Z",
+  "changelog": "curated 1by1 boutique event icons — each kind has distinct illustration, sports sub-variants golf/gym/run/gaa/rugby/football + generic whistle not soccer ball always, title-aware, warm pastel Habit + Hume",
+  "code": 208,
+  "mandatory": false,
+  "version": "208.0.0"
+}

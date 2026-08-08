@@ -30,7 +30,7 @@ export function AgendaView({ eventsForToday, eventsForTomorrow, laterFlat, onSel
         <span className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-[18px]" style={{background:leftRuleColor}} aria-hidden="true"/>
         <span className="flex flex-1 items-center gap-3 px-3.5 py-3 min-w-0 ml-[3px]">
           <span className="h-[38px] w-[38px] shrink-0 grid place-items-center rounded-full border" style={{ background:`radial-gradient(110% 90% at 30% 20%, white 0%, ${def.light.bg} 50%)`, borderColor:"rgba(0,0,0,0.06)" }}>
-            <EventIcon kind={def.id} size={24} theme="light" />
+            <EventIcon kind={def.id} title={ev.title} size={24} theme="light" />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[13.5px] font-semibold truncate" style={{letterSpacing:"-0.01em"}}>{ev.title}</span>

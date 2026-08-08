@@ -1,8 +1,8 @@
 {
-  "build": "v209-boutique-svg-20pass",
-  "builtAt": "2026-08-08T15:10:00Z",
-  "changelog": "20-pass SVG polish: hand-drawn watercolor beds 10-14%, boutique sparkles/scallops/wax seals, sports 7 variants (golf green+flag, kettlebell, trail dust, hurl grain, rugby stitch, crest, whistle laurel generic NOT soccer), date love-letter wax, travel vintage tag, music vinyl sleeve, all cut 25% grain, Fraunces label, watermark 118-120 crisp breakout",
-  "code": 209,
+  "build": "v210-boutique-svg-soccer",
+  "builtAt": "2026-08-08T15:55:00Z",
+  "changelog": "V210 boutique: soccer ball proper for football (hand-stitched boutique ball, seams, highlight), chores + calendar picker SVGs curated 1by1 boutique (washes 8-12%, 1.45px optical, scallops/seed pearls, double paper edge, 25% grain cut) — disgrace fixed, generic sports stays whistle+laurel distinct",
+  "code": 210,
   "mandatory": false,
-  "version": "209.0.0"
+  "version": "210.0.0"
 }

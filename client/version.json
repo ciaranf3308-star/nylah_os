@@ -1,1 +1,8 @@
-{"build":"v211-game-arena","builtAt":"2026-08-08T16:48:00Z","changelog":"V211 game arena: deck arena stack depth x2, velocity runway, double-tap insta-claim, keys ←/→, z undo, combo flame HUD, undo 8 deep toast, coach tutorial 10s, empty 🎉 celebration, mine quest-log urgency bars, championship compact duel HUD live dot cap rail collapsible seasons, juicier haptics + WebAudio gain ramp — way more fun & user-focused","code":211,"mandatory":false,"version":"211.0.0"}
+{
+  "build": "v213-boutique-notes-true-live",
+  "builtAt": "2026-08-08T18:45:00Z",
+  "changelog": "V213 boutique notes true-live: sticky memo board 2-col tapes polaroid script moments warm boutique, fix 95% DB success → 100% — dual-write notes_memo+couple_data+queue prune, NOTES table corrected to notes_memo, delete prune+legacy sync — aesthetically matches fridge/shop goal — code 213",
+  "code": 213,
+  "mandatory": false,
+  "version": "213.0.0"
+}

@@ -12,7 +12,7 @@ export const TABLES = {
   CAL: 'calendar_events',
   CHORES: 'chores',
   SHOP: 'shopping_items',
-  NOTES: 'notes',
+  NOTES: 'notes_memo',
 } as const
 
 // Scalable: household id is dynamic, stored in localStorage

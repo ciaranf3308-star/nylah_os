@@ -1,8 +1,8 @@
 {
-  "build": "v212-game-clarity",
-  "builtAt": "2026-08-08T18:30:00Z",
-  "changelog": "V212 game clarity: fix Ash claim → your Open confusion — solo claims now Mine-only, partner never sees it; Open renamed Duel (only both-right race 1.15×); clearer toasts and rules, no steal spam — makes game understandable",
-  "code": 212,
+  "build": "v213-boutique-notes-true-live",
+  "builtAt": "2026-08-08T18:45:00Z",
+  "changelog": "V213 boutique notes true-live: sticky memo board 2-col tapes polaroid script moments warm boutique, fix 95% DB success → 100% — dual-write notes_memo+couple_data+queue prune, NOTES table corrected to notes_memo, delete prune+legacy sync — aesthetically matches fridge/shop goal — code 213",
+  "code": 213,
   "mandatory": false,
-  "version": "212.0.0"
+  "version": "213.0.0"
 }

@@ -95,7 +95,7 @@ export async function remoteLoad(): Promise<RemoteData | null> {
 
   try {
     const [calRes, choresRes, shopRes, notesRes, houseRes] = await Promise.all([
-      sb.from(TABLES.CAL).select('*').eq('household_id', hid).is('deleted_at', null).order('start', { ascending: true } as any) as any,
+      sb.from(TABLES.CAL).select('*').eq('household_id', hid).is('deleted_at', null).order('created_at', { ascending: true } as any) as any,
       sb.from(TABLES.CHORES).select('*').eq('household_id', hid).is('deleted_at', null) as any,
       sb.from(TABLES.SHOP).select('*').eq('household_id', hid).is('deleted_at', null) as any,
       sb.from(TABLES.NOTES).select('*').eq('household_id', hid).is('deleted_at', null) as any,
@@ -105,11 +105,39 @@ export async function remoteLoad(): Promise<RemoteData | null> {
       return [ { data: null, error: e }, { data: null }, { data: null }, { data: null }, { data: null } ] as any
     })
 
-    const calendar = (calRes?.data as any[]) || []
-    const chores = (choresRes?.data as any[]) || []
-    const shopping = (shopRes?.data as any[]) || []
-    const notes = (notesRes?.data as any[]) || []
+    // unwrap `data` jsonb blob → actual app objects (live minimal schema)
+    const unwrap = (arr:any[])=> (arr||[]).map((r:any)=>{
+      try{
+        if (r && typeof r.data === 'object' && r.data !== null) {
+          // merge outer id/household_id to ensure consistency, but keep data fields dominant
+          const d = r.data
+          // ensure id/household_id present if data missing them
+          if (!d.id) d.id = r.id
+          if (!d.household_id) d.household_id = r.household_id || hid
+          // propagate timestamps if missing from data
+          if (!d.created_at && r.created_at) d.created_at = r.created_at
+          if (!d.updated_at && r.updated_at) d.updated_at = r.updated_at
+          if (!d.createdAt && r.created_at) d.createdAt = r.created_at
+          if (!d.updatedAt && r.updated_at) d.updatedAt = r.updated_at
+          return d
+        }
+        if (r && typeof r.data === 'string') {
+          try { const parsed = JSON.parse(r.data); return { ...parsed, id: parsed.id||r.id, household_id: r.household_id||hid } } catch { return r }
+        }
+        return r
+      }catch{ return r }
+    })
+
+    const calendarRaw = (calRes?.data as any[]) || []
+    const choresRaw = (choresRes?.data as any[]) || []
+    const shoppingRaw = (shopRes?.data as any[]) || []
+    const notesRaw = (notesRes?.data as any[]) || []
     const house = houseRes?.data || null
+
+    const calendar = unwrap(calendarRaw)
+    const chores = unwrap(choresRaw)
+    const shopping = unwrap(shoppingRaw)
+    const notes = unwrap(notesRaw)
 
     const totalNorm = calendar.length + chores.length + shopping.length + notes.length
 
@@ -135,6 +163,41 @@ export async function remoteLoad(): Promise<RemoteData | null> {
               meta: (legacy as any).meta || house?.meta || null,
               updated_at: (legacy as any).updated_at || nowIso,
               revision: (legacy as any).revision ?? 0,
+            }
+          }
+        }
+      } catch {}
+    }
+
+    // Transitional merge: normalized may have 1 new event while legacy still holds 5 old events (ash-ciaran-2026)
+    // Union them to avoid sudden data loss after we started writing to normalized.
+    if (hid === 'ash-ciaran-2026' || hid.startsWith('ash-')) {
+      try {
+        const { data: legacy, error: legErr } = await (sb as any).from(TABLE).select('*').eq('id', hid).maybeSingle()
+        if (!legErr && legacy) {
+          const lc = Array.isArray((legacy as any).calendar) ? (legacy as any).calendar : []
+          if (lc.length > 0) {
+            // merge normalized + legacy missing ids => server-wins for overlapping
+            const seen = new Set<string>(calendar.map((c:any)=> String(c.id)))
+            for (const ev of lc) {
+              if (!ev || !ev.id) continue
+              if (!seen.has(String(ev.id))) {
+                calendar.push(ev)
+                seen.add(String(ev.id))
+              }
+            }
+            // same for chores/shopping/notes if normalized empty but legacy has them
+            if (chores.length === 0) {
+              const lch = Array.isArray((legacy as any).chores) ? (legacy as any).chores : []
+              if (lch.length>0) chores.push(...lch)
+            }
+            if (shopping.length === 0) {
+              const lsh = Array.isArray((legacy as any).shopping) ? (legacy as any).shopping : []
+              if (lsh.length>0) shopping.push(...lsh)
+            }
+            if (notes.length === 0) {
+              const ln = Array.isArray((legacy as any).notes) ? (legacy as any).notes : []
+              if (ln.length>0) notes.push(...ln)
             }
           }
         }
@@ -214,102 +277,32 @@ function kindToTable(kind: EntityKind): string {
 
 function cleanRow(kind: EntityKind, src: any): any {
   const o = src || {}
-  // base always
-  const base: any = { id: o.id }
-  if (o.household_id) base.household_id = o.household_id
-  // pick updated_at from either camel or snake
   const nowIso = new Date().toISOString()
   try {
+    // Current live Supabase (pre-V159-migration) uses minimal schema:
+    // id, household_id, data (jsonb), created_at, updated_at, deleted_at, + calendar end_at
+    // PostgREST rejects unknown columns, so we must ONLY send those that exist.
+    // We store full payload in `data` for forward compatibility with both schemas.
+    const base: any = {
+      id: String(o.id),
+      household_id: o.household_id,
+      data: o, // store whole object blob
+      updated_at: o.updated_at || o.updatedAt || nowIso,
+    }
+    const ca = o.created_at || o.createdAt || null
+    if (ca) base.created_at = ca
+    const da = o.deleted_at || o.deletedAt || null
+    if (da) base.deleted_at = da
+    else if (o.deleted_at === null || o.deletedAt === null) base.deleted_at = null
+    // calendar has optional end_at column on live DB
     if (kind === 'calendar') {
-      return {
-        id: String(o.id),
-        household_id: o.household_id,
-        title: o.title || 'Untitled',
-        start: o.start || o.dueAt || o.due_at || nowIso,
-        end: o.end || o.endAt || o.end_at || null,
-        due_at: o.due_at || o.dueAt || null,
-        all_day: !!(o.all_day ?? o.allDay),
-        type: o.type || 'one-off',
-        frequency: o.frequency || 'once',
-        frequency_detail: o.frequency_detail ?? o.frequencyDetail ?? null,
-        timezone: o.timezone || 'Europe/Dublin',
-        status: o.status || 'proposed',
-        proposer: o.proposer || null,
-        attendees: o.attendees || null,
-        swipes: o.swipes || null,
-        responses: o.responses || null,
-        location: o.location || null,
-        notes: o.notes || null,
-        pinned: !!o.pinned,
-        pinned_at: o.pinned_at || o.pinnedAt || null,
-        created_at: o.created_at || o.createdAt || null,
-        updated_at: o.updated_at || o.updatedAt || nowIso,
-        deleted_at: o.deleted_at || o.deletedAt || null,
-        mutation_id: o.mutation_id || o.mutationId || null,
-      }
+      const endVal = o.end || o.endAt || o.end_at || null
+      if (endVal) base.end_at = endVal
     }
-    if (kind === 'chore') {
-      return {
-        id: String(o.id),
-        household_id: o.household_id,
-        title: o.title || 'Untitled',
-        type: o.type || 'one-off',
-        frequency: o.frequency || 'once',
-        due_at: o.due_at || o.dueAt || null,
-        created_at: o.created_at || o.createdAt || null,
-        pain: typeof o.pain === 'number' ? o.pain : 5,
-        base_points: o.base_points ?? o.basePoints ?? 10,
-        swipes: o.swipes || null,
-        status: o.status || 'open',
-        assigned_to: o.assigned_to || o.assignedTo || null,
-        multiplier: o.multiplier ?? 1,
-        time_window_hours: o.time_window_hours ?? o.timeWindowHours ?? 24,
-        updated_at: o.updated_at || o.updatedAt || nowIso,
-        deleted_at: o.deleted_at || o.deletedAt || null,
-      }
-    }
-    if (kind === 'shopping') {
-      return {
-        id: String(o.id),
-        household_id: o.household_id,
-        item: o.item || o.title || 'Untitled',
-        qty: o.qty ?? 1,
-        cat: o.cat || 'Food',
-        trip: (['grocery','online','personal','want'].includes(o.trip) ? o.trip : 'grocery'),
-        purchased: !!o.purchased,
-        added_by: o.added_by || o.addedBy || null,
-        created_at: o.created_at || o.createdAt || null,
-        last_done_at: o.last_done_at || o.lastDoneAt || null,
-        repeat_count: o.repeat_count ?? o.repeatCount ?? 0,
-        frequency: o.frequency || 'as-needed',
-        need_days: o.need_days ?? o.needDays ?? null,
-        updated_at: o.updated_at || o.updatedAt || nowIso,
-        deleted_at: o.deleted_at || o.deletedAt || null,
-        archived_at: o.archived_at || o.archivedAt || null,
-        status: o.status || 'active',
-      }
-    }
-    if (kind === 'note') {
-      return {
-        id: String(o.id),
-        household_id: o.household_id,
-        body: o.body || o.text || '',
-        author: o.author || 'unknown',
-        created_at: o.created_at || o.createdAt || nowIso,
-        seen_by: o.seen_by ?? o.seenBy ?? null,
-        is_love: !!(o.is_love ?? o.isLove),
-        photo_data_url: o.photo_data_url || o.photoDataUrl || null,
-        photo_thumb_data_url: o.photo_thumb_data_url || o.photoThumbDataUrl || null,
-        reactions: o.reactions || null,
-        pinned_at: o.pinned_at || o.pinnedAt || null,
-        archived_at: o.archived_at || o.archivedAt || null,
-        deleted_at: o.deleted_at || o.deletedAt || null,
-        updated_at: o.updated_at || o.updatedAt || nowIso,
-      }
-    }
+    return base
   } catch {}
-  // fallback minimal
-  return { id: String(o.id), household_id: o.household_id, updated_at: nowIso, ...(o.title ? {title:o.title} : {}) }
+  // fallback minimal - this shape works on both old and new schema (id+household_id+data)
+  return { id: String(o.id), household_id: o.household_id, data: o, updated_at: nowIso }
 }
 
 export async function remoteSaveOperations(ops: QueuedOp[]): Promise<boolean> {
@@ -330,6 +323,34 @@ export async function remoteSaveOperations(ops: QueuedOp[]): Promise<boolean> {
     // do not early return - attempt anyway, let actual error decide
   }
 
+  async function safeUpsert(table: string, row: any, id: string, targetHid: string): Promise<{error:any|null}> {
+    try {
+      const { error } = await (sb as any).from(table).upsert(row, { onConflict: 'id' } as any)
+      if (!error) return { error: null }
+      // if no unique constraint matches on_conflict, fallback to insert/update sans onConflict
+      const code = (error as any)?.code
+      const msg = String((error as any)?.message||'')
+      if (code === '42P10' || msg.includes('ON CONFLICT')) {
+        // try plain insert
+        const { error: insErr } = await (sb as any).from(table).insert(row as any)
+        if (!insErr) return { error: null }
+        // if insert says duplicate / already exists, try update
+        if (String(insErr.code) === '23505' || String(insErr.message).toLowerCase().includes('duplicate') || String(insErr.message).toLowerCase().includes('unique')) {
+          const { error: updErr } = await (sb as any).from(table).update(row as any).eq('id', id).eq('household_id', targetHid)
+          return { error: updErr || null }
+        }
+        // if insert failed for other reason (maybe row exists but no unique), attempt update anyway
+        const { error: updErr2 } = await (sb as any).from(table).update(row as any).eq('id', id).eq('household_id', targetHid)
+        if (!updErr2) return { error: null }
+        // if update affected 0 rows, try insert again without on_conflict but force? give up returning original error
+        return { error: insErr }
+      }
+      return { error }
+    } catch (e:any) {
+      return { error: e }
+    }
+  }
+
   for (const op of ops) {
     if (!op || !op.id) continue
     const targetHid = op.household_id || hid
@@ -348,7 +369,7 @@ export async function remoteSaveOperations(ops: QueuedOp[]): Promise<boolean> {
         }
       } else {
         const cleaned = cleanRow(op.kind as any, { ...(op.payload || {}), id: op.id, household_id: targetHid })
-        const { error } = await (sb as any).from(table).upsert(cleaned, { onConflict: 'id' } as any)
+        const { error } = await safeUpsert(table, cleaned, String(op.id), String(targetHid))
         if (error) {
           console.warn('[supabase] upsert error', table, op.id, error.message)
           // continue to legacy attempt, don't hard fail yet
@@ -368,12 +389,28 @@ export async function remoteSaveOperations(ops: QueuedOp[]): Promise<boolean> {
     const hasAnyDelete = ops.some(o=> o.op==='delete')
     if (hasCalendarOps || hasAnyDelete) {
       const { data: legacyRow, error: legErr } = await (sb as any).from(TABLE).select('*').eq('id', hid).maybeSingle()
-      if (!legErr && legacyRow) {
+      // even if no legacy row (nylah new house), attempt to create one on save so reload fallback works
+      let baseRow: any = null
+      if (!legErr && legacyRow) baseRow = legacyRow
+      else if (!legacyRow) {
+        // try to see if ANY row exists for hid in couple_data; if not, we will upsert minimal
+        baseRow = { id: hid, calendar: [], chores: [], shopping: [], notes: [] }
+      }
+      if (baseRow) {
         let mutated = false
-        let newCalendar = Array.isArray((legacyRow as any).calendar) ? [...(legacyRow as any).calendar] : []
-        let newChores = Array.isArray((legacyRow as any).chores) ? [...(legacyRow as any).chores] : null
-        let newShopping = Array.isArray((legacyRow as any).shopping) ? [...(legacyRow as any).shopping] : null
-        let newNotes = Array.isArray((legacyRow as any).notes) ? [...(legacyRow as any).notes] : null
+        let newCalendar = Array.isArray((baseRow as any).calendar) ? [...(baseRow as any).calendar] : Array.isArray((legacyRow as any)?.calendar) ? [...(legacyRow as any).calendar] : []
+        // for new nylah houses legacyRow may be null -> start empty
+        if (!legacyRow && (!newCalendar || newCalendar.length===0)) {
+          // will be built from ops
+        }
+        let newChores = Array.isArray((baseRow as any).chores) ? [...(baseRow as any).chores] : null
+        let newShopping = Array.isArray((baseRow as any).shopping) ? [...(baseRow as any).shopping] : null
+        let newNotes = Array.isArray((baseRow as any).notes) ? [...(baseRow as any).notes] : null
+        // ensure arrays exist for nylah case where baseRow empty
+        if (!newChores) newChores = []
+        if (!newShopping) newShopping = []
+        if (!newNotes) newNotes = []
+        if (!newCalendar) newCalendar = []
 
         for (const op of ops) {
           if (op.kind === 'calendar') {
@@ -390,23 +427,41 @@ export async function remoteSaveOperations(ops: QueuedOp[]): Promise<boolean> {
               if (idx >= 0) { newCalendar[idx] = { ...newCalendar[idx], ...payload, id: op.id, updatedAt: new Date().toISOString() }; mutated = true }
               else { newCalendar.push({ ...(payload||{}), id: op.id }); mutated = true }
             }
-          } else if (op.kind === 'chore' && newChores) {
+          } else if (op.kind === 'chore') {
             if (op.op === 'delete') {
               const before = newChores.length
               newChores = newChores.filter((c:any)=> String(c.id)!==String(op.id))
               if (newChores.length !== before) mutated = true
+            } else {
+              // for nylah new houses, also sync creates to legacy so fallback stays consistent
+              const payload = op.payload || {}
+              const idx = newChores.findIndex((c:any)=> String(c.id)===String(op.id))
+              if (idx>=0) { newChores[idx] = { ...newChores[idx], ...payload }; mutated=true }
+              else { newChores.push({ ...(payload||{}), id: op.id }); mutated=true }
             }
-          } else if (op.kind === 'shopping' && newShopping) {
+          } else if (op.kind === 'shopping') {
             if (op.op === 'delete') {
               const before = newShopping.length
               newShopping = newShopping.filter((s:any)=> String(s.id)!==String(op.id))
               if (newShopping.length !== before) mutated = true
+            } else {
+              const payload = op.payload || {}
+              const idx = newShopping.findIndex((s:any)=> String(s.id)===String(op.id))
+              if (idx>=0) newShopping[idx] = { ...newShopping[idx], ...payload }
+              else newShopping.push({ ...(payload||{}), id: op.id })
+              mutated=true
             }
-          } else if (op.kind === 'note' && newNotes) {
+          } else if (op.kind === 'note') {
             if (op.op === 'delete') {
               const before = newNotes.length
               newNotes = newNotes.filter((n:any)=> String(n.id)!==String(op.id))
               if (newNotes.length !== before) mutated = true
+            } else {
+              const payload = op.payload || {}
+              const idx = newNotes.findIndex((n:any)=> String(n.id)===String(op.id))
+              if (idx>=0) newNotes[idx] = { ...newNotes[idx], ...payload }
+              else newNotes.push({ ...(payload||{}), id: op.id })
+              mutated=true
             }
           }
         }
@@ -419,7 +474,7 @@ export async function remoteSaveOperations(ops: QueuedOp[]): Promise<boolean> {
           const { error: updErr } = await (sb as any).from(TABLE).update(updatePayload as any).eq('id', hid)
           if (updErr) {
             console.warn('[supabase] legacy couple_data update failed', updErr.message)
-            // fallback to upsert whole row if update blocked by RLS
+            // fallback to upsert whole row if update blocked by RLS or row missing
             try {
               const { error: upsErr } = await (sb as any).from(TABLE).upsert({ id: hid, ...updatePayload } as any, { onConflict: 'id' } as any)
               if (upsErr) console.warn('[supabase] legacy upsert also failed', upsErr.message)

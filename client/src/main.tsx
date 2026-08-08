@@ -4,6 +4,8 @@ import { App } from "./App";
 import "./theme.css";
 
 // V174 self-heal: old queue with camelCase caused upsert error -> Sync failed stuck + PWA stale 172
+// V181 update: normalize fix now uses `data` column (jsonb), so camelCase inside payload.data is legit.
+// Only wipe when retries stuck or payload missing hid/id, NOT on camelCase inside payload.
 try{
   const raw = localStorage.getItem('idb_mutation_queue');
   if(raw){
@@ -13,12 +15,14 @@ try{
         let dirty = false;
         for(const o of arr){
           if(!o) continue;
-          if((o.retries||0)>=2){ dirty = true; break; }
-          const p = o.payload||{};
-          if(p.deletedAt || p.createdAt || p.updatedAt || p.pinnedAt || p.dueAt || p.allDay){ dirty = true; break; }
+          if((o.retries||0)>=3){ dirty = true; break; }
+          // old bug: top-level column mismatch caused PGRST204 - those rows had no household_id or missing id
+          if(!o.id || !o.household_id){ dirty = true; break; }
+          // old v172-v173 stored cleanRow with bad columns like deletedAt at top-level (not inside data) - those would have been at o.payload.deletedAt with retries
+          // but we no longer treat payload camelCase inside data as dirty because data blob is jsonb
         }
         if(dirty){
-          console.log('[beirt v174 self-heal] clearing stuck camelCase queue', arr.length);
+          console.log('[beirt v181 self-heal] clearing stuck queue', arr.length);
           // keep household safe, just wipe queue - server will be source of truth on next load
           try{ localStorage.removeItem('idb_mutation_queue'); }catch{}
           try{ localStorage.removeItem('couple_v1_queue_count'); }catch{}

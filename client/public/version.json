@@ -1,8 +1,8 @@
 {
-  "build": "v192-shop-nodupe-header",
-  "builtAt": "2026-08-08T12:22:52Z",
-  "changelog": "shop: remove duplicate inner Shop header (shell already renders title), keep single Next Run boutique card \u2014 matches mock",
-  "code": 192,
+  "build": "v193-onboard-warm-hero",
+  "builtAt": "2026-08-08T12:36:45Z",
+  "changelog": "onboarding: use exact warm table scene (mugs + plant + candle) as full-bleed hero, top fade + bottom fade, no fake clipped shapes, single charcoal bottom sheet \u2014 boutique match fridge/shop",
+  "code": 193,
   "mandatory": false,
-  "version": "192.0.0"
+  "version": "193.0.0"
 }

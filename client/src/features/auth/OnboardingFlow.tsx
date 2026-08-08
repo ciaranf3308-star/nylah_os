@@ -395,10 +395,10 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
     if (step==="welcome") {
     return (
       <div className="absolute inset-0 z-[90] flex min-h-dvh w-full flex-col bg-[#FEF7F0] overflow-hidden">
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');`}</style>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Instrument+Sans:wght@400;500&display=swap');`}</style>
 
-        {/* Top content — logo + headline */}
-        <div className="flex flex-col items-center px-6 pt-[48px]">
+        {/* Top — logo */}
+        <div className="flex flex-col items-center px-6 pt-[42px] pb-2 shrink-0">
           <div className="relative flex flex-col items-center">
             <div className="h-[72px] w-[86px] relative grid place-items-center">
               <svg width="88" height="80" viewBox="0 0 88 82" fill="none" xmlns="http://www.w3.org/2000/svg" className="overflow-visible">
@@ -421,35 +421,32 @@ export function OnboardingFlow({ onComplete }: OnboardingProps) {
             </div>
           </div>
 
-          <h1 className="mt-8 font-display text-[32px] font-bold leading-[0.96] tracking-[-0.03em] text-[#161210] text-center" style={{fontFamily:"Fraunces, Georgia, serif"}}>
+          <h1 className="mt-7 font-display text-[32px] font-bold leading-[0.96] tracking-[-0.03em] text-[#161210] text-center" style={{fontFamily:"Fraunces, Georgia, serif"}}>
             A home runs<br/>better together
           </h1>
-          <p className="mt-3 max-w-[312px] text-[13px] leading-[1.55] text-[#6E5F55] text-center">
+          <p className="mt-3 max-w-[312px] text-[13px] leading-[1.55] text-[#6E5F55] text-center" style={{fontFamily:"Instrument Sans"}}>
             Beirt is your private space for two.<br/>
             Stay organised, share responsibilities,<br/>
             and build a stronger home—together.
           </p>
         </div>
 
-        {/* Photoreal illustration — goal match: big soft shapes filling background, plant bottom */}
-        <div className="relative w-full h-[440px] shrink-0 overflow-hidden">
-          {/* big shapes - exactly like your iPhone ref */}
-          <div className="pointer-events-none absolute left-[-130px] top-[-36px] w-[420px] h-[520px] rounded-[9999px] bg-[#F6D2A9]" style={{opacity:0.98}} />
-          <div className="pointer-events-none absolute left-[-24px] top-[84px] opacity-[0.32]" style={{width:"96px", height:"168px", background:"radial-gradient(ellipse at 60% 40%, rgba(88,70,58,0.22) 0%, transparent 72%)", filter:"blur(0.3px)"}} />
-          <div className="pointer-events-none absolute left-[24%] top-[200px] w-[320px] h-[320px] rounded-full bg-[#EBC392]" style={{opacity:0.96}} />
-          <div className="pointer-events-none absolute right-[-118px] top-[88px] w-[360px] h-[460px] rounded-[9999px] bg-[#CBD4C8]" style={{opacity:0.93}} />
-
+        {/* Hero image — exact file you sent, edge-to-edge, no fake shapes overlaying */}
+        <div className="relative w-full flex-1 min-h-[380px] overflow-hidden">
           <img
             src="./onboarding-photo.png"
             alt=""
-            className="absolute bottom-[-8px] left-0 w-full h-auto object-contain object-bottom"
-            style={{ filter:"drop-shadow(0 12px 28px rgba(80,50,25,0.10))" }}
+            className="absolute inset-0 w-full h-full object-cover object-center"
             draggable={false}
           />
+          {/* soft top fade so headline breathes into image */}
+          <div className="absolute inset-0 pointer-events-none" style={{background:"linear-gradient(180deg,#FEF7F0 0%, rgba(254,247,240,0) 18%)"}} />
+          {/* bottom fade into charcoal card */}
+          <div className="absolute inset-x-0 bottom-0 h-[28%] pointer-events-none" style={{background:"linear-gradient(0deg,#0F1012 0%, rgba(15,16,18,0) 100%)", opacity:0.22}} />
         </div>
 
-        {/* Bottom sheet — charcoal, flush to wood like ref */}
-        <div className="w-full px-[18px] pb-[max(18px,env(safe-area-inset-bottom))] mt-[0px] bg-[#FEF7F0] relative z-[3]">
+        {/* Bottom sheet — charcoal, single */}
+        <div className="w-full px-[18px] pb-[max(18px,env(safe-area-inset-bottom))] pt-[14px] bg-[#FEF7F0] relative z-[3] shrink-0">
           <div className="mx-auto w-full max-w-[384px] rounded-[26px] bg-[#101214] px-[18px] pt-[14px] pb-[18px] shadow-[0_22px_60px_rgba(0,0,0,0.42),0_2px_0_rgba(255,255,255,0.04)_inset] border border-white/[0.04]">
             <button
               onClick={()=> setStep("create_names")}

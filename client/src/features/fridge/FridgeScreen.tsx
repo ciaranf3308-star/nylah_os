@@ -151,8 +151,8 @@ function FridgePage(props: FridgeProps | any) {
   // boutique pastel hero – matches reference left
   const currentName = (PERSONS as any)[currentUser]?.name || currentUser || "You";
   const partnerName = (PERSONS as any)[partner]?.name || partner;
-  const withLabel = isFriends ? "with" : "with"; // both use "with" but friend track uses softer copy elsewhere
   const partnerOrFlat = isFriends ? "flatmate" : "partner";
+  const beirtTag = isFriends ? "FLATMATES • BEIRT" : "BEIRT";
 
   return (
     <div className="w-full space-y-5">
@@ -211,13 +211,18 @@ function FridgePage(props: FridgeProps | any) {
             </div>
             <div className="mt-4 flex items-center gap-2.5">
               <span className="h-px w-8" style={{ background: (theme as any)?.id==='ink' ? "#2A2A2E" : "#DDD2C9" }} />
-              <span className="text-[10.5px] font-[700] tracking-[0.13em] uppercase" style={{ color: (theme as any)?.id==='ink' ? "#8A8580" : "#8D837C" }}>{currentName.toUpperCase()} ♥ {partnerName.toUpperCase()} • BEIRT</span>
+              <span className="text-[10.5px] font-[700] tracking-[0.13em] uppercase" style={{ color: (theme as any)?.id==='ink' ? "#8A8580" : "#8D837C" }}>{currentName.toUpperCase()} ♥ {partnerName.toUpperCase()} • {beirtTag}</span>
             </div>
           </div>
         </div>
 
         <div className="absolute bottom-2.5 right-3 z-[2]">{syncMinimal}</div>
       </div>
+
+      {/* helper copy when flatmates — tiny */}
+      {isFriends && (
+        <div className="px-1 -mt-1 text-[10.5px] text-[#8B7357]">House type: roommates — copy says {partnerOrFlat}, same chores + shop + plans</div>
+      )}
 
       <NeedsYou currentUser={currentUser} calendar={activeCalendar as any} chores={activeChores as any} nowMs={nowMs} setTab={setTab as any} />
       <Upcoming currentUser={currentUser} calendar={activeCalendar as any} chores={activeChores as any} shopping={activeShopping as any} nowMs={nowMs} todayDateStr={todayDateStr} setTab={setTab as any} />

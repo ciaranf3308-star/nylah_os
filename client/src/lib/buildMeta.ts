@@ -8,8 +8,8 @@ export const BUILD_CHANNEL = "beta" as const;
 export const BUILD_META = {
   tz: HOUSEHOLD_TZ,
   channel: BUILD_CHANNEL,
-  build: "v227-friends-second-path",
-  code: 227,
+  build: "v228-flatmates-tag",
+  code: 228,
 } as const;
 export const HOUSEHOLD_ID: string | null = null;
 export const HOUSEHOLD_ROW_ID: string | null = null;

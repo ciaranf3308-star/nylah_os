@@ -1,8 +1,8 @@
 {
-  "build": "v227-friends-second-path",
-  "builtAt": "2026-08-08T21:36:00Z",
-  "changelog": "V227 add second path friends/roommates — scalable couple|friends via connectionType, welcome→connection picker, LS couple_v1_connection_type + data-connection html attr, meta.connectionType saved, scalable nylah-xxxxxx for 4k houses, boutique copy flat vs partner, friends keeps same people engine",
-  "code": 227,
+  "build": "v228-flatmates-tag",
+  "builtAt": "2026-08-08T21:38:00Z",
+  "changelog": "V228 fridge tag switches to FLATMATES • BEIRT when friends connection, keeps BEIRT for couples, plus helper copy house type roommates, scalable connectionType",
+  "code": 228,
   "mandatory": false,
-  "version": "227.0.0"
+  "version": "228.0.0"
 }

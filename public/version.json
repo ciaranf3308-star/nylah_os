@@ -1,8 +1,8 @@
 {
-  "build": "v218-pull-refresh-native",
-  "builtAt": "2026-08-08T19:18:00Z",
-  "changelog": "V218 fix drag to refresh: remove nested overflow-hidden on standalone to allow window scroll, add custom pull-to-refresh touch handler for PWA standalone where native is disabled, keeps tab persistence LS+?tab and fixed centered nav",
-  "code": 218,
+  "build": "v219-scroll-fix-ptr",
+  "builtAt": "2026-08-08T19:22:00Z",
+  "changelog": "V219 fix scrolling broken: remove flex-1 overflow constraints in standalone so window scrolls naturally, remove preventDefault that blocked scroll, custom PTR now passive non-blocking",
+  "code": 219,
   "mandatory": false,
-  "version": "218.0.0"
+  "version": "219.0.0"
 }

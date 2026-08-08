@@ -180,21 +180,19 @@ export function App() {
     } catch {}
   }, [theme, themeId, setThemeId]);
 
-  // pull-to-refresh: native is disabled in standalone PWA, so implement custom drag-down
+  // pull-to-refresh: native is disabled in standalone PWA, so implement custom drag-down (non-blocking)
   React.useEffect(() => {
-    // need window + top-of-page check; works for standalone and for browser nested scroll removed
     let startY = 0;
     let pulling = false;
     let indicator: HTMLDivElement | null = null;
     const getScrollTop = () => {
-      // when standalone we let window scroll; fallback to phoneInner container if present
-      if ((window as any).scrollY !== undefined) {
-        if (window.scrollY <= 2) return 0;
-        // if window has scrolled, not at top
-        return window.scrollY;
-      }
-      const el = safePhoneInnerRef?.current;
-      if (el) return (el as any).scrollTop || 0;
+      // standalone now scrolls window, fallback to phoneInner if old layout
+      try {
+        const scY = (window as any).scrollY || window.pageYOffset || 0;
+        if (scY > 2) return scY;
+      } catch {}
+      const el = safePhoneInnerRef?.current as any;
+      if (el && typeof el.scrollTop === "number") return el.scrollTop;
       return 0;
     };
     const ensureIndicator = () => {
@@ -226,22 +224,19 @@ export function App() {
     };
     const onTouchMove = (e: TouchEvent) => {
       if (!pulling) return;
-      if (getScrollTop() > 2) { pulling = false; return; }
+      const top = getScrollTop();
+      if (top > 2) { pulling = false; return; }
       const y = e.touches[0]?.clientY || 0;
       const dist = y - startY;
-      if (dist < 8) return;
-      if (dist > 0 && dist < 160) {
-        // block native rubber-band a bit and show hint
-        if (dist > 12) {
-          const ind = ensureIndicator();
-          ind.style.opacity = Math.min(1, (dist - 12) / 42).toString();
-          ind.style.transform = `translateX(-50%) translateY(${Math.min(16, (dist-12)*0.28)}px)`;
-          ind.textContent = dist > 78 ? "↻ Release to refresh" : "↓ Pull to refresh";
+      if (dist <= 0) return; // scrolling up — ignore
+      if (dist < 160) {
+        const ind = ensureIndicator();
+        if (dist > 10) {
+          ind.style.opacity = Math.min(1, (dist - 10) / 42).toString();
+          ind.style.transform = `translateX(-50%) translateY(${Math.min(16, (dist-10)*0.28)}px)`;
+          ind.textContent = dist > 76 ? "↻ Release to refresh" : "↓ Pull to refresh";
         }
-        if (dist > 20) {
-          // prevent scroll chaining only when really pulling
-          try { if (e.cancelable) e.preventDefault(); } catch {}
-        }
+        // DO NOT preventDefault — let scroll stay natural
       }
     };
     const onTouchEnd = (e: TouchEvent) => {
@@ -253,20 +248,14 @@ export function App() {
         indicator.style.opacity = "0";
         indicator.style.transform = "translateX(-50%) translateY(-20px)";
       }
-      if (dist > 82 && getScrollTop() <= 2) {
-        // keep tab persistence (LS+?tab already), just reload data / page
-        try {
-          if (typeof safeDrainQueue === 'function') safeDrainQueue();
-        } catch {}
-        // small delay for UX feel
-        window.setTimeout(() => {
-          window.location.reload();
-        }, 120);
+      if (dist > 76 && getScrollTop() <= 2) {
+        try { if (typeof safeDrainQueue === 'function') safeDrainQueue(); } catch {}
+        window.setTimeout(() => { window.location.reload(); }, 120);
       }
       startY = 0;
     };
     window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: false } as any);
+    window.addEventListener("touchmove", onTouchMove, { passive: true } as any);
     window.addEventListener("touchend", onTouchEnd, { passive: true });
     return () => {
       window.removeEventListener("touchstart", onTouchStart as any);
@@ -354,13 +343,13 @@ export function App() {
         .hero-script { font-family: Fraunces, Instrument Serif, Georgia, serif; letter-spacing: -0.02em; }
       `}</style>
 
-      <div className={standalone ? "relative w-full max-w-[100vw] w-[100vw] min-h-screen min-h-dvh flex flex-col border-0 rounded-none" : "relative mx-auto w-full max-w-[390px] overflow-hidden rounded-[36px] border-0 flex flex-col"} style={{ background: (safeTheme as any).bg || (theme as any)?.bg, width: standalone ? "100vw" : undefined, maxWidth: standalone ? "100vw" : undefined } as any}>
+      <div className={standalone ? "relative w-full max-w-[100vw] min-h-screen flex flex-col border-0 rounded-none" : "relative mx-auto w-full max-w-[390px] overflow-hidden rounded-[36px] border-0 flex flex-col"} style={{ background: (safeTheme as any).bg || (theme as any)?.bg, width: standalone ? "100vw" : undefined, maxWidth: standalone ? "100vw" : undefined } as any}>
         {pushToast && (
           <div className="fixed top-[12px] left-1/2 -translate-x-1/2 z-[80] rounded-full bg-[#0A0A0A] text-white px-4 py-2 text-[12px] font-semibold shadow-[0_8px_24px_rgba(0,0,0,0.22)] max-w-[90%] truncate">
             <span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#22C55E] animate-pulse" />{pushToast.title}: {pushToast.body}</span>
           </div>
         )}
-        <div ref={safePhoneInnerRef} className={standalone ? "relative flex flex-1 min-h-0 flex-col w-full max-w-[100vw] rounded-none" : "relative flex h-[800px] flex-col overflow-hidden rounded-[28px]"}>
+        <div ref={safePhoneInnerRef} className={standalone ? "relative flex flex-col w-full max-w-[100vw] rounded-none flex-1" : "relative flex h-[800px] flex-col overflow-hidden rounded-[28px]"}>
           <div className="sticky top-0 z-30 flex flex-col bg-transparent border-0 shadow-none backdrop-blur-[1px] topbar-transparent" style={{ background: "transparent" }}>
             <div className="flex h-[56px] items-center justify-between px-4">
               <h1 className="text-[26px] font-semibold leading-[32px] tracking-[-0.02em] text-[var(--text)] hero-script">{getPageTitle((tab as any) || "fridge")}</h1>
@@ -369,7 +358,7 @@ export function App() {
             {(()=>{ const k=(safeSyncStatus as any)?.kind; if(!k||k==="saved"||k==="saving") return null; let msg:string|null=null; let tone="bg-amber-50 text-amber-900 border-amber-200"; if(k==="offline-queued"||k==="offline"||k==="queued"){const n=(safeSyncStatus as any).queueCount??1; msg=n>1?`${n} changes waiting`:"Offline"; tone="bg-neutral-100 text-neutral-800 border-neutral-200";} else if(k==="failed"){msg="Sync failed — tap retry"; tone="bg-red-50 text-red-800 border-red-200";} else if(k==="updated-elsewhere"){msg="Updated elsewhere"; tone="bg-violet-50 text-violet-800 border-violet-200";} if(!msg) return null; return (<button onClick={()=> (safeDrainQueue as any)()} className={`mx-3 mb-2 flex h-[36px] items-center rounded-[12px] border px-3 text-[12px] font-medium leading-[17px] ${tone}`}><span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-70 mr-2" />{msg}</button>); })()}
           </div>
 
-          <div className={standalone ? "flex-1 px-4 pt-3 pb-[112px] no-scrollbar" : "flex-1 overflow-auto no-scrollbar px-4 pt-3 pb-[112px]"} style={{ background: (safeTheme as any).bg || (theme as any)?.bg }}>
+          <div className={standalone ? "w-full px-4 pt-3 pb-[132px]" : "flex-1 overflow-auto no-scrollbar px-4 pt-3 pb-[112px]"} style={{ background: (safeTheme as any).bg || (theme as any)?.bg }}>
             {(tab as any)==="fridge" && <FridgeScreen currentUser={safeCurrentUser} chores={(safeChores||[]) as any} calendar={(safeCalendarRaw||[])} shopping={(safeShoppingRaw||[])} notes={(safeNotesRaw||[])} setTab={safeSetTab as any} nowMs={safeNowMs} theme={safeTheme} syncStatus={safeSyncStatus} />}
             {((tab as any)==="calendar" || (tab as any)==="plans") && <CalendarScreen events={(safeCalendarRaw||[]) as any} setEvents={safeSetCalendarRaw as any} currentUser={safeCurrentUser} nowMs={safeNowMs} chores={(safeChores||[]) as any} setCurrentUser={safeSetCurrentUser as any} onCelebrate={()=> (s as any).triggerConfetti?.()} />}
             {tab==="chores" && <ChoresScreen chores={(safeChores||[]) as any} setChores={(s as any).setChores || safeSetChoresRaw as any} currentUser={safeCurrentUser} setCurrentUser={safeSetCurrentUser as any} onCelebrate={()=> (s as any).triggerConfetti?.()} nowMs={safeNowMs} />}

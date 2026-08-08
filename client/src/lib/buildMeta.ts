@@ -8,8 +8,8 @@ export const BUILD_CHANNEL = "beta" as const;
 export const BUILD_META = {
   tz: HOUSEHOLD_TZ,
   channel: BUILD_CHANNEL,
-  build: "v213-boutique-notes-true-live",
-  code: 213,
+  build: "v214-boutique-nav-sticky",
+  code: 214,
 } as const;
 export const HOUSEHOLD_ID: string | null = null;
 export const HOUSEHOLD_ROW_ID: string | null = null;

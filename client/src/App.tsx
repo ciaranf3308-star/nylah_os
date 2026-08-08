@@ -37,17 +37,75 @@ function getPageTitle(tab: TabKey): string {
   return m[tab] || "Beirt";
 }
 function TabIcon({ k, active }: { k: TabKey; active?: boolean }) {
-  // minimal inline icons — same palette as monolith
-  const icons: Record<string,React.ReactNode> = {
-    fridge: <span>❄︎</span>,
-    plans: <span>◐</span>,
-    calendar: <span>📅</span>,
-    chores: <span>✦</span>,
-    shopping: <span>🛒</span>,
-    notes: <span>♥</span>,
-    blueprint: <span>⚙︎</span>,
-  };
-  return <span className={active?"opacity-100":"opacity-70"}>{icons[k]||"•"}</span>;
+  const sw = active ? 1.9 : 1.65;
+  const common = "block";
+  // boutique curated 1-by-1 — warm line with subtle filled detail when active
+  if (k === "fridge") {
+    return (
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" className={common} aria-hidden>
+        <path d="M4.1 10.5L12 4.1l7.9 6.4v7.2a2.4 2.4 0 0 1-2.4 2.4H6.5a2.4 2.4 0 0 1-2.4-2.4v-7.2Z" />
+        <path d="M9.3 20.1V13a2.1 2.1 0 0 1 2.1-2.1h1.2a2.1 2.1 0 0 1 2.1 2.1v7.1" />
+        {active && <circle cx="12" cy="8.6" r="1.15" fill="currentColor" stroke="none" opacity="0.92" />}
+      </svg>
+    );
+  }
+  if (k === "plans" || k === "calendar") {
+    return (
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" className={common} aria-hidden>
+        <rect x="3.1" y="4.9" width="17.8" height="15.1" rx="4.2" />
+        <path d="M8 3.1v3" />
+        <path d="M16 3.1v3" />
+        <path d="M3.1 9.7h17.8" strokeOpacity="0.88" />
+        <path d="M8.9 12.8h.01M12 12.8h.01M15.1 12.8h.01M8.9 15.8h.01M12 15.8h.01M15.1 15.8h.01" strokeWidth={active ? 2.25 : 1.85} strokeLinecap="round" />
+        {active && <circle cx="12" cy="14.35" r="0.9" fill="currentColor" stroke="none" opacity="0.3" />}
+      </svg>
+    );
+  }
+  if (k === "chores") {
+    return (
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" className={common} aria-hidden>
+        <path d="M12 3.2L13.1 8.1l4.9 1.1-4.9 1.1L12 15.2l-1.1-4.9L6 9.2l4.9-1.1L12 3.2Z" fill={active ? "currentColor" : "none"} fillOpacity={active ? 0.18 : 0} />
+        <circle cx="18.1" cy="6" r="1.15" fill="currentColor" stroke="none" opacity="0.95" />
+        <circle cx="6.2" cy="17.2" r="0.95" fill="currentColor" stroke="none" opacity="0.72" />
+        {active && <circle cx="12" cy="9.2" r="1.6" fill="currentColor" opacity="0.12" stroke="none" />}
+      </svg>
+    );
+  }
+  if (k === "shopping") {
+    return (
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" className={common} aria-hidden>
+        <path d="M6.2 7.7h11.6L17 19a1.6 1.6 0 0 1-1.6 1.5H8.6A1.6 1.6 0 0 1 7 19L6.2 7.7Z" />
+        <path d="M9.2 7.7V6.05A2.85 2.85 0 0 1 12.05 3.2h0A2.85 2.85 0 0 1 14.9 6.05V7.7" />
+        <path d="M9.7 11.2c0 .75 1.05 1.55 2.3 1.55 1.25 0 2.3-.8 2.3-1.55" strokeOpacity="0.88" strokeWidth="1.4" />
+        {active && <circle cx="12" cy="12.45" r="0.9" fill="currentColor" opacity="0.26" stroke="none" />}
+      </svg>
+    );
+  }
+  if (k === "notes") {
+    return (
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" className={common} aria-hidden>
+        <path d="M5 4h9.2L19 8.8V19.6A1.4 1.4 0 0 1 17.6 21H5.8A1.8 1.8 0 0 1 4 19.2V5.6A1.6 1.6 0 0 1 5 4Z" />
+        <path d="M14.2 4v4.6H19" />
+        {active ? (
+          <path d="M9.75 12.55c-.6-1.15.18-2.32 1.32-2.06.56.13.98.52 1.75.88.77-.36 1.19-.75 1.75-.88 1.14-.26 1.92.91 1.32 2.06-.82 1.57-2.07 2.85-3.07 3.5-.99-.65-2.25-1.93-3.07-3.5Z" fill="currentColor" stroke="none" opacity="0.92" />
+        ) : (
+          <>
+            <path d="M8.6 13h6.4" strokeWidth="1.45" opacity="0.92" />
+            <path d="M8.6 15.7h4.9" strokeWidth="1.45" opacity="0.82" />
+          </>
+        )}
+        {!active && <circle cx="15.9" cy="9.6" r="0.75" fill="currentColor" opacity="0.22" stroke="none" />}
+      </svg>
+    );
+  }
+  // blueprint / settings fallback — boutique gear
+  return (
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" className={common} aria-hidden>
+      <circle cx="12" cy="12" r="3.25" />
+      <path d="M12 3.2v2M12 18.8v2M3.8 8.2l1.7 1M18.5 14.8l1.7 1M3.8 15.8l1.7-1M18.5 9.2l1.7-1M5 12H3M21 12h-2" strokeWidth="1.35" opacity="0.92" />
+      {active && <circle cx="12" cy="12" r="1.1" fill="currentColor" opacity="0.85" stroke="none" />}
+    </svg>
+  );
 }
 function BottomSheet({ open, onClose, children, title }: { open: boolean; onClose:()=>void; children:React.ReactNode; title?:string }) {
   if (!open) return null;
@@ -225,7 +283,7 @@ export function App() {
           </div>
         </div>
 
-        <nav className="absolute inset-x-0 bottom-0 left-0 right-0 z-[60] flex h-[64px] w-full max-w-none items-center justify-around bottom-nav-v11 backdrop-blur-[12px] pb-[env(safe-area-inset-bottom)]" style={{ borderColor:"var(--border)" }}>
+        <nav className="z-[60] bottom-nav-v11" style={{ borderColor:"var(--border)" }}>
           {(TABS as any).map((it:any)=>{
             const isPlans=it.k==="plans"; const currentIsPlans=(tab as any)==="plans"||(tab as any)==="calendar"; const isActive=isPlans?currentIsPlans:tab===it.k;
             return (

@@ -427,7 +427,30 @@ export function getRevision(): number {
 // ---- Core composition hook: mirrors V1AppShell internal state (verbatim copy blocks) ----
 export function useV1AppShellState() {
   const standalone = useIsStandalone();
-  const [tab, setTab] = useState<TabKey>("fridge");
+  const [tab, setTab] = useState<TabKey>(()=>{
+    try{
+      const saved = localStorage.getItem("couple_v1_current_tab");
+      if(saved && ["fridge","plans","calendar","chores","shopping","notes","blueprint"].includes(saved)) return saved as TabKey;
+      // also support query param ?tab=notes to deep link
+      const sp = new URLSearchParams(location.search);
+      const q = sp.get("tab");
+      if(q && ["fridge","plans","calendar","chores","shopping","notes","blueprint"].includes(q)) return q as TabKey;
+    }catch{}
+    return "fridge" as TabKey;
+  });
+  useEffect(()=>{
+    try{ localStorage.setItem("couple_v1_current_tab", String(tab)); }catch{}
+    // keep url in sync for deep link/share without full reload
+    try{
+      const sp = new URLSearchParams(location.search);
+      if(sp.get("tab")!==String(tab)){
+        sp.set("tab", String(tab));
+        const qs = sp.toString();
+        const next = location.pathname + (qs?"?"+qs:"") + (location.hash||"");
+        history.replaceState(null,"",next);
+      }
+    }catch{}
+  },[tab]);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(() => {
     try {
       const q = localStorage.getItem('couple_v1_queue_count')

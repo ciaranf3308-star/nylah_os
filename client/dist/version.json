@@ -1,8 +1,8 @@
 {
-  "build": "v212-game-clarity",
-  "builtAt": "2026-08-08T18:30:00Z",
-  "changelog": "V212 game clarity: fix Ash claim → your Open confusion — solo claims now Mine-only, partner never sees it; Open renamed Duel (only both-right race 1.15×); clearer toasts and rules, no steal spam — makes game understandable",
-  "code": 212,
+  "build": "v214-boutique-nav-sticky",
+  "builtAt": "2026-08-08T18:55:00Z",
+  "changelog": "V214 boutique nav sticky: pull-to-refresh keeps current tab via localStorage+?tab sync + overscroll-behavior contain, floating boutique dock 68px rounded 22px, curated 1-by-1 SVG icons for each nav (home house, plans calendar, chores spark, shop tote, notes memo) replacing emoji placeholders — premium distinct",
+  "code": 214,
   "mandatory": false,
-  "version": "212.0.0"
+  "version": "214.0.0"
 }

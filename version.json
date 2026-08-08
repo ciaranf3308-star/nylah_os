@@ -1,8 +1,8 @@
 {
-  "build": "v213-boutique-notes-true-live",
-  "builtAt": "2026-08-08T18:45:00Z",
-  "changelog": "V213 boutique notes true-live: sticky memo board 2-col tapes polaroid script moments warm boutique, fix 95% DB success → 100% — dual-write notes_memo+couple_data+queue prune, NOTES table corrected to notes_memo, delete prune+legacy sync — aesthetically matches fridge/shop goal — code 213",
-  "code": 213,
+  "build": "v214-boutique-nav-sticky",
+  "builtAt": "2026-08-08T18:55:00Z",
+  "changelog": "V214 boutique nav sticky: pull-to-refresh keeps current tab via localStorage+?tab sync + overscroll-behavior contain, floating boutique dock 68px rounded 22px, curated 1-by-1 SVG icons for each nav (home house, plans calendar, chores spark, shop tote, notes memo) replacing emoji placeholders — premium distinct",
+  "code": 214,
   "mandatory": false,
-  "version": "213.0.0"
+  "version": "214.0.0"
 }

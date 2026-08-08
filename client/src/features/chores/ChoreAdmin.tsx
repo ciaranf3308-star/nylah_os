@@ -23,25 +23,30 @@ function hardDeleteChore(id: string) {
     const hid = getEffectiveRowId();
     if (!hid) return;
     const sb = getSupabase();
-    if (!sb) return;
-    // fire-and-forget: delete from normalized + occurrences + legacy couple_data + queue
+    // fire-and-forget: delete from normalized + queue + enqueue delete op for sync
     (async () => {
-      try { await (sb as any).from('chores').delete().eq('id', id).eq('household_id', hid); } catch {}
-      try { await (sb as any).from('chore_occurrences').delete().eq('id', id).eq('household_id', hid); } catch {}
+      try { if (sb) await (sb as any).from('chores').delete().eq('id', id); } catch {}
+      try { if (sb) await (sb as any).from('chore_occurrences').delete().eq('id', id); } catch {}
       try {
-        const { data: row } = await (sb as any).from('couple_data').select('chores').eq('id', hid).maybeSingle();
-        if (row && Array.isArray((row as any).chores)) {
-          const filtered = (row as any).chores.filter((c:any)=> String(c.id)!==String(id));
-          if (filtered.length !== (row as any).chores.length) {
-            await (sb as any).from('couple_data').update({ chores: filtered, updated_at: new Date().toISOString() }).eq('id', hid);
-          }
-        }
+        const { getQueue, persistQueue, enqueueOp, drainOps } = await import("../../data/offlineQueue").then(m=>m as any).catch(()=>({getQueue: async()=>[], persistQueue: async()=>{}, enqueueOp: async()=>{}} as any));
+        try {
+          const q = await getQueue();
+          const next = q.filter((o:any)=> !(o.id===id && (o.kind==='chore' || o.kind==='chore_occ')));
+          if (next.length !== q.length) await persistQueue(next as any);
+        } catch {}
+        try { await enqueueOp('chore','delete', id, hid, {id, deleted_at:new Date().toISOString()}); } catch {}
+        try { if (sb) { const {drainOps} = await import("../../data/offlineQueue"); await drainOps(sb as any).catch(()=>{}); } } catch {}
       } catch {}
       try {
-        const { getQueue, persistQueue } = await import("../../data/offlineQueue");
-        const q = await getQueue();
-        const next = q.filter((o:any)=> !(o.id===id && o.kind==='chore'));
-        if (next.length !== q.length) await persistQueue(next as any);
+        if (sb) {
+          const { data: row } = await (sb as any).from('couple_data').select('chores').eq('id', hid).maybeSingle();
+          if (row && Array.isArray((row as any).chores)) {
+            const filtered = (row as any).chores.filter((c:any)=> String(c.id)!==String(id));
+            if (filtered.length !== (row as any).chores.length) {
+              await (sb as any).from('couple_data').update({ chores: filtered, updated_at: new Date().toISOString() }).eq('id', hid);
+            }
+          }
+        }
       } catch {}
     })();
   } catch {}

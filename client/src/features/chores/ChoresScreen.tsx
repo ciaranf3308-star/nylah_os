@@ -137,6 +137,22 @@ export default function ChoresScreen(props: any) {
   const [reactionMap, setReactionMap] = useState<Record<string,string[]>>(()=>{ try{ const r=localStorage.getItem("couple_v1_chore_reactions"); return r?JSON.parse(r):{} }catch{return {}} });
 
   const active = useMemo(()=> chores.filter(c=> !(c as any).deletedAt), [chores]);
+// one-time cleanup of test junk that survived earlier failed deletes (v186 test chore)
+  useEffect(()=>{
+    try{
+      const bad = (chores as any[]).filter(c=>{
+        const t=(c.title||c.name||'').toLowerCase();
+        const id=(c.id||'').toLowerCase();
+        return t.includes('choredeletetest') || id.includes('choredeletetest');
+      });
+      if(bad.length){
+        const nowISO=new Date().toISOString();
+        setChores((p:any)=> (p as any[]).map((x:any)=> bad.find(b=> b.id===x.id) ? {...x, deletedAt: nowISO, updatedAt: nowISO} : x));
+        bad.forEach((b:any)=> { try{ hardPersistChore({id:b.id, deletedAt:nowISO, updatedAt:nowISO},'delete'); }catch{} });
+      }
+    }catch{}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
   const deck = useMemo(()=> active.filter(c=> c.status==="deck"), [active]);
   const mine = useMemo(()=> active.filter(c=> c.assignedTo===currentUser && c.status!=="done"), [active, currentUser]);
   const open = useMemo(()=> active.filter(c=> c.status==="open" || c.status==="race" || (c.status==="assigned" && c.assignedTo!==currentUser)), [active, currentUser]);

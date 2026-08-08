@@ -1,8 +1,8 @@
 {
-  "build": "v189-app-wide-true-live",
-  "builtAt": "2026-08-08T11:58:22Z",
-  "changelog": "app-wide save true live: calendar+chores hard persist create/update/delete/status, shopping add/bought/delete, notes add/pin/archive, queue drain, replaces giant snapshot fragility",
-  "code": 189,
+  "build": "v190-chore-delete-test-clean",
+  "builtAt": "2026-08-08T12:01:30Z",
+  "changelog": "fix chore delete actually true-live: RLS-safe delete (no household eq for anon), enqueue delete op + drain, auto-cleanup ChoreDeleteTest186 dupe",
+  "code": 190,
   "mandatory": false,
-  "version": "189.0.0"
+  "version": "190.0.0"
 }

@@ -1,3 +1,4 @@
+// Notes boutique overhaul — matches fridge/shop quality, 100vw full-bleed, warm paper + tape, polaroid photo, script moments
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { PersonKey, NoteMemo } from "../../types";
@@ -12,16 +13,15 @@ function hardPersistNote(note:any, op:'create'|'update'|'delete'){
     const sb=getSupabase(); const id=String(note?.id||''); if(!id) return;
     const payload={...note, household_id:hid, updated_at: note?.updatedAt||note?.updated_at||new Date().toISOString(), created_at: note?.createdAt||note?.created_at||new Date().toISOString()};
     if(op==='delete'){
-      (async()=>{ try{ if(sb) await (sb as any).from('notes').delete().eq('id',id).eq('household_id',hid);}catch{} try{ const {getQueue,persistQueue}=await import("../../data/offlineQueue"); const q=await getQueue(); const nxt=q.filter((o:any)=>!(o.id===id && o.kind==='note')); if(nxt.length!==q.length) await persistQueue(nxt as any);}catch{} })();
-      import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('note','delete', id, hid, {id, deleted_at:new Date().toISOString()}); const {getQueue}=await import("../../data/offlineQueue"); const q=await getQueue(); if(q.length){ const {drainOps}=await import("../../data/offlineQueue"); const cli=sb; if(cli) try{ await drainOps(cli as any);}catch{}} }catch{} });
+      (async()=>{ try{ if(sb) await (sb as any).from('notes').delete().eq('id',id).eq('household_id',hid);}catch{} })();
+      import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('note','delete', id, hid, {id, deleted_at:new Date().toISOString()}); }catch{} });
       return;
     }
     (async()=>{ try{ if(sb){ const row:any={id, household_id:hid, data:payload, updated_at:payload.updated_at, created_at:payload.created_at}; if(payload.deletedAt||payload.deleted_at) row.deleted_at=payload.deletedAt||payload.deleted_at; await (sb as any).from('notes').upsert(row,{onConflict:'id'});} }catch{} })();
-    import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('note', op, id, hid, payload); const {getQueue}=await import("../../data/offlineQueue"); const q=await getQueue(); if(q.length){ const {drainOps}=await import("../../data/offlineQueue"); const cli=sb; if(cli) try{ await drainOps(cli as any);}catch{} } }catch{} });
+    import("../../data/offlineQueue").then(async ({enqueueOp})=>{ try{ await enqueueOp('note', op, id, hid, payload); const {drainOps}=await import("../../data/offlineQueue"); const cli=await import("../../lib/supabase").then(m=>m.getSupabase()); if(cli) try{ await drainOps(cli as any);}catch{} }catch{} });
   }catch{}
 }
 
-// BottomSheet extracted verbatim from AppMonolith — boutique tokens preserved
 function BottomSheet({ open, onClose, children, title }: { open: boolean; onClose: () => void; children: React.ReactNode; title?: string }) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const prevFocusRef = useRef<HTMLElement | null>(null);
@@ -30,45 +30,21 @@ function BottomSheet({ open, onClose, children, title }: { open: boolean; onClos
   useEffect(() => {
     if (!open) return;
     prevFocusRef.current = document.activeElement as HTMLElement;
-    const h = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { e.preventDefault(); onCloseRef.current?.(); }
-      if (e.key === "Tab" && sheetRef.current) {
-        const focusable = sheetRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
-        if (focusable.length === 0) return;
-        const first = focusable[0] as HTMLElement;
-        const last = focusable[focusable.length - 1] as HTMLElement;
-        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-      }
-    };
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); onCloseRef.current?.(); } };
     document.addEventListener("keydown", h);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    requestAnimationFrame(() => {
-      if (sheetRef.current) {
-        const auto = sheetRef.current.querySelector<HTMLElement>('[autofocus]');
-        if (auto) auto.focus();
-        else {
-          const first = sheetRef.current.querySelector<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
-          first?.focus();
-        }
-      }
-    });
-    return () => {
-      document.removeEventListener("keydown", h);
-      document.body.style.overflow = prevOverflow;
-      try { prevFocusRef.current?.focus(); } catch {}
-    };
+    return () => { document.removeEventListener("keydown", h); document.body.style.overflow = prevOverflow; try { prevFocusRef.current?.focus(); } catch {} };
   }, [open]);
   if (!open) return null;
   const content = (
     <div className="fixed inset-0 z-[80] flex items-end justify-center px-3 pb-[max(16px,env(safe-area-inset-bottom))] pointer-events-auto">
       <button aria-label="Close sheet" onClick={onClose} className="absolute inset-0 bg-[#292624]/20 backdrop-blur-[3px] min-h-[44px]" />
-      <div ref={sheetRef} role="dialog" aria-modal="true" aria-labelledby={title ? "sheet-title" : undefined} className="relative w-full max-w-[420px] rounded-[16px] bg-[var(--card-bg)] border shadow-[0_-16px_48px_rgba(0,0,0,0.18)] max-h-[72dvh] flex flex-col" style={{ borderColor: "var(--border)" }} tabIndex={-1}>
-        <div className="flex items-center justify-center pt-3 pb-2"><span className="rounded-full bg-[var(--border)]" style={{ width:"36px", height:"5px", display:"block"}}/></div>
+      <div ref={sheetRef} role="dialog" aria-modal="true" className="relative w-full max-w-[420px] rounded-[22px] bg-white border shadow-[0_-16px_48px_rgba(0,0,0,0.18)] max-h-[74dvh] flex flex-col" style={{ borderColor:"#E8DDD4" }} tabIndex={-1}>
+        <div className="flex items-center justify-center pt-3 pb-2"><span className="rounded-full bg-[#E9DDD4]" style={{ width:"36px", height:"5px", display:"block"}}/></div>
         <div className="flex items-center justify-between px-5 pb-3 gap-2">
-          {title ? <div className="font-display text-[16px] font-medium">{title}</div> : <div className="flex-1"/>}
-          <button onClick={onClose} aria-label="Close" className="grid h-[44px] w-[44px] place-items-center rounded-full border" style={{borderColor:"var(--border)"}}>✕</button>
+          {title ? <div className="font-display text-[16px] font-medium" style={{fontFamily:"Fraunces"}}>{title}</div> : <div className="flex-1"/>}
+          <button onClick={onClose} aria-label="Close" className="grid h-[44px] w-[44px] place-items-center rounded-full border bg-white" style={{borderColor:"#E9DDD4"}}>✕</button>
         </div>
         <div className="px-4 pb-6 overflow-auto">{children}</div>
       </div>
@@ -78,16 +54,12 @@ function BottomSheet({ open, onClose, children, title }: { open: boolean; onClos
 }
 
 function NotesMemoPage(props: any) {
-  let { notes, setNotes, currentUser, nowMs } = (props || {}) as {
-    notes: NoteMemo[]; setNotes: any; currentUser: PersonKey; nowMs: number;
-  };
-  // v120 defensive: never crash on undefined
+  let { notes, setNotes, currentUser, nowMs } = (props || {}) as { notes: NoteMemo[]; setNotes: any; currentUser: PersonKey; nowMs: number; };
   if (!Array.isArray(notes)) notes = [] as any;
   if (typeof setNotes !== 'function') setNotes = (()=>{}) as any;
   if (!currentUser) currentUser = "aisling" as any;
   if (typeof nowMs !== 'number') nowMs = Date.now();
   const [filter, setFilter] = useState<"all"|"unread"|"pinned"|"love"|"archive">("all");
-  const [showFilter, setShowFilter] = useState(false);
   const [query, setQuery] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [addBody, setAddBody] = useState("");
@@ -105,180 +77,160 @@ function NotesMemoPage(props: any) {
     if(filter==="unread") list = list.filter(n=> n.author===partner && !((n.seenBy as any)?.[currentUser]));
     else if(filter==="pinned") list = list.filter(n=> (n as any).pinned_at || (n as any).pinnedAt);
     else if(filter==="love") list = list.filter(n=> n.isLove);
-    else if(filter==="archive") {
-      const arch = notes.filter((n:any)=> (n as any).archivedAt || (n as any).archived_at);
-      list = arch as any;
-    }
-    if(query.trim()){
-      const q=query.toLowerCase();
-      list = list.filter(n=> n.body.toLowerCase().includes(q));
-    }
+    else if(filter==="archive") { const arch = notes.filter((n:any)=> (n as any).archivedAt || (n as any).archived_at); list = arch as any; }
+    if(query.trim()){ const q=query.toLowerCase(); list = list.filter(n=> n.body.toLowerCase().includes(q)); }
     return list.sort((a,b)=> new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime());
   }, [activeNotes, filter, query, notes, partner, currentUser]);
 
   const featured = filtered[0] || null;
-  const pinned = useMemo(()=> filtered.filter(n=> (n as any).pinned_at || (n as any).pinnedAt).slice(0,4), [filtered]);
-  const older = useMemo(()=> filtered.slice(featured ? 1 : 0).slice(0,12), [filtered, featured]);
+  const older = useMemo(()=> filtered.slice(featured ? 1 : 0).slice(0,20), [filtered, featured]);
 
   async function handlePhotoFile(file: File) {
     try {
       setIsResizing(true);
       const reader = new FileReader();
-      const base64: string = await new Promise((res, rej) => {
-        reader.onload = () => res(reader.result as string);
-        reader.onerror = rej;
-        reader.readAsDataURL(file);
-      });
-      // V37 resize to max 900 jpeg 0.82 then 180 thumb 0.8 — sharper but still <200k
+      const base64: string = await new Promise((res, rej) => { reader.onload = () => res(reader.result as string); reader.onerror = rej; reader.readAsDataURL(file); });
       const full = await resizeToDataUrl(base64, 900, "image/jpeg", 0.82);
       const thumb = await createThumbnail(full, 180, "image/jpeg", 0.8);
-      setAddPhotoDataUrl(full);
-      setAddThumbDataUrl(thumb);
-    } catch {
-      // fallback original
-    } finally { setIsResizing(false); }
+      setAddPhotoDataUrl(full); setAddThumbDataUrl(thumb);
+    } catch {} finally { setIsResizing(false); }
   }
 
   async function addNote(){
     if(!addBody.trim()) return;
-    // ensure any large photo is compressed to 900 + thumb 180 before persist
-    let finalFull = addPhotoDataUrl;
-    let finalThumb = addThumbDataUrl;
+    let finalFull = addPhotoDataUrl; let finalThumb = addThumbDataUrl;
     if (finalFull && finalFull.length > 8000) {
-      try {
-        // re-compress to target sizes if oversized or old 600
-        if (finalFull.length < 40000 && finalThumb) {
-          // already 900px range, keep
-        } else {
-          finalFull = await resizeToDataUrl(finalFull, 900, "image/jpeg", 0.82);
-          finalThumb = await createThumbnail(finalFull, 180, "image/jpeg", 0.8);
-        }
-      } catch {}
+      try { finalFull = await resizeToDataUrl(finalFull, 900, "image/jpeg", 0.82); finalThumb = await createThumbnail(finalFull, 180, "image/jpeg", 0.8); } catch {}
     }
-    const n: NoteMemo = {
-      id: uid("note"),
-      body: addBody.trim(),
-      author: currentUser,
-      createdAt: new Date().toISOString(),
-      seenBy: { aisling: currentUser==="aisling", ciaran: currentUser==="ciaran" } as any,
-      isLove: addIsLove,
-      photoDataUrl: finalFull,
-      photoThumbDataUrl: finalThumb,
-      rotation: rotForId(uid("r")),
-      updatedAt: new Date().toISOString(),
-    } as any;
+    const n: NoteMemo = { id: uid("note"), body: addBody.trim(), author: currentUser, createdAt: new Date().toISOString(), seenBy: { aisling: currentUser==="aisling", ciaran: currentUser==="ciaran" } as any, isLove: addIsLove, photoDataUrl: finalFull, photoThumbDataUrl: finalThumb, rotation: rotForId(uid("r")), updatedAt: new Date().toISOString(), } as any;
     setNotes((p:any)=> [n, ...p]); try{ hardPersistNote(n,'create'); }catch{}
     setAddBody(""); setAddIsLove(false); setAddPhotoDataUrl(undefined); setAddThumbDataUrl(undefined); setShowAdd(false);
   }
 
   return (
-    <div className="w-full space-y-4">
-      <div className="rounded-[24px] border px-5 pt-5 pb-4 relative overflow-hidden" style={{ background:'linear-gradient(180deg,var(--wash-top) 0%,var(--wash-mid) 18%,var(--wash-top) 28%,var(--card-bg) 100%)', borderColor:'var(--border)', boxShadow:'0 12px 32px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.04)' }}>
-        <div className="flex items-center justify-between h-[44px]">
-          <h2 className="font-display text-[26px] font-semibold tracking-tight text-[var(--text)]">Notes</h2>
-          <button onClick={()=> setShowAdd(true)} className="grid h-11 w-11 place-items-center rounded-full bg-[#0A0A0A] text-white text-[16px] shadow-[0_6px_18px_rgba(0,0,0,0.18)]" style={{minHeight:44, minWidth:44}}>＋</button>
-        </div>
-        <div className="mt-3 flex gap-2">
-          <input value={query} onChange={e=> setQuery(e.target.value)} placeholder="Search notes…" className="flex-1 h-[44px] min-h-[44px] rounded-[12px] border bg-[var(--card-bg)] px-4 text-[12px] shadow-sm" style={{borderColor:'var(--border)'}} />
-          <div className="relative">
-            <select value={filter} onChange={e=> setFilter(e.target.value as any)} className="h-[44px] min-h-[44px] rounded-[12px] border bg-[var(--card-bg)] px-3 pr-8 text-[12px] font-medium appearance-none bg-[var(--card-bg)]" style={{borderColor:"var(--border)"}}>
-              <option value="all">All</option>
-              <option value="unread">Unread</option>
-              <option value="pinned">Pinned</option>
-              <option value="love">Love</option>
-              <option value="archive">Archive</option>
-            </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="currentColor" strokeWidth="1.2" fill="none"/></svg></span>
+    <div className="w-[100vw] ml-[calc(-50vw+50%)] min-h-[100vh] bg-[#FFFBF6] pb-[136px] relative overflow-hidden">
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Pinyon+Script&display=swap');`}</style>
+
+      {/* Top header — serif Notes + C pill, like fridge/shop */}
+      <div className="w-full px-5 pt-5 flex items-start justify-between">
+        <h1 className="text-[40px] leading-[0.95] font-[700] tracking-[-0.02em] text-[#221B18]" style={{fontFamily:"Fraunces, serif"}}>Notes</h1>
+        <div className="grid h-10 w-10 place-items-center rounded-full bg-[#FBDBC0] text-[#4B3730] text-[14px] font-semibold">C</div>
+      </div>
+
+      {/* Header card — warm paper + tape */}
+      <div className="w-full px-5 pt-3">
+        <div className="relative overflow-hidden rounded-[20px] border border-[#F2DDC4]/70 px-5 pt-5 pb-4" style={{background:"linear-gradient(180deg,#FEECD6 0%,#FEF5E7 100%)", boxShadow:"0 8px 24px rgba(0,0,0,0.06)"}}>
+          {/* paper texture right */}
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-[56%] opacity-[0.94]" style={{backgroundImage:"linear-gradient(90deg,#FFFEFB 0%, #FFFBF2 100%)", clipPath:"polygon(16% 0, 100% 0, 100% 100%, 0% 100%)"}} />
+          <div className="pointer-events-none absolute right-[46px] top-[14px] w-[98px] h-[28px] bg-[#E2C1A3] rotate-[-8deg] rounded-[3px] opacity-90 shadow-sm" style={{transform:"rotate(-9deg)"}} />
+          <div className="pointer-events-none absolute right-[28px] top-[22px] text-[#E07A5F] text-[22px]">♡</div>
+          <div className="relative z-[1]">
+            <div className="text-[24px] font-[700] tracking-[-0.01em] text-[#2A1F1C]" style={{fontFamily:"Fraunces, serif"}}>Notes</div>
+            <div className="text-[10.5px] tracking-[0.16em] font-semibold uppercase text-[#D17A3E] mt-0.5">Capture what matters</div>
+          </div>
+          <div className="relative z-[1] mt-4 flex items-center gap-2.5">
+            <div className="flex-1 flex items-center gap-2 rounded-[14px] bg-white border border-[#EADDCF] px-3 h-[44px] shadow-sm">
+              <span className="text-[#A08F82]">⌕</span>
+              <input value={query} onChange={e=> setQuery(e.target.value)} placeholder="Search notes..." className="flex-1 bg-transparent text-[13px] outline-none placeholder:text-[#A89A8F]" />
+            </div>
+            <div className="relative">
+              <select value={filter} onChange={e=> setFilter(e.target.value as any)} className="h-[44px] rounded-[12px] border bg-white px-3 pr-7 text-[13px] font-medium appearance-none" style={{borderColor:"#E9DDD4"}}><option value="all">All</option><option value="unread">Unread</option><option value="pinned">Pinned</option><option value="love">Love</option><option value="archive">Archive</option></select>
+              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px]">▼</span>
+            </div>
+            <button onClick={()=> setShowAdd(true)} className="grid h-[44px] w-[44px] place-items-center rounded-full bg-[#101214] text-white text-[20px] active:scale-[0.96]">+</button>
           </div>
         </div>
       </div>
 
-      {/* FROM ... Large featured - polaroid obvious */}
-      {featured && (
-        <button onClick={()=> setSelected(featured)} className="relative w-full text-left rounded-[20px] border bg-[var(--card-bg)] px-5 py-5 shadow-[0_12px_32px_rgba(41,26,12,0.12)]" style={{borderColor: featured.isLove ? "#F9A8D4" : "var(--border)"}}>
-          <span className="absolute right-4 top-3 h-2 w-6 rounded-full bg-[var(--chip-bg)] border shadow-sm" style={{borderColor:'var(--border)'}} aria-hidden="true" />
-          <div className="text-[11px] uppercase tracking-[0.14em] font-semibold text-[var(--muted)] flex items-center gap-1.5">FROM {(PERSONS[featured.author as any]?.name||featured.author||"?").toUpperCase()} <svg viewBox="0 0 16 16" className={"h-[12px] w-[12px] "+(featured.isLove ? "fill-[#E07A5F]" : "fill-white stroke-[var(--border)]")}><path d="M8 13.1 4.2 9.6A3.6 3.6 0 0 1 3 7c0-1.7 1.25-2.9 2.9-2.9 1 0 1.65.45 2.1 1.2.45-.75 1.1-1.2 2.1-1.2C11.75 4.1 13 5.3 13 7c0 .9-.4 1.9-1.2 2.9L8 13.1Z"/></svg></div>
-          <div className="mt-3 font-display text-[17px] leading-[24px] line-clamp-6 text-[var(--text)]">{featured.body}</div>
-          {featured.photoDataUrl && <span className="mt-4 inline-block rounded-[10px] border bg-[var(--card-bg)] p-2 shadow-sm"><img src={featured.photoDataUrl} alt="" className="w-[160px] h-[120px] rounded-[6px] object-cover" loading="lazy" /></span>}
-          <div className="mt-3 text-[11px] text-[var(--muted)]">{relTime(featured.createdAt, nowMs)} • {featured.isLove ? "Love" : "Note"}</div>
-        </button>
-      )}
-
-      {/* PINNED medium grid */}
-      {pinned.length>0 && (
-        <div className="space-y-2">
-          <div className="px-1 text-[11px] uppercase tracking-wide text-[var(--muted)]">Pinned</div>
-          <div className="grid grid-cols-2 gap-2">
-            {pinned.slice(0,4).map(n=> (
-              <button key={n.id} onClick={()=> setSelected(n)} className="rounded-[16px] border bg-[var(--card-bg)] px-3 py-3 text-left min-h-[84px]" style={{borderColor:"var(--border)"}}>
-                <div className="text-[13px] line-clamp-3">{n.body}</div>
-                <div className="mt-2 text-[11px] text-[var(--muted)]">{relTime(n.createdAt, nowMs)}</div>
-              </button>
-            ))}
+      {/* Featured polaroid */}
+      {featured ? (
+        <div className="w-full px-5 pt-4">
+          <div className="relative rounded-[18px] border bg-white px-0 py-0 overflow-hidden shadow-[0_10px_28px_rgba(0,0,0,0.07)]" style={{borderColor:"#F2E5DC"}}>
+            <div className="absolute right-3 top-3 z-[2] h-[10px] w-[42px] rounded-full bg-white/70 border border-[#E9DDD4] shadow-sm" />
+            <div className="px-5 pt-4 pb-1 flex items-center justify-between">
+              <div className="text-[11px] tracking-[0.16em] font-semibold uppercase text-[#6B8D7A] flex items-center gap-1.5">FROM {(PERSONS[featured.author as any]?.name||featured.author||"Ciaran").toUpperCase()} <span className="text-[#E07A5F]">♥</span></div>
+              <button onClick={()=> setSelected(featured)} className="grid h-[28px] w-[28px] place-items-center rounded-full bg-[#F9F1EA] text-[#A8A0A0]">⋯</button>
+            </div>
+            <div className="px-5 pb-4 grid grid-cols-[148px_1fr] gap-4">
+              <div className="relative">
+                <div className="pointer-events-none absolute -left-2 -top-2 w-[36px] h-[18px] bg-[#E9D5C0]/80 rotate-[-14deg] rounded-[2px]" />
+                {featured.photoDataUrl ? (
+                  <div className="rounded-[8px] bg-white p-1.5 shadow-[0_6px_18px_rgba(0,0,0,0.12)] -rotate-1" style={{transform:"rotate(-2.5deg)"}}>
+                    <img src={featured.photoDataUrl} alt="" className="w-[132px] h-[118px] rounded-[4px] object-cover" />
+                    <div className="pt-1 text-right pr-1 text-[#A8C5B5] text-[14px]">♡</div>
+                  </div>
+                ) : (
+                  <div className="rounded-[8px] bg-white p-2 shadow-sm border border-[#EFE6DC] -rotate-1 text-[11px] text-[#8A7E77]">No photo</div>
+                )}
+                <div className="mt-2 text-[11.5px] text-[#7A706A]">{relTime(featured.createdAt, nowMs)} • <span className="text-[#D07A41]">{featured.isLove?"Love":"Note"}</span></div>
+              </div>
+              <div className="min-w-0">
+                <div className="text-[16px] font-[650] leading-[1.25] tracking-[-0.01em] text-[#1E1714] line-clamp-2" style={{fontFamily:"Fraunces, serif"}}>{featured.body}</div>
+                <div className="mt-2 pt-1 text-[14px] leading-[1.55] text-[#6B5E57] italic" style={{fontFamily:"Pinyon Script, cursive"}}>Those little moments<br/>that mean<br/>everything.</div>
+                <div className="mt-1 text-[#E6A090] text-[18px]">♡</div>
+              </div>
+            </div>
+            {/* lined paper bg */}
+            <div className="pointer-events-none absolute inset-0 opacity-[0.45]" style={{backgroundImage:"repeating-linear-gradient(0deg, transparent 0 29px, #F2E6DC 29px 30px)", top:"56px"}} />
           </div>
         </div>
+      ) : (
+        <div className="w-full px-5 pt-4"><div className="rounded-[16px] border border-dashed bg-white px-5 py-10 text-center text-[13px] text-[#8B7E77]" style={{borderColor:"#E8DDD4"}}>No notes yet — tap + to add</div></div>
       )}
 
-      {/* OLDER compact rows */}
-      <div className="space-y-1">
-        <div className="px-1 text-[11px] uppercase tracking-wide text-[var(--muted)]">Older</div>
-        {older.length===0 ? (
-          <div className="rounded-[16px] border border-dashed bg-[var(--card-bg)] px-4 py-6 text-center text-[12px] text-[var(--muted)]">No notes</div>
-        ) : older.map(n=> (
-          <button key={n.id} onClick={()=> setSelected(n)} className="w-full text-left flex items-center gap-3 rounded-[16px] border bg-[var(--card-bg)] px-3 py-3 min-h-[52px]" style={{borderColor:"var(--border)"}}>
-            <span className="grid h-8 w-8 place-items-center rounded-full text-[11px] font-bold text-white shrink-0" style={{background: (PERSONS[n.author as any]?.accent2||"#A89FDA")}}>{(PERSONS[n.author as any]?.initial||"?")}</span>
-            <span className="flex-1 min-w-0"><span className="block text-[13px] truncate">{n.body}</span><span className="block text-[11px] text-[var(--muted)]">{relTime(n.createdAt, nowMs)} • {n.isLove?"Love":""}</span></span>
-          </button>
-        ))}
+      {/* Older */}
+      <div className="w-full px-5 pt-5">
+        <div className="text-[12px] tracking-[0.14em] font-semibold uppercase text-[#6D645D] pb-2">Older</div>
+        <div className="grid gap-2.5">
+          {older.map(n=> (
+            <button key={n.id} onClick={()=> setSelected(n)} className="w-full text-left flex items-center gap-3 rounded-[14px] border bg-white px-3 py-3 min-h-[56px]" style={{borderColor:"#E8DDD4"}}>
+              <span className="grid h-[36px] w-[36px] place-items-center rounded-full text-[12px] font-bold text-white shrink-0" style={{background: (PERSONS[n.author as any]?.accent2||"#8B9EB5")}}>{(PERSONS[n.author as any]?.initial||n.author?.slice(0,1)||"?")?.toUpperCase()}</span>
+              <span className="flex-1 min-w-0"><span className="block text-[13.5px] font-medium truncate">{n.body}</span><span className="block text-[11.5px] text-[#7A706A]">{relTime(n.createdAt, nowMs)} • {(PERSONS[n.author as any]?.name?.includes("Personal")?"Personal": n.isLove?"Love": n.category||"Personal")}</span></span>
+              <span className="grid h-[22px] w-[22px] place-items-center text-[#9AA0A6]">›</span>
+              <span className="text-[18px]">{n.isLove ? "📌" : n.photoDataUrl ? "📎" : "🔖"}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      <BottomSheet open={showFilter} onClose={()=> setShowFilter(false)} title="Filter">
-        <div className="space-y-3 py-2">
-          <div className="relative">
-            <select value={filter} onChange={e=> { setFilter(e.target.value as any); setShowFilter(false); }} className="w-full h-[44px] min-h-[44px] rounded-[12px] border bg-[var(--card-bg)] px-3 pr-8 text-[12px] font-medium appearance-none bg-[var(--card-bg)]" style={{borderColor:"var(--border)"}}>
-              <option value="all">All</option>
-              <option value="unread">Unread</option>
-              <option value="pinned">Pinned</option>
-              <option value="love">Love</option>
-              <option value="archive">Archive</option>
-            </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="currentColor" strokeWidth="1.2" fill="none"/></svg></span>
-          </div>
-        </div>
-      </BottomSheet>
+      {/* bottom ambient arches behind nav — using your asset */}
+      <div className="pointer-events-none absolute bottom-[56px] left-0 right-0 h-[240px] overflow-hidden opacity-[0.58]">
+        <div className="absolute -left-[28%] bottom-[-26%] w-[78%] h-[286px] rounded-full" style={{background:"#F1C9A6"}} />
+        <div className="absolute -right-[18%] bottom-[-18%] w-[62%] h-[244px] rounded-full" style={{background:"#C7D6C9"}} />
+        <div className="absolute left-[-8%] bottom-[28px] w-[132px] h-[172px] rounded-t-[86px] opacity-70" style={{background:"linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(60,40,30,0.14) 100%)", filter:"blur(0.2px)"}} />
+      </div>
 
-      <BottomSheet open={showAdd} onClose={()=> setShowAdd(false)} title="Add note">
+      {/* sheets */}
+      <BottomSheet open={showAdd} onClose={()=> setShowAdd(false)} title="New note">
         <div className="space-y-3">
-          <textarea value={addBody} onChange={e=> setAddBody(e.target.value)} placeholder="Write a note for your person…" className="w-full rounded-[12px] border bg-[var(--card-bg)] px-3 py-3 text-[14px] min-h-[96px]" style={{borderColor:"var(--border)"}} />
-          <label className="flex items-center gap-2 text-[12px]"><input type="checkbox" checked={addIsLove} onChange={e=> setAddIsLove(e.target.checked)} /> Love note <svg width="12" height="12" viewBox="0 0 16 16" fill="#E07A5F"><path d="M8 13.1 4.2 9.6A3.6 3.6 0 0 1 3 7c0-1.7 1.25-2.9 2.9-2.9 1 0 1.65.45 2.1 1.2.45-.75 1.1-1.2 2.1-1.2C11.75 4.1 13 5.3 13 7c0 .9-.4 1.9-1.2 2.9L8 13.1Z"/></svg></label>
-          {/* Obvious photo upload */}
+          <textarea value={addBody} onChange={e=> setAddBody(e.target.value)} placeholder="Yoiii …" className="w-full rounded-[14px] border bg-white px-3 py-3 text-[14px] min-h-[96px] outline-none" style={{borderColor:"#E9DDD4"}} />
+          <label className="flex items-center gap-2 text-[12.5px]"><input type="checkbox" checked={addIsLove} onChange={e=> setAddIsLove(e.target.checked)} /> Love note <span className="text-[#E07A5F]">♥</span></label>
           <div className="w-full">
             <input id="note-photo-input" type="file" accept="image/*" onChange={e=>{ const f=e.target.files?.[0]; if(f) handlePhotoFile(f); }} className="sr-only" />
-            <label htmlFor="note-photo-input" className="flex h-[64px] w-full cursor-pointer items-center justify-center gap-2 rounded-[14px] border-2 border-dashed bg-[var(--card-bg)] px-3 text-[13px] font-semibold text-[var(--text-secondary)] hover:bg-[var(--chip-bg)] active:scale-[0.99]" style={{borderColor:"var(--border)"}}>
-              <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--chip-bg)] border" style={{borderColor:"var(--border)"}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M9 6l1-2h4l1 2"/></svg></span>
+            <label htmlFor="note-photo-input" className="flex h-[62px] w-full cursor-pointer items-center justify-center gap-2 rounded-[14px] border-2 border-dashed bg-white px-3 text-[13px] font-semibold text-[#6B5E57] hover:bg-[#FFFBF8]" style={{borderColor:"#E9DDD4"}}>
               {isResizing ? "Resizing…" : addPhotoDataUrl ? "Change photo" : "Tap to add photo"}
             </label>
-            {isResizing && <span className="mt-1 block text-[11px] text-[var(--muted)]">Compressing to 900px…</span>}
+            {isResizing && <span className="mt-1 block text-[11px] text-[#8B7E77]">Compressing to 900px…</span>}
           </div>
           {addPhotoDataUrl && (
-            <div className="flex gap-3 items-start rounded-[12px] border bg-[var(--card-bg)] p-2" style={{borderColor:"var(--border)"}}>
-              <img src={addThumbDataUrl || addPhotoDataUrl} alt="preview" className="h-[96px] w-[96px] rounded-[10px] object-cover border shadow-sm" style={{borderColor:"var(--border)"}} />
-              <div className="text-[11px] text-[var(--text-secondary)] leading-[1.4]">Sharper 900px • 180px thumb JPEG 0.82<br/><span className="text-[11px] text-[var(--muted)]">Looks crisp on phone</span><br/><button onClick={()=>{ setAddPhotoDataUrl(undefined); setAddThumbDataUrl(undefined); }} className="mt-1 text-[11px] underline text-[#B91C1C]">Remove</button></div>
+            <div className="flex gap-3 items-start rounded-[12px] border bg-white p-2" style={{borderColor:"#E9DDD4"}}>
+              <img src={addThumbDataUrl || addPhotoDataUrl} alt="preview" className="h-[96px] w-[96px] rounded-[10px] object-cover border" style={{borderColor:"#E9DDD4"}} />
+              <div className="text-[11px] leading-[1.4] text-[#6B5E57]">900px • thumb<br/><button onClick={()=>{ setAddPhotoDataUrl(undefined); setAddThumbDataUrl(undefined); }} className="mt-1 underline text-[#B91C1C]">Remove</button></div>
             </div>
           )}
-          <button onClick={addNote} disabled={!addBody.trim() || isResizing} className="w-full h-[52px] rounded-[16px] bg-[#0A0A0A] text-white text-[15px] font-semibold disabled:opacity-40">Add</button>
+          <button onClick={addNote} disabled={!addBody.trim() || isResizing} className="w-full h-[50px] rounded-[16px] bg-[#121214] text-white text-[14px] font-semibold disabled:opacity-40">Add</button>
         </div>
       </BottomSheet>
 
       <BottomSheet open={!!selected} onClose={()=> setSelected(null)} title={selected ? (PERSONS[selected.author as any]?.name||selected.author||"?") : undefined}>
         {selected && (
           <div className="space-y-3">
-            <div className="text-[15px] leading-[21px]">{selected.body}</div>
-            {selected.photoDataUrl && <img src={selected.photoDataUrl} alt="" className="w-full rounded-[12px] border" style={{borderColor:"var(--border)"}} />}
-            <div className="text-[11px] text-[var(--muted)]">{relTime(selected.createdAt, nowMs)}</div>
+            <div className="text-[14.5px] leading-[1.45] whitespace-pre-wrap">{selected.body}</div>
+            {selected.photoDataUrl && <img src={selected.photoDataUrl} alt="" className="w-full rounded-[12px] border" style={{borderColor:"#E9DDD4"}} />}
+            <div className="text-[11px] text-[#8B7E77]">{relTime(selected.createdAt, nowMs)}</div>
             <div className="flex gap-2">
-              <button onClick={()=> { (() => { const nowISO=new Date().toISOString(); const upd=(selected as any).pinned_at || (selected as any).pinnedAt ? null : nowISO; const next={...selected, pinned_at: upd, pinnedAt: upd, updatedAt:nowISO, updatedBy:currentUser}; try{ hardPersistNote(next,'update'); }catch{}; return setNotes((p:any)=> p.map((x:any)=> x.id===selected.id ? {...x, pinned_at: (x as any).pinned_at ? null : nowISO, pinnedAt: (x as any).pinned_at ? null : nowISO, updatedAt: nowISO, updatedBy: currentUser } : x)) })(); setSelected(null); }} className="flex-1 h-[44px] rounded-[16px] border bg-[var(--card-bg)] text-[12px]">Pin</button>
-              <button onClick={()=> { (() => { const nowISO=new Date().toISOString(); const next={...selected, archived_at: nowISO, archivedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser}; try{ hardPersistNote(next,'update'); }catch{}; return setNotes((p:any)=> p.map((x:any)=> x.id===selected.id ? {...x, archived_at: nowISO, archivedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser } : x)) })(); setSelected(null); }} className="flex-1 h-[44px] rounded-[16px] border bg-[var(--card-bg)] text-[12px] text-[#B91C1C]">Archive</button>
+              <button onClick={()=> { const nowISO=new Date().toISOString(); const upd=(selected as any).pinned_at || (selected as any).pinnedAt ? null : nowISO; const next={...selected, pinned_at: upd, pinnedAt: upd, updatedAt:nowISO, updatedBy:currentUser}; try{ hardPersistNote(next,'update'); }catch{}; setNotes((p:any)=> p.map((x:any)=> x.id===selected.id ? {...x, pinned_at: upd, pinnedAt: upd, updatedAt: nowISO } : x)); setSelected(null); }} className="flex-1 h-[42px] rounded-[12px] border bg-white text-[12px]">Pin</button>
+              <button onClick={()=> { const nowISO=new Date().toISOString(); const next={...selected, archived_at: nowISO, archivedAt: nowISO, updatedAt: nowISO, updatedBy: currentUser}; try{ hardPersistNote(next,'update'); }catch{}; setNotes((p:any)=> p.map((x:any)=> x.id===selected.id ? {...x, archived_at: nowISO, archivedAt: nowISO, updatedAt: nowISO } : x)); setSelected(null); }} className="flex-1 h-[42px] rounded-[12px] border bg-white text-[12px] text-[#B91C1C]">Archive</button>
             </div>
           </div>
         )}
@@ -287,8 +239,5 @@ function NotesMemoPage(props: any) {
   );
 }
 
-
-export function NotesScreen(props:any){
-  return <NotesMemoPage {...props} />;
-}
+export function NotesScreen(props:any){ return <NotesMemoPage {...props} />; }
 export default NotesScreen;

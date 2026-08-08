@@ -940,8 +940,8 @@ export function useAppState() {
   // v144 scalable — no hard-coded ash-ciaran-2026 migration. Keep build marker only.
   useEffect(()=>{
     // v144 build marker
-    try{ localStorage.setItem("couple_v1_build","v190-chore-delete-test-clean"); }catch{}
-    try{ (window as any).__NYLAH_VERSION__ = "v190-chore-delete-test-clean"; }catch{}
+    try{ localStorage.setItem("couple_v1_build","v191-shop-boutique-lift"); }catch{}
+    try{ (window as any).__NYLAH_VERSION__ = "v191-shop-boutique-lift"; }catch{}
   },[]);
 
   // v121 auto-sync after login (PinScreen sets force_resync flag)
